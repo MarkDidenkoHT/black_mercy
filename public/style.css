@@ -148,6 +148,23 @@ body {
     margin-top: 2px;
 }
 
+.day-display {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 5px 15px;
+    border-radius: 20px;
+    border: 1px solid #ffd700;
+}
+
+.day-text {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffd700;
+}
+
 .modal-overlay {
     display: none;
     position: fixed;
@@ -286,5 +303,9 @@ body {
     .reputation-level,
     .inventory-count {
         font-size: 14px;
+    }
+
+    .day-text {
+        font-size: 16px;
     }
 }

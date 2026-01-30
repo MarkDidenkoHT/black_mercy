@@ -114,7 +114,8 @@ app.post('/api/auth/check', async (req, res) => {
             church: 1,
             apothecary: 1
           },
-          active: true
+          active: true,
+          day: 1
         }
       ])
       .select()
