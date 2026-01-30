@@ -58,9 +58,33 @@ app.post('/api/auth/check', async (req, res) => {
       .single();
 
     if (existingPlayer) {
+      const { data: activeSession, error: sessionError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('player', existingPlayer.id)
+        .eq('active', true)
+        .single();
+
+      const { data: reputationData, error: repError } = await supabase
+        .from('reputation')
+        .select('*')
+        .eq('player', existingPlayer.id)
+        .eq('session', activeSession.id)
+        .single();
+
+      const { data: inventoryData, error: invError } = await supabase
+        .from('inventory')
+        .select('*')
+        .eq('player', existingPlayer.id)
+        .eq('session', activeSession.id)
+        .single();
+
       return res.json({ 
         exists: true, 
-        player: existingPlayer 
+        player: existingPlayer,
+        session: activeSession,
+        reputation: reputationData?.reputation || { town: 1, church: 1, apothecary: 1 },
+        inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 }
       });
     }
 
@@ -89,7 +113,8 @@ app.post('/api/auth/check', async (req, res) => {
             town: 1,
             church: 1,
             apothecary: 1
-          }
+          },
+          active: true
         }
       ])
       .select()
@@ -137,7 +162,10 @@ app.post('/api/auth/check', async (req, res) => {
 
     return res.json({ 
       exists: false, 
-      player: newPlayer 
+      player: newPlayer,
+      session: newSession,
+      reputation: { town: 1, church: 1, apothecary: 1 },
+      inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 }
     });
 
   } catch (error) {
