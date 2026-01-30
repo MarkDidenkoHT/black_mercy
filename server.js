@@ -64,7 +64,7 @@ app.post('/api/auth/check', async (req, res) => {
       });
     }
 
-    const { data: newPlayer, error: insertError } = await supabase
+    const { data: newPlayer, error: playerError } = await supabase
       .from('players')
       .insert([
         {
@@ -76,8 +76,63 @@ app.post('/api/auth/check', async (req, res) => {
       .select()
       .single();
 
-    if (insertError) {
-      throw insertError;
+    if (playerError) {
+      throw playerError;
+    }
+
+    const { data: newSession, error: sessionError } = await supabase
+      .from('sessions')
+      .insert([
+        {
+          player: newPlayer.id,
+          status: {
+            town: 1,
+            church: 1,
+            apothecary: 1
+          }
+        }
+      ])
+      .select()
+      .single();
+
+    if (sessionError) {
+      throw sessionError;
+    }
+
+    const { error: reputationError } = await supabase
+      .from('reputation')
+      .insert([
+        {
+          player: newPlayer.id,
+          session: newSession.id,
+          reputation: {
+            town: 1,
+            church: 1,
+            apothecary: 1
+          }
+        }
+      ]);
+
+    if (reputationError) {
+      throw reputationError;
+    }
+
+    const { error: inventoryError } = await supabase
+      .from('inventory')
+      .insert([
+        {
+          player: newPlayer.id,
+          session: newSession.id,
+          items: {
+            'holy water': 2,
+            'lantern fuel': 2,
+            'medicinal herbs': 2
+          }
+        }
+      ]);
+
+    if (inventoryError) {
+      throw inventoryError;
     }
 
     return res.json({ 
