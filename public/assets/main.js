@@ -1,31 +1,61 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  if (window.Telegram && window.Telegram.WebApp) {
-    const user = window.Telegram.WebApp.initDataUnsafe?.user;
-    if (!user) {
-      alert('Unable to get user data from Telegram.');
-      return;
-    }
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-    const { id: chat_id, first_name: player_name } = user;
+let currentPlayer = null;
 
+async function initializeApp() {
     try {
-      const response = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chat_id.toString(), player_name })
-      });
+        const initData = tg.initDataUnsafe;
+        const chatId = initData?.user?.id?.toString() || 'test_user';
+        const playerName = initData?.user?.first_name || 'Player';
+        const playerLanguage = initData?.user?.language_code?.toUpperCase() || 'EN';
 
-      const result = await response.json();
-      if (result.success) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('home-screen').style.display = 'block';
-      } else {
-        alert('Login failed: ' + result.error);
-      }
+        const response = await fetch('/api/auth/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chatId,
+                playerName,
+                playerLanguage
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to authenticate');
+        }
+
+        const data = await response.json();
+        currentPlayer = data.player;
+
+        document.getElementById('player-name').textContent = currentPlayer.player_name;
+
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        switchScreen('loading-screen', 'home-screen');
+
     } catch (error) {
-      alert('Error: ' + error.message);
+        console.error('Initialization error:', error);
+        document.querySelector('.loading-text').textContent = 'Error loading game. Please try again.';
     }
-  } else {
-    alert('This app must be opened from Telegram.');
-  }
+}
+
+function switchScreen(fromScreenId, toScreenId) {
+    const fromScreen = document.getElementById(fromScreenId);
+    const toScreen = document.getElementById(toScreenId);
+
+    if (fromScreen) {
+        fromScreen.classList.remove('active');
+    }
+
+    if (toScreen) {
+        toScreen.classList.add('active');
+    }
+}
+
+window.addEventListener('load', () => {
+    initializeApp();
 });
+
+tg.ready();

@@ -1,20 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Telegram Web App</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shattered Crown</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div id="login-screen">
-    <h1>Loading...</h1>
-  </div>
-  <div id="home-screen" style="display: none;">
-    <h1>Welcome to Black Mercy!</h1>
-    <p>Home screen content here.</p>
-  </div>
-  <script src="main.js"></script>
+    <div id="loading-screen" class="screen active">
+        <div class="loading-container">
+            <img src="assets/art/loading.png" alt="Loading" class="loading-image">
+            <div class="loading-text">Loading...</div>
+        </div>
+    </div>
+
+    <div id="home-screen" class="screen">
+        <div class="home-container">
+            <img src="assets/art/town.png" alt="Town" class="town-image">
+            <div class="player-info">
+                <h1>Welcome, <span id="player-name">Player</span>!</h1>
+            </div>
+            <div class="game-buttons">
+                <button class="game-btn">Start Adventure</button>
+                <button class="game-btn">Inventory</button>
+                <button class="game-btn">Shop</button>
+                <button class="game-btn">Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
 </body>
 </html>

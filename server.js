@@ -1,41 +1,85 @@
+require('dotenv').config();
 const express = require('express');
-//const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
+  process.exit(1);
+}
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use(limiter);
 
-app.post('/login', async (req, res) => {
-  const { chat_id, player_name, player_language = 'EN' } = req.body;
-  if (!chat_id) return res.status(400).json({ error: 'Missing chat_id' });
+app.post('/api/auth/check', async (req, res) => {
+  try {
+    const { chatId, playerName, playerLanguage } = req.body;
 
-  // Check if user exists
-  const { data: existingUser } = await supabase
-    .from('players')
-    .select('*')
-    .eq('chat_id', chat_id)
-    .single();
+    if (!chatId) {
+      return res.status(400).json({ error: 'Chat ID is required' });
+    }
 
-  if (existingUser) {
-    return res.json({ success: true, user: existingUser });
+    const { data: existingPlayer, error: selectError } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (existingPlayer) {
+      return res.json({ 
+        exists: true, 
+        player: existingPlayer 
+      });
+    }
+
+    const { data: newPlayer, error: insertError } = await supabase
+      .from('players')
+      .insert([
+        {
+          chat_id: chatId,
+          player_name: playerName || 'Player',
+          player_language: playerLanguage || 'EN'
+        }
+      ])
+      .select()
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    return res.json({ 
+      exists: false, 
+      player: newPlayer 
+    });
+
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  // Register new user
-  const { data, error } = await supabase
-    .from('players')
-    .insert([{ chat_id, player_name, player_language }])
-    .select()
-    .single();
-
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ success: true, user: data });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
