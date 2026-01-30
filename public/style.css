@@ -100,56 +100,50 @@ body {
     width: 30%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
 }
 
 .reputation-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #ffd700;
 }
 
 .reputation-icon {
     width: 40px;
     height: 40px;
+    border-radius: 50%;
 }
 
 .reputation-level {
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 16px;
     color: #ffd700;
+    margin-top: 2px;
 }
 
 .inventory-container {
     width: 30%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
 }
 
 .inventory-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #ffd700;
 }
 
 .inventory-icon {
     width: 40px;
     height: 40px;
+    border-radius: 50%;
 }
 
 .inventory-count {
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 16px;
     color: #ffffff;
+    margin-top: 2px;
 }
 
 .game-buttons {
@@ -207,6 +201,6 @@ body {
 
     .reputation-level,
     .inventory-count {
-        font-size: 16px;
+        font-size: 14px;
     }
 }

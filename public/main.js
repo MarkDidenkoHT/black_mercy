@@ -100,6 +100,31 @@ function renderInventory() {
     });
 }
 
+function renderInventory() {
+    const inventoryContainer = document.getElementById('inventory-container');
+    inventoryContainer.innerHTML = '';
+
+    const items = [
+        { key: 'holy water', name: 'Holy Water', icon: 'holy_water' },
+        { key: 'lantern fuel', name: 'Lantern Fuel', icon: 'lantern_fuel' },
+        { key: 'medicinal herbs', name: 'Medicinal Herbs', icon: 'medicinal_herbs' }
+    ];
+
+    items.forEach(item => {
+        const count = currentInventory[item.key] || 0;
+        
+        const invItem = document.createElement('div');
+        invItem.className = 'inventory-item';
+        
+        invItem.innerHTML = `
+            <img src="assets/art/icons/${item.icon}.png" alt="${item.name}" class="inventory-icon">
+            <span class="inventory-count">${count}</span>
+        `;
+        
+        inventoryContainer.appendChild(invItem);
+    });
+}
+
 function switchScreen(fromScreenId, toScreenId) {
     const fromScreen = document.getElementById(fromScreenId);
     const toScreen = document.getElementById(toScreenId);
