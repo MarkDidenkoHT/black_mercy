@@ -79,12 +79,21 @@ app.post('/api/auth/check', async (req, res) => {
         .eq('session', activeSession.id)
         .single();
 
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('player', existingPlayer.id)
+        .eq('session', activeSession.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
       return res.json({ 
         exists: true, 
         player: existingPlayer,
         session: activeSession,
         reputation: reputationData?.reputation || { town: 1, church: 1, apothecary: 1 },
-        inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 }
+        inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
+        events: eventsData || []
       });
     }
 
@@ -161,12 +170,27 @@ app.post('/api/auth/check', async (req, res) => {
       throw inventoryError;
     }
 
+    const { error: eventsError } = await supabase
+      .from('events')
+      .insert([
+        {
+          player: newPlayer.id,
+          session: newSession.id,
+          event: 'Welcome to Shattered Crown! Your adventure begins now.'
+        }
+      ]);
+a
+    if (eventsError) {
+      throw eventsError;
+    }
+
     return res.json({ 
       exists: false, 
       player: newPlayer,
       session: newSession,
       reputation: { town: 1, church: 1, apothecary: 1 },
-      inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 }
+      inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
+      events: [{ event: 'Welcome to Shattered Crown! Your adventure begins now.' }]
     });
 
   } catch (error) {

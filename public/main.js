@@ -5,6 +5,7 @@ let currentPlayer = null;
 let currentSession = null;
 let currentReputation = null;
 let currentInventory = null;
+let currentEvents = [];
 
 const factionDescriptions = {
     town: "Your standing with the townsfolk. Higher reputation unlocks better trade deals and local support.",
@@ -46,12 +47,18 @@ async function initializeApp() {
         currentSession = data.session;
         currentReputation = data.reputation;
         currentInventory = data.inventory;
+        currentEvents = data.events || [];
 
         document.getElementById('current-day').textContent = currentSession.day || 1;
 
         renderReputation();
         renderInventory();
+        renderEvents();
         setupModalEvents();
+
+        document.getElementById('settings-button').addEventListener('click', () => {
+            alert('Settings functionality will be added later.');
+        });
 
         await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -120,6 +127,26 @@ function renderInventory() {
         `;
         
         inventoryContainer.appendChild(invItem);
+    });
+}
+
+function renderEvents() {
+    const eventsList = document.getElementById('events-list');
+    eventsList.innerHTML = '';
+
+    if (currentEvents.length === 0) {
+        const noEvents = document.createElement('div');
+        noEvents.className = 'event-item';
+        noEvents.textContent = 'No events yet. Your adventure begins now!';
+        eventsList.appendChild(noEvents);
+        return;
+    }
+
+    currentEvents.slice(-10).reverse().forEach(event => {
+        const eventElement = document.createElement('div');
+        eventElement.className = 'event-item';
+        eventElement.textContent = event.event;
+        eventsList.appendChild(eventElement);
     });
 }
 
