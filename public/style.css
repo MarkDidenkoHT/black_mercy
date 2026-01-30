@@ -72,21 +72,6 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-.player-info {
-    text-align: center;
-    margin: 20px 0;
-}
-
-.player-info h1 {
-    font-size: 28px;
-    color: #ffd700;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-}
-
-#player-name {
-    color: #ffffff;
-}
-
 .stats-overlay {
     position: absolute;
     top: 10px;
@@ -270,10 +255,6 @@ body {
 @media (max-width: 480px) {
     .loading-text {
         font-size: 20px;
-    }
-
-    .player-info h1 {
-        font-size: 24px;
     }
 
     .game-btn {

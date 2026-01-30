@@ -47,7 +47,6 @@ async function initializeApp() {
         currentReputation = data.reputation;
         currentInventory = data.inventory;
 
-        document.getElementById('player-name').textContent = currentPlayer.player_name;
         document.getElementById('current-day').textContent = currentSession.day || 1;
 
         renderReputation();
