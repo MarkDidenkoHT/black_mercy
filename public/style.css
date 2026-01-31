@@ -66,7 +66,6 @@ body {
     flex-direction: column;
     justify-content: flex-end;
     position: relative;
-    background: rgba(0, 0, 0, 0.3);
 }
 
 .stats-overlay {
@@ -161,13 +160,12 @@ body {
 .events-container {
     height: 35%;
     width: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgb(123 122 122 / 71%);
     border: 1px solid #ffd700;
     border-radius: 10px;
     padding: 10px;
     margin-bottom: 10px;
     overflow-y: auto;
-    backdrop-filter: blur(5px);
     position: relative;
     z-index: 5;
 }
@@ -180,7 +178,6 @@ body {
     font-weight: bold;
     position: sticky;
     top: 0;
-    background: rgba(0, 0, 0, 0.9);
     padding: 5px;
     z-index: 1;
 }
@@ -204,8 +201,8 @@ body {
 
 .bottom-button {
     flex: 1;
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #ffd700;
+    background: rgb(177 73 40 / 70%);
+    border: 2px solid #ddbd13;
     border-radius: 10px;
     color: #ffffff;
     font-size: 16px;
