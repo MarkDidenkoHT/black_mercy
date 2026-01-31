@@ -55,7 +55,7 @@ body {
     background-repeat: no-repeat;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 20px;
+    padding: 5px;
     overflow-y: auto;
 }
 
@@ -158,7 +158,7 @@ body {
 }
 
 .events-container {
-    height: 35%;
+    height: 30%;
     width: 100%;
     background: rgb(123 122 122 / 71%);
     border: 1px solid #ffd700;
@@ -168,18 +168,6 @@ body {
     overflow-y: auto;
     position: relative;
     z-index: 5;
-}
-
-.events-title {
-    font-size: 18px;
-    color: #ffd700;
-    margin-bottom: 10px;
-    text-align: center;
-    font-weight: bold;
-    position: sticky;
-    top: 0;
-    padding: 5px;
-    z-index: 1;
 }
 
 .event-item {
@@ -330,23 +318,11 @@ body {
         font-size: 16px;
     }
 
-    .events-title {
-        font-size: 16px;
-    }
-
     .event-item {
         font-size: 12px;
     }
 
     .bottom-button {
         font-size: 14px;
-    }
-
-    #home-screen {
-        padding: 15px;
-    }
-
-    .events-container {
-        height: 40%;
     }
 }
