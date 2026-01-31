@@ -43,6 +43,27 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Simple function to call Supabase Edge Function
+async function callGenerateTravelers(playerId, sessionId) {
+  const response = await fetch(`${process.env.SUPABASE_URL}/functions/v1/generate-travelers`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      player_id: playerId,
+      session_id: sessionId
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to generate travelers');
+  }
+
+  return await response.json();
+}
+
 app.post('/api/auth/check', async (req, res) => {
   try {
     const { chatId, playerName, playerLanguage } = req.body;
@@ -87,16 +108,27 @@ app.post('/api/auth/check', async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(10);
 
+      // Get travelers for current day
+      const { data: currentTravelers, error: travelersError } = await supabase
+        .from('travelers')
+        .select('*')
+        .eq('player', existingPlayer.id)
+        .eq('session', activeSession.id)
+        .eq('day', activeSession.day || 1)
+        .order('order->position');
+
       return res.json({ 
         exists: true, 
         player: existingPlayer,
         session: activeSession,
-        reputation: reputationData?.reputation || { town: 1, church: 1, apothecary: 1 },
+        reputation: reputationData?.reputation || { town: 5, church: 3, apothecary: 3 },
         inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
-        events: eventsData || []
+        events: eventsData || [],
+        travelers: currentTravelers || []
       });
     }
 
+    // New player - create everything
     const { data: newPlayer, error: playerError } = await supabase
       .from('players')
       .insert([
@@ -133,6 +165,9 @@ app.post('/api/auth/check', async (req, res) => {
     if (sessionError) {
       throw sessionError;
     }
+
+    // Generate travelers by calling the edge function
+    await callGenerateTravelers(newPlayer.id, newSession.id);
 
     const { error: reputationError } = await supabase
       .from('reputation')
@@ -179,10 +214,19 @@ app.post('/api/auth/check', async (req, res) => {
           event: 'Welcome to Shattered Crown! Your adventure begins now.'
         }
       ]);
-a
+
     if (eventsError) {
       throw eventsError;
     }
+
+    // Get travelers for day 1
+    const { data: day1Travelers } = await supabase
+      .from('travelers')
+      .select('*')
+      .eq('player', newPlayer.id)
+      .eq('session', newSession.id)
+      .eq('day', 1)
+      .order('order->position');
 
     return res.json({ 
       exists: false, 
@@ -190,11 +234,129 @@ a
       session: newSession,
       reputation: { town: 1, church: 1, apothecary: 1 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
-      events: [{ event: 'Welcome to Shattered Crown! Your adventure begins now.' }]
+      events: [{ event: 'Welcome to Shattered Crown! Your adventure begins now.' }],
+      travelers: day1Travelers || []
     });
 
   } catch (error) {
     console.error('Auth error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Simple endpoint to get travelers for a day
+app.post('/api/travelers/get-day', async (req, res) => {
+  try {
+    const { chatId, day } = req.body;
+
+    if (!chatId || !day) {
+      return res.status(400).json({ error: 'chatId and day are required' });
+    }
+
+    // Get player
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    // Get active session
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) {
+      return res.status(404).json({ error: 'Active session not found' });
+    }
+
+    // Get travelers for requested day
+    const { data: travelers } = await supabase
+      .from('travelers')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .eq('day', day)
+      .order('order->position');
+
+    return res.json({
+      success: true,
+      day: day,
+      travelers: travelers || []
+    });
+
+  } catch (error) {
+    console.error('Get travelers error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Simple endpoint to advance day
+app.post('/api/game/advance-day', async (req, res) => {
+  try {
+    const { chatId } = req.body;
+
+    if (!chatId) {
+      return res.status(400).json({ error: 'chatId is required' });
+    }
+
+    // Get player
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    // Get active session
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) {
+      return res.status(404).json({ error: 'Active session not found' });
+    }
+
+    const nextDay = session.day + 1;
+    
+    // Update session day
+    const { data: updatedSession } = await supabase
+      .from('sessions')
+      .update({ day: nextDay })
+      .eq('id', session.id)
+      .select()
+      .single();
+
+    // Get travelers for next day
+    const { data: nextDayTravelers } = await supabase
+      .from('travelers')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .eq('day', nextDay)
+      .order('order->position');
+
+    return res.json({
+      success: true,
+      new_day: nextDay,
+      travelers: nextDayTravelers || [],
+      session: updatedSession
+    });
+
+  } catch (error) {
+    console.error('Advance day error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

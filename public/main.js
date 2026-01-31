@@ -8,15 +8,15 @@ let currentInventory = null;
 let currentEvents = [];
 
 const factionDescriptions = {
-    town: "Your standing with the townsfolk. Higher reputation unlocks better trade deals and local support.",
-    church: "Your relationship with the church. Higher reputation grants access to holy blessings and divine protection.",
-    apothecary: "Your connection with the apothecary. Higher reputation provides better healing items and rare concoctions."
+    town: "Remaining population. Eveything is lost if no townsfolr remain.",
+    church: "Members of the church. They can provide holy water supplies.",
+    apothecary: "Apothecarion. Provides medicinal herbs."
 };
 
 const itemDescriptions = {
-    'holy water': "A vial of blessed water. Can be used to cleanse corruption and ward off evil spirits.",
-    'lantern fuel': "Fuel for your lantern. Essential for exploring dark areas and surviving the night.",
-    'medicinal herbs': "Healing herbs. Can be used to treat wounds and recover health during your adventures."
+    'holy water': "A vial of blessed water. Causes possessed to shriek in pain.",
+    'lantern fuel': "Fuel for your lantern. Essential for inspecting travel papers.",
+    'medicinal herbs': "Medicinal herbs. Burning these causes the infected to cough."
 };
 
 async function initializeApp() {
