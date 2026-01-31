@@ -63,6 +63,37 @@ async function callGenerateTravelers(playerId, sessionId) {
   return await response.json();
 }
 
+function parseDialog(dialogData) {
+  if (!dialogData) return null;
+  
+  if (typeof dialogData === 'string') {
+    try {
+      return JSON.parse(dialogData);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  return dialogData;
+}
+
+function getDialogText(dialog, key, faction) {
+  if (!dialog) return null;
+  
+  const parsedDialog = parseDialog(dialog);
+  if (!parsedDialog) return null;
+  
+  if (parsedDialog[key]) {
+    if (typeof parsedDialog[key] === 'string') {
+      return parsedDialog[key];
+    } else if (parsedDialog[key][faction]) {
+      return parsedDialog[key][faction];
+    }
+  }
+  
+  return null;
+}
+
 app.post('/api/auth/check', async (req, res) => {
   try {
     const { chatId, playerName, playerLanguage } = req.body;
@@ -207,7 +238,7 @@ app.post('/api/auth/check', async (req, res) => {
         {
           player: newPlayer.id,
           session: newSession.id,
-          event: 'Welcome to BLack Mercy! Your adventure begins now.'
+          event: 'Welcome to Shattered Crown! Your adventure begins now.'
         }
       ]);
 
@@ -229,7 +260,7 @@ app.post('/api/auth/check', async (req, res) => {
       session: newSession,
       reputation: { town: 1, church: 1, apothecary: 1 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
-      events: [{ event: 'Welcome to Black Mercy! Your adventure begins now.' }],
+      events: [{ event: 'Welcome to Shattered Crown! Your adventure begins now.' }],
       travelers: day1Travelers || []
     });
 
@@ -409,31 +440,52 @@ app.post('/api/travelers/decision', async (req, res) => {
       .single();
 
     let updatedReputation = reputation?.reputation || { town: 5, church: 3, apothecary: 3 };
-    let updatedHiddenReputation = reputation?.hidden_reputation || { cult: 0, inquisition: 0 };
+    let updatedHiddenReputation = reputation?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 };
 
     if (effectToApply) {
       const faction = travelerData.faction;
-      if (faction === 'human' && travelerData.effect_in === 'church +1') {
-        updatedReputation.church = Math.max(1, Math.min(10, updatedReputation.church + 1));
-      } else if (faction === 'infected' && travelerData.effect_in === 'apothecary -1') {
-        updatedReputation.apothecary = Math.max(1, Math.min(10, updatedReputation.apothecary - 1));
-      } else if (faction === 'possessed') {
-        if (decision === 'allow') {
-          updatedReputation.church = Math.max(1, Math.min(10, updatedReputation.church - 1));
-        } else if (decision === 'deny' && travelerData.effect_out === 'church +1') {
-          updatedReputation.church = Math.max(1, Math.min(10, updatedReputation.church + 1));
-        } else if (decision === 'execute' && travelerData.effect_ex === 'cult -1') {
-          updatedHiddenReputation.cult = Math.max(0, Math.min(10, updatedHiddenReputation.cult - 1));
+      if (typeof effectToApply === 'string') {
+        const effectParts = effectToApply.split(' ');
+        if (effectParts.length === 2) {
+          const factionKey = effectParts[0];
+          const effectValue = parseInt(effectParts[1]);
+          
+          if (factionKey in updatedReputation) {
+            updatedReputation[factionKey] = Math.max(1, Math.min(10, updatedReputation[factionKey] + effectValue));
+          } else if (factionKey in updatedHiddenReputation) {
+            updatedHiddenReputation[factionKey] = Math.max(0, Math.min(10, updatedHiddenReputation[factionKey] + effectValue));
+          }
+        }
+      } else if (typeof effectToApply === 'object' && travelerData.faction) {
+        const effectString = effectToApply[travelerData.faction];
+        if (effectString && typeof effectString === 'string') {
+          const effectParts = effectString.split(' ');
+          if (effectParts.length === 2) {
+            const factionKey = effectParts[0];
+            const effectValue = parseInt(effectParts[1]);
+            
+            if (factionKey in updatedReputation) {
+              updatedReputation[factionKey] = Math.max(1, Math.min(10, updatedReputation[factionKey] + effectValue));
+            } else if (factionKey in updatedHiddenReputation) {
+              updatedHiddenReputation[factionKey] = Math.max(0, Math.min(10, updatedHiddenReputation[factionKey] + effectValue));
+            }
+          }
         }
       }
     }
 
-    if (hiddenEffectToApply) {
-      const faction = travelerData.faction;
-      if (faction === 'infected' && hiddenEffectToApply === 'undead +1') {
-        updatedHiddenReputation.undead = Math.max(0, Math.min(10, (updatedHiddenReputation.undead || 0) + 1));
-      } else if (faction === 'possessed' && hiddenEffectToApply === 'cult +1') {
-        updatedHiddenReputation.cult = Math.max(0, Math.min(10, updatedHiddenReputation.cult + 1));
+    if (hiddenEffectToApply && typeof hiddenEffectToApply === 'object' && travelerData.faction) {
+      const hiddenEffectString = hiddenEffectToApply[travelerData.faction];
+      if (hiddenEffectString && typeof hiddenEffectString === 'string') {
+        const effectParts = hiddenEffectString.split(' ');
+        if (effectParts.length === 2) {
+          const factionKey = effectParts[0];
+          const effectValue = parseInt(effectParts[1]);
+          
+          if (factionKey in updatedHiddenReputation) {
+            updatedHiddenReputation[factionKey] = Math.max(0, Math.min(10, updatedHiddenReputation[factionKey] + effectValue));
+          }
+        }
       }
     }
 
@@ -453,7 +505,8 @@ app.post('/api/travelers/decision', async (req, res) => {
       })
       .eq('id', travelerId);
 
-    const eventMessage = `${travelerData.name} (${travelerData.faction}) was ${decision}ed.`;
+    const decisionText = decision === 'allow' ? 'allowed' : decision === 'deny' ? 'denied' : 'executed';
+    const eventMessage = `${travelerData.name} (${travelerData.faction}) was ${decisionText}.`;
     
     await supabase
       .from('events')

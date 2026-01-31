@@ -9,6 +9,7 @@ let currentEvents = [];
 let currentTravelers = [];
 let currentTravelerIndex = 0;
 let currentDayTravelers = [];
+let currentTraveler = null;
 
 const factionDescriptions = {
     town: "Remaining population. Everything is lost if no townsfolk remain.",
@@ -327,16 +328,27 @@ function loadCurrentTraveler() {
     
     const continueButton = document.getElementById('continue-button');
     const actionButtons = document.querySelectorAll('.action-row button');
+    const actionRows = document.querySelectorAll('.action-row');
     
-    continueButton.style.display = 'block';
-    actionButtons.forEach(btn => {
-        btn.style.display = 'none';
-        btn.disabled = false;
-    });
-    
-    document.querySelectorAll('.action-row').forEach(row => {
-        row.style.display = 'none';
-    });
+    if (traveler.traveler.is_fixed) {
+        continueButton.textContent = 'Continue';
+        continueButton.style.display = 'block';
+        actionRows.forEach(row => {
+            row.style.display = 'none';
+        });
+        actionButtons.forEach(btn => {
+            btn.style.display = 'none';
+        });
+    } else {
+        continueButton.textContent = 'Continue';
+        continueButton.style.display = 'block';
+        actionRows.forEach(row => {
+            row.style.display = 'none';
+        });
+        actionButtons.forEach(btn => {
+            btn.style.display = 'block';
+        });
+    }
 }
 
 function showTravelerGreeting() {
@@ -344,17 +356,44 @@ function showTravelerGreeting() {
     
     const dialogContainer = document.getElementById('traveler-dialog');
     const travelerData = currentTraveler.traveler;
+    const continueButton = document.getElementById('continue-button');
+    const actionRows = document.querySelectorAll('.action-row');
     
     if (travelerData.is_fixed) {
         dialogContainer.textContent = "Fixed traveler - Continue to proceed.";
-    } else if (travelerData.dialog && travelerData.dialog.greeting) {
-        dialogContainer.textContent = travelerData.dialog.greeting;
-    } else {
-        dialogContainer.textContent = "Greetings. I seek entry to your town.";
+        continueButton.style.display = 'block';
+        actionRows.forEach(row => {
+            row.style.display = 'none';
+        });
+        return;
     }
     
-    const continueButton = document.getElementById('continue-button');
-    const actionRows = document.querySelectorAll('.action-row');
+    let greetingText = "Greetings. I seek entry to your town.";
+    
+    if (travelerData.dialog) {
+        if (typeof travelerData.dialog === 'string') {
+            try {
+                const parsedDialog = JSON.parse(travelerData.dialog);
+                if (parsedDialog.greeting && typeof parsedDialog.greeting === 'string') {
+                    greetingText = parsedDialog.greeting;
+                } else if (parsedDialog.greeting && travelerData.faction && parsedDialog.greeting[travelerData.faction]) {
+                    greetingText = parsedDialog.greeting[travelerData.faction];
+                }
+            } catch (e) {
+                if (travelerData.dialog.greeting && typeof travelerData.dialog.greeting === 'string') {
+                    greetingText = travelerData.dialog.greeting;
+                } else if (travelerData.dialog.greeting && travelerData.faction && travelerData.dialog.greeting[travelerData.faction]) {
+                    greetingText = travelerData.dialog.greeting[travelerData.faction];
+                }
+            }
+        } else if (travelerData.dialog.greeting && typeof travelerData.dialog.greeting === 'string') {
+            greetingText = travelerData.dialog.greeting;
+        } else if (travelerData.dialog.greeting && travelerData.faction && travelerData.dialog.greeting[travelerData.faction]) {
+            greetingText = travelerData.dialog.greeting[travelerData.faction];
+        }
+    }
+    
+    dialogContainer.textContent = greetingText;
     
     continueButton.style.display = 'none';
     actionRows.forEach(row => {
@@ -374,12 +413,32 @@ async function handleTravelerAction(action) {
             return;
         }
         
-        if (travelerData.dialog && travelerData.dialog.papers) {
-            dialogContainer.textContent = travelerData.dialog.papers;
-        } else {
-            dialogContainer.textContent = "The papers seem to be in order.";
+        let papersText = "The papers seem to be in order.";
+        
+        if (travelerData.dialog) {
+            if (typeof travelerData.dialog === 'string') {
+                try {
+                    const parsedDialog = JSON.parse(travelerData.dialog);
+                    if (parsedDialog.papers && typeof parsedDialog.papers === 'string') {
+                        papersText = parsedDialog.papers;
+                    } else if (parsedDialog.papers && travelerData.faction && parsedDialog.papers[travelerData.faction]) {
+                        papersText = parsedDialog.papers[travelerData.faction];
+                    }
+                } catch (e) {
+                    if (travelerData.dialog.papers && typeof travelerData.dialog.papers === 'string') {
+                        papersText = travelerData.dialog.papers;
+                    } else if (travelerData.dialog.papers && travelerData.faction && travelerData.dialog.papers[travelerData.faction]) {
+                        papersText = travelerData.dialog.papers[travelerData.faction];
+                    }
+                }
+            } else if (travelerData.dialog.papers && typeof travelerData.dialog.papers === 'string') {
+                papersText = travelerData.dialog.papers;
+            } else if (travelerData.dialog.papers && travelerData.faction && travelerData.dialog.papers[travelerData.faction]) {
+                papersText = travelerData.dialog.papers[travelerData.faction];
+            }
         }
         
+        dialogContainer.textContent = papersText;
         await updateInventory('lantern fuel', -1);
         
     } else if (action === 'holy_water') {
@@ -388,14 +447,34 @@ async function handleTravelerAction(action) {
             return;
         }
         
-        if (travelerData.dialog && travelerData.dialog.holy_water) {
-            dialogContainer.textContent = travelerData.dialog.holy_water;
-        } else {
-            dialogContainer.textContent = travelerData.faction === 'possessed' 
-                ? "The traveler shrieks in pain!" 
-                : "The traveler reacts normally to the holy water.";
+        let holyWaterText = travelerData.faction === 'possessed' 
+            ? "The traveler shrieks in pain!" 
+            : "The traveler reacts normally to the holy water.";
+        
+        if (travelerData.dialog) {
+            if (typeof travelerData.dialog === 'string') {
+                try {
+                    const parsedDialog = JSON.parse(travelerData.dialog);
+                    if (parsedDialog.holy_water && typeof parsedDialog.holy_water === 'string') {
+                        holyWaterText = parsedDialog.holy_water;
+                    } else if (parsedDialog.holy_water && travelerData.faction && parsedDialog.holy_water[travelerData.faction]) {
+                        holyWaterText = parsedDialog.holy_water[travelerData.faction];
+                    }
+                } catch (e) {
+                    if (travelerData.dialog.holy_water && typeof travelerData.dialog.holy_water === 'string') {
+                        holyWaterText = travelerData.dialog.holy_water;
+                    } else if (travelerData.dialog.holy_water && travelerData.faction && travelerData.dialog.holy_water[travelerData.faction]) {
+                        holyWaterText = travelerData.dialog.holy_water[travelerData.faction];
+                    }
+                }
+            } else if (travelerData.dialog.holy_water && typeof travelerData.dialog.holy_water === 'string') {
+                holyWaterText = travelerData.dialog.holy_water;
+            } else if (travelerData.dialog.holy_water && travelerData.faction && travelerData.dialog.holy_water[travelerData.faction]) {
+                holyWaterText = travelerData.dialog.holy_water[travelerData.faction];
+            }
         }
         
+        dialogContainer.textContent = holyWaterText;
         await updateInventory('holy water', -1);
         
     } else if (action === 'medicinal_herbs') {
@@ -404,14 +483,34 @@ async function handleTravelerAction(action) {
             return;
         }
         
-        if (travelerData.dialog && travelerData.dialog.medicinal_herbs) {
-            dialogContainer.textContent = travelerData.dialog.medicinal_herbs;
-        } else {
-            dialogContainer.textContent = travelerData.faction === 'infected'
-                ? "The traveler coughs violently!"
-                : "The traveler shows no unusual reaction.";
+        let medicinalHerbsText = travelerData.faction === 'infected'
+            ? "The traveler coughs violently!"
+            : "The traveler shows no unusual reaction.";
+        
+        if (travelerData.dialog) {
+            if (typeof travelerData.dialog === 'string') {
+                try {
+                    const parsedDialog = JSON.parse(travelerData.dialog);
+                    if (parsedDialog.medicinal_herbs && typeof parsedDialog.medicinal_herbs === 'string') {
+                        medicinalHerbsText = parsedDialog.medicinal_herbs;
+                    } else if (parsedDialog.medicinal_herbs && travelerData.faction && parsedDialog.medicinal_herbs[travelerData.faction]) {
+                        medicinalHerbsText = parsedDialog.medicinal_herbs[travelerData.faction];
+                    }
+                } catch (e) {
+                    if (travelerData.dialog.medicinal_herbs && typeof travelerData.dialog.medicinal_herbs === 'string') {
+                        medicinalHerbsText = travelerData.dialog.medicinal_herbs;
+                    } else if (travelerData.dialog.medicinal_herbs && travelerData.faction && travelerData.dialog.medicinal_herbs[travelerData.faction]) {
+                        medicinalHerbsText = travelerData.dialog.medicinal_herbs[travelerData.faction];
+                    }
+                }
+            } else if (travelerData.dialog.medicinal_herbs && typeof travelerData.dialog.medicinal_herbs === 'string') {
+                medicinalHerbsText = travelerData.dialog.medicinal_herbs;
+            } else if (travelerData.dialog.medicinal_herbs && travelerData.faction && travelerData.dialog.medicinal_herbs[travelerData.faction]) {
+                medicinalHerbsText = travelerData.dialog.medicinal_herbs[travelerData.faction];
+            }
         }
         
+        dialogContainer.textContent = medicinalHerbsText;
         await updateInventory('medicinal herbs', -1);
     }
     
