@@ -442,49 +442,28 @@ app.post('/api/travelers/decision', async (req, res) => {
     let updatedReputation = reputation?.reputation || { town: 5, church: 3, apothecary: 3 };
     let updatedHiddenReputation = reputation?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 };
 
-    if (effectToApply) {
-      const faction = travelerData.faction;
-      if (typeof effectToApply === 'string') {
-        const effectParts = effectToApply.split(' ');
-        if (effectParts.length === 2) {
-          const factionKey = effectParts[0];
-          const effectValue = parseInt(effectParts[1]);
-          
-          if (factionKey in updatedReputation) {
-            updatedReputation[factionKey] = Math.max(1, Math.min(10, updatedReputation[factionKey] + effectValue));
-          } else if (factionKey in updatedHiddenReputation) {
-            updatedHiddenReputation[factionKey] = Math.max(0, Math.min(10, updatedHiddenReputation[factionKey] + effectValue));
-          }
-        }
-      } else if (typeof effectToApply === 'object' && travelerData.faction) {
-        const effectString = effectToApply[travelerData.faction];
-        if (effectString && typeof effectString === 'string') {
-          const effectParts = effectString.split(' ');
-          if (effectParts.length === 2) {
-            const factionKey = effectParts[0];
-            const effectValue = parseInt(effectParts[1]);
-            
-            if (factionKey in updatedReputation) {
-              updatedReputation[factionKey] = Math.max(1, Math.min(10, updatedReputation[factionKey] + effectValue));
-            } else if (factionKey in updatedHiddenReputation) {
-              updatedHiddenReputation[factionKey] = Math.max(0, Math.min(10, updatedHiddenReputation[factionKey] + effectValue));
-            }
-          }
+    if (effectToApply && typeof effectToApply === 'string') {
+      const effectParts = effectToApply.split(' ');
+      if (effectParts.length === 2) {
+        const factionKey = effectParts[0];
+        const effectValue = parseInt(effectParts[1]);
+        
+        if (factionKey in updatedReputation) {
+          updatedReputation[factionKey] = Math.max(1, Math.min(10, updatedReputation[factionKey] + effectValue));
+        } else if (factionKey in updatedHiddenReputation) {
+          updatedHiddenReputation[factionKey] = Math.max(0, Math.min(10, updatedHiddenReputation[factionKey] + effectValue));
         }
       }
     }
 
-    if (hiddenEffectToApply && typeof hiddenEffectToApply === 'object' && travelerData.faction) {
-      const hiddenEffectString = hiddenEffectToApply[travelerData.faction];
-      if (hiddenEffectString && typeof hiddenEffectString === 'string') {
-        const effectParts = hiddenEffectString.split(' ');
-        if (effectParts.length === 2) {
-          const factionKey = effectParts[0];
-          const effectValue = parseInt(effectParts[1]);
-          
-          if (factionKey in updatedHiddenReputation) {
-            updatedHiddenReputation[factionKey] = Math.max(0, Math.min(10, updatedHiddenReputation[factionKey] + effectValue));
-          }
+    if (hiddenEffectToApply && typeof hiddenEffectToApply === 'string') {
+      const effectParts = hiddenEffectToApply.split(' ');
+      if (effectParts.length === 2) {
+        const factionKey = effectParts[0];
+        const effectValue = parseInt(effectParts[1]);
+        
+        if (factionKey in updatedHiddenReputation) {
+          updatedHiddenReputation[factionKey] = Math.max(0, Math.min(10, updatedHiddenReputation[factionKey] + effectValue));
         }
       }
     }

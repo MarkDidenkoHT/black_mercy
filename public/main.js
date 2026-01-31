@@ -323,28 +323,14 @@ function loadCurrentTraveler() {
     document.getElementById('traveler-dialog').textContent = '';
     
     const continueButton = document.getElementById('continue-button');
-    const actionButtons = document.querySelectorAll('.action-row button');
     const actionRows = document.querySelectorAll('.action-row');
     
-    if (traveler.traveler.is_fixed) {
-        continueButton.textContent = 'Continue';
-        continueButton.style.display = 'block';
-        actionRows.forEach(row => {
-            row.style.display = 'none';
-        });
-        actionButtons.forEach(btn => {
-            btn.style.display = 'none';
-        });
-    } else {
-        continueButton.textContent = 'Continue';
-        continueButton.style.display = 'block';
-        actionRows.forEach(row => {
-            row.style.display = 'none';
-        });
-        actionButtons.forEach(btn => {
-            btn.style.display = 'block';
-        });
-    }
+    continueButton.textContent = 'Continue';
+    continueButton.style.display = 'block';
+    
+    actionRows.forEach(row => {
+        row.style.display = 'none';
+    });
 }
 
 function showTravelerGreeting() {
@@ -356,8 +342,9 @@ function showTravelerGreeting() {
     const actionRows = document.querySelectorAll('.action-row');
     
     if (travelerData.is_fixed) {
-        dialogContainer.textContent = "Fixed traveler - Continue to proceed.";
+        dialogContainer.textContent = travelerData.fixed_trigger || "Fixed traveler - Continue to proceed.";
         continueButton.style.display = 'block';
+        continueButton.textContent = 'Continue';
         actionRows.forEach(row => {
             row.style.display = 'none';
         });
@@ -366,25 +353,9 @@ function showTravelerGreeting() {
     
     let greetingText = "Greetings. I seek entry to your town.";
     
-    if (travelerData.dialog) {
-        try {
-            let dialogObj;
-            if (typeof travelerData.dialog === 'string') {
-                dialogObj = JSON.parse(travelerData.dialog);
-            } else {
-                dialogObj = travelerData.dialog;
-            }
-            
-            if (dialogObj.greeting) {
-                if (typeof dialogObj.greeting === 'string') {
-                    greetingText = dialogObj.greeting;
-                } else if (travelerData.faction && dialogObj.greeting[travelerData.faction]) {
-                    greetingText = dialogObj.greeting[travelerData.faction];
-                }
-            }
-        } catch (error) {
-            console.error('Error parsing dialog:', error);
-            greetingText = "Greetings. I seek entry to your town.";
+    if (travelerData.dialog && travelerData.dialog.greeting) {
+        if (typeof travelerData.dialog.greeting === 'string') {
+            greetingText = travelerData.dialog.greeting;
         }
     }
     
@@ -410,24 +381,9 @@ async function handleTravelerAction(action) {
         
         let papersText = "The papers seem to be in order.";
         
-        if (travelerData.dialog) {
-            try {
-                let dialogObj;
-                if (typeof travelerData.dialog === 'string') {
-                    dialogObj = JSON.parse(travelerData.dialog);
-                } else {
-                    dialogObj = travelerData.dialog;
-                }
-                
-                if (dialogObj.papers) {
-                    if (typeof dialogObj.papers === 'string') {
-                        papersText = dialogObj.papers;
-                    } else if (travelerData.faction && dialogObj.papers[travelerData.faction]) {
-                        papersText = dialogObj.papers[travelerData.faction];
-                    }
-                }
-            } catch (error) {
-                console.error('Error parsing dialog:', error);
+        if (travelerData.dialog && travelerData.dialog.papers) {
+            if (typeof travelerData.dialog.papers === 'string') {
+                papersText = travelerData.dialog.papers;
             }
         }
         
@@ -444,24 +400,9 @@ async function handleTravelerAction(action) {
             ? "The traveler shrieks in pain!" 
             : "The traveler reacts normally to the holy water.";
         
-        if (travelerData.dialog) {
-            try {
-                let dialogObj;
-                if (typeof travelerData.dialog === 'string') {
-                    dialogObj = JSON.parse(travelerData.dialog);
-                } else {
-                    dialogObj = travelerData.dialog;
-                }
-                
-                if (dialogObj.holy_water) {
-                    if (typeof dialogObj.holy_water === 'string') {
-                        holyWaterText = dialogObj.holy_water;
-                    } else if (travelerData.faction && dialogObj.holy_water[travelerData.faction]) {
-                        holyWaterText = dialogObj.holy_water[travelerData.faction];
-                    }
-                }
-            } catch (error) {
-                console.error('Error parsing dialog:', error);
+        if (travelerData.dialog && travelerData.dialog.holy_water) {
+            if (typeof travelerData.dialog.holy_water === 'string') {
+                holyWaterText = travelerData.dialog.holy_water;
             }
         }
         
@@ -478,24 +419,9 @@ async function handleTravelerAction(action) {
             ? "The traveler coughs violently!"
             : "The traveler shows no unusual reaction.";
         
-        if (travelerData.dialog) {
-            try {
-                let dialogObj;
-                if (typeof travelerData.dialog === 'string') {
-                    dialogObj = JSON.parse(travelerData.dialog);
-                } else {
-                    dialogObj = travelerData.dialog;
-                }
-                
-                if (dialogObj.medicinal_herbs) {
-                    if (typeof dialogObj.medicinal_herbs === 'string') {
-                        medicinalHerbsText = dialogObj.medicinal_herbs;
-                    } else if (travelerData.faction && dialogObj.medicinal_herbs[travelerData.faction]) {
-                        medicinalHerbsText = dialogObj.medicinal_herbs[travelerData.faction];
-                    }
-                }
-            } catch (error) {
-                console.error('Error parsing dialog:', error);
+        if (travelerData.dialog && travelerData.dialog.medicinal_herbs) {
+            if (typeof travelerData.dialog.medicinal_herbs === 'string') {
+                medicinalHerbsText = travelerData.dialog.medicinal_herbs;
             }
         }
         
@@ -530,29 +456,6 @@ async function handleTravelerDecision(decision) {
         
         if (data.success) {
             currentTravelerIndex++;
-            
-            const reputationResponse = await fetch('/api/auth/check', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    chatId: currentPlayer.chat_id,
-                    playerName: currentPlayer.player_name,
-                    playerLanguage: currentPlayer.player_language
-                })
-            });
-            
-            if (reputationResponse.ok) {
-                const updatedData = await reputationResponse.json();
-                currentReputation = updatedData.reputation;
-                currentInventory = updatedData.inventory;
-                currentEvents = updatedData.events || [];
-                
-                renderReputation();
-                renderInventory();
-                renderEvents();
-            }
             
             if (currentTravelerIndex >= currentDayTravelers.length) {
                 switchScreen('travelers-screen', 'home-screen');
