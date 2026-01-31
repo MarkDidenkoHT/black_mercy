@@ -54,7 +54,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 20px;
     overflow-y: auto;
 }
@@ -64,9 +64,9 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-end;
     position: relative;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .stats-overlay {
@@ -76,6 +76,7 @@ body {
     display: flex;
     justify-content: space-between;
     padding: 0 10px;
+    z-index: 10;
 }
 
 .reputation-container {
@@ -148,6 +149,7 @@ body {
     border-radius: 20px;
     border: 1px solid #ffd700;
     backdrop-filter: blur(5px);
+    z-index: 10;
 }
 
 .day-text {
@@ -159,13 +161,15 @@ body {
 .events-container {
     height: 35%;
     width: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     border: 1px solid #ffd700;
     border-radius: 10px;
     padding: 10px;
     margin-bottom: 10px;
     overflow-y: auto;
     backdrop-filter: blur(5px);
+    position: relative;
+    z-index: 5;
 }
 
 .events-title {
@@ -174,6 +178,11 @@ body {
     margin-bottom: 10px;
     text-align: center;
     font-weight: bold;
+    position: sticky;
+    top: 0;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 5px;
+    z-index: 1;
 }
 
 .event-item {
@@ -183,7 +192,6 @@ body {
     border-left: 3px solid #ffd700;
     border-radius: 5px;
     font-size: 14px;
-    backdrop-filter: blur(5px);
 }
 
 .bottom-buttons {
@@ -191,6 +199,7 @@ body {
     width: 100%;
     height: 50px;
     gap: 10px;
+    z-index: 10;
 }
 
 .bottom-button {
@@ -334,5 +343,13 @@ body {
 
     .bottom-button {
         font-size: 14px;
+    }
+
+    #home-screen {
+        padding: 15px;
+    }
+
+    .events-container {
+        height: 40%;
     }
 }

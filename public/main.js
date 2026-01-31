@@ -168,13 +168,19 @@ function setupBottomButtons() {
     const eventsButton = document.getElementById('events-button');
     const preparationButton = document.getElementById('preparation-button');
     const settingsButton = document.getElementById('settings-button');
+    const eventsContainer = document.getElementById('events-container');
 
     travelersButton.addEventListener('click', () => {
+        eventsContainer.style.display = 'none';
+        travelersButton.classList.add('active');
+        eventsButton.classList.remove('active');
+        preparationButton.classList.remove('active');
+        settingsButton.classList.remove('active');
         alert('Travelers functionality will be added later.');
     });
 
     eventsButton.addEventListener('click', () => {
-        document.getElementById('events-container').style.display = 'block';
+        eventsContainer.style.display = 'block';
         travelersButton.classList.remove('active');
         eventsButton.classList.add('active');
         preparationButton.classList.remove('active');
@@ -182,7 +188,7 @@ function setupBottomButtons() {
     });
 
     preparationButton.addEventListener('click', () => {
-        document.getElementById('events-container').style.display = 'none';
+        eventsContainer.style.display = 'none';
         travelersButton.classList.remove('active');
         eventsButton.classList.remove('active');
         preparationButton.classList.add('active');
@@ -191,7 +197,7 @@ function setupBottomButtons() {
     });
 
     settingsButton.addEventListener('click', () => {
-        document.getElementById('events-container').style.display = 'none';
+        eventsContainer.style.display = 'none';
         travelersButton.classList.remove('active');
         eventsButton.classList.remove('active');
         preparationButton.classList.remove('active');
