@@ -6,11 +6,14 @@ let currentSession = null;
 let currentReputation = null;
 let currentInventory = null;
 let currentEvents = [];
+let currentTravelers = [];
+let currentTravelerIndex = 0;
+let currentDayTravelers = [];
 
 const factionDescriptions = {
-    town: "Remaining population. Eveything is lost if no townsfolr remain.",
+    town: "Remaining population. Everything is lost if no townsfolk remain.",
     church: "Members of the church. They can provide holy water supplies.",
-    apothecary: "Apothecarion. Provides medicinal herbs."
+    apothecary: "Apothecaries. Provides medicinal herbs."
 };
 
 const itemDescriptions = {
@@ -48,6 +51,7 @@ async function initializeApp() {
         currentReputation = data.reputation;
         currentInventory = data.inventory;
         currentEvents = data.events || [];
+        currentTravelers = data.travelers || [];
 
         document.getElementById('current-day').textContent = currentSession.day || 1;
 
@@ -56,6 +60,9 @@ async function initializeApp() {
         renderEvents();
         setupModalEvents();
         setupBottomButtons();
+        setupTravelersScreen();
+
+        checkForPendingTravelers();
 
         await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -176,7 +183,7 @@ function setupBottomButtons() {
         eventsButton.classList.remove('active');
         preparationButton.classList.remove('active');
         settingsButton.classList.remove('active');
-        alert('Travelers functionality will be added later.');
+        loadTravelersForCurrentDay();
     });
 
     eventsButton.addEventListener('click', () => {
@@ -204,6 +211,292 @@ function setupBottomButtons() {
         settingsButton.classList.add('active');
         alert('Settings functionality will be added later.');
     });
+}
+
+function setupTravelersScreen() {
+    const backButton = document.getElementById('back-button');
+    const continueButton = document.getElementById('continue-button');
+    const checkPapersButton = document.getElementById('check-papers');
+    const holyWaterButton = document.getElementById('holy-water');
+    const medicinalHerbsButton = document.getElementById('medicinal-herbs');
+    const allowButton = document.getElementById('allow');
+    const denyButton = document.getElementById('deny');
+    const executeButton = document.getElementById('execute');
+
+    backButton.addEventListener('click', () => {
+        switchScreen('travelers-screen', 'home-screen');
+        checkForPendingTravelers();
+    });
+
+    continueButton.addEventListener('click', () => {
+        if (currentTraveler) {
+            showTravelerGreeting();
+        }
+    });
+
+    checkPapersButton.addEventListener('click', () => {
+        handleTravelerAction('check_papers');
+    });
+
+    holyWaterButton.addEventListener('click', () => {
+        handleTravelerAction('holy_water');
+    });
+
+    medicinalHerbsButton.addEventListener('click', () => {
+        handleTravelerAction('medicinal_herbs');
+    });
+
+    allowButton.addEventListener('click', () => {
+        handleTravelerDecision('allow');
+    });
+
+    denyButton.addEventListener('click', () => {
+        handleTravelerDecision('deny');
+    });
+
+    executeButton.addEventListener('click', () => {
+        handleTravelerDecision('execute');
+    });
+}
+
+function checkForPendingTravelers() {
+    const travelersButton = document.getElementById('travelers-button');
+    const pendingTravelers = currentTravelers.filter(t => !t.complete);
+    
+    if (pendingTravelers.length > 0) {
+        travelersButton.classList.add('glow');
+    } else {
+        travelersButton.classList.remove('glow');
+    }
+}
+
+async function loadTravelersForCurrentDay() {
+    try {
+        const response = await fetch('/api/travelers/get-day', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chatId: currentPlayer.chat_id,
+                day: currentSession.day
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load travelers');
+        }
+
+        const data = await response.json();
+        currentDayTravelers = data.travelers.filter(t => !t.complete);
+        
+        if (currentDayTravelers.length > 0) {
+            currentTravelerIndex = 0;
+            loadCurrentTraveler();
+            switchScreen('home-screen', 'travelers-screen');
+        } else {
+            alert('No travelers available for today.');
+        }
+    } catch (error) {
+        console.error('Error loading travelers:', error);
+        alert('Failed to load travelers.');
+    }
+}
+
+function loadCurrentTraveler() {
+    if (currentTravelerIndex >= currentDayTravelers.length) {
+        switchScreen('travelers-screen', 'home-screen');
+        checkForPendingTravelers();
+        return;
+    }
+
+    const traveler = currentDayTravelers[currentTravelerIndex];
+    currentTraveler = traveler;
+    
+    document.getElementById('traveler-day').textContent = `Day ${currentSession.day}`;
+    document.getElementById('traveler-art').src = `assets/art/travelers/${traveler.traveler.art}.png`;
+    
+    const descriptionContainer = document.getElementById('traveler-description');
+    if (traveler.traveler.is_fixed) {
+        descriptionContainer.textContent = traveler.traveler.description || "A traveler approaches...";
+    } else {
+        descriptionContainer.textContent = traveler.traveler.description || "A traveler approaches...";
+    }
+    
+    document.getElementById('traveler-dialog').textContent = '';
+    
+    const continueButton = document.getElementById('continue-button');
+    const actionButtons = document.querySelectorAll('.action-row button');
+    
+    continueButton.style.display = 'block';
+    actionButtons.forEach(btn => {
+        btn.style.display = 'none';
+        btn.disabled = false;
+    });
+    
+    document.querySelectorAll('.action-row').forEach(row => {
+        row.style.display = 'none';
+    });
+}
+
+function showTravelerGreeting() {
+    if (!currentTraveler) return;
+    
+    const dialogContainer = document.getElementById('traveler-dialog');
+    const travelerData = currentTraveler.traveler;
+    
+    if (travelerData.is_fixed) {
+        dialogContainer.textContent = "Fixed traveler - Continue to proceed.";
+    } else if (travelerData.dialog && travelerData.dialog.greeting) {
+        dialogContainer.textContent = travelerData.dialog.greeting;
+    } else {
+        dialogContainer.textContent = "Greetings. I seek entry to your town.";
+    }
+    
+    const continueButton = document.getElementById('continue-button');
+    const actionRows = document.querySelectorAll('.action-row');
+    
+    continueButton.style.display = 'none';
+    actionRows.forEach(row => {
+        row.style.display = 'flex';
+    });
+}
+
+async function handleTravelerAction(action) {
+    if (!currentTraveler) return;
+    
+    const travelerData = currentTraveler.traveler;
+    const dialogContainer = document.getElementById('traveler-dialog');
+    
+    if (action === 'check_papers') {
+        if (currentInventory['lantern fuel'] <= 0) {
+            dialogContainer.textContent = "Not enough lantern fuel to check papers.";
+            return;
+        }
+        
+        if (travelerData.dialog && travelerData.dialog.papers) {
+            dialogContainer.textContent = travelerData.dialog.papers;
+        } else {
+            dialogContainer.textContent = "The papers seem to be in order.";
+        }
+        
+        await updateInventory('lantern fuel', -1);
+        
+    } else if (action === 'holy_water') {
+        if (currentInventory['holy water'] <= 0) {
+            dialogContainer.textContent = "Not enough holy water.";
+            return;
+        }
+        
+        if (travelerData.dialog && travelerData.dialog.holy_water) {
+            dialogContainer.textContent = travelerData.dialog.holy_water;
+        } else {
+            dialogContainer.textContent = travelerData.faction === 'possessed' 
+                ? "The traveler shrieks in pain!" 
+                : "The traveler reacts normally to the holy water.";
+        }
+        
+        await updateInventory('holy water', -1);
+        
+    } else if (action === 'medicinal_herbs') {
+        if (currentInventory['medicinal herbs'] <= 0) {
+            dialogContainer.textContent = "Not enough medicinal herbs.";
+            return;
+        }
+        
+        if (travelerData.dialog && travelerData.dialog.medicinal_herbs) {
+            dialogContainer.textContent = travelerData.dialog.medicinal_herbs;
+        } else {
+            dialogContainer.textContent = travelerData.faction === 'infected'
+                ? "The traveler coughs violently!"
+                : "The traveler shows no unusual reaction.";
+        }
+        
+        await updateInventory('medicinal herbs', -1);
+    }
+    
+    renderInventory();
+}
+
+async function handleTravelerDecision(decision) {
+    if (!currentTraveler) return;
+    
+    try {
+        const response = await fetch('/api/travelers/decision', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chatId: currentPlayer.chat_id,
+                travelerId: currentTraveler.id,
+                decision: decision
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to process decision');
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            currentTravelerIndex++;
+            
+            const reputationResponse = await fetch('/api/auth/check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chatId: currentPlayer.chat_id,
+                    playerName: currentPlayer.player_name,
+                    playerLanguage: currentPlayer.player_language
+                })
+            });
+            
+            if (reputationResponse.ok) {
+                const updatedData = await reputationResponse.json();
+                currentReputation = updatedData.reputation;
+                currentInventory = updatedData.inventory;
+                currentEvents = updatedData.events || [];
+                
+                renderReputation();
+                renderInventory();
+                renderEvents();
+            }
+            
+            if (currentTravelerIndex >= currentDayTravelers.length) {
+                switchScreen('travelers-screen', 'home-screen');
+                checkForPendingTravelers();
+            } else {
+                loadCurrentTraveler();
+            }
+        }
+    } catch (error) {
+        console.error('Error processing decision:', error);
+        alert('Failed to process decision.');
+    }
+}
+
+async function updateInventory(item, amount) {
+    currentInventory[item] = Math.max(0, (currentInventory[item] || 0) + amount);
+    
+    try {
+        await fetch('/api/inventory/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chatId: currentPlayer.chat_id,
+                item: item,
+                amount: amount
+            })
+        });
+    } catch (error) {
+        console.error('Error updating inventory:', error);
+    }
 }
 
 function handleIconClick(e) {

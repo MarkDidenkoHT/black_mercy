@@ -43,7 +43,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Simple function to call Supabase Edge Function
 async function callGenerateTravelers(playerId, sessionId) {
   const response = await fetch(`${process.env.SUPABASE_URL}/functions/v1/generate-travelers`, {
     method: 'POST',
@@ -108,7 +107,6 @@ app.post('/api/auth/check', async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      // Get travelers for current day
       const { data: currentTravelers, error: travelersError } = await supabase
         .from('travelers')
         .select('*')
@@ -128,7 +126,6 @@ app.post('/api/auth/check', async (req, res) => {
       });
     }
 
-    // New player - create everything
     const { data: newPlayer, error: playerError } = await supabase
       .from('players')
       .insert([
@@ -166,7 +163,6 @@ app.post('/api/auth/check', async (req, res) => {
       throw sessionError;
     }
 
-    // Generate travelers by calling the edge function
     await callGenerateTravelers(newPlayer.id, newSession.id);
 
     const { error: reputationError } = await supabase
@@ -211,7 +207,7 @@ app.post('/api/auth/check', async (req, res) => {
         {
           player: newPlayer.id,
           session: newSession.id,
-          event: 'Welcome to Shattered Crown! Your adventure begins now.'
+          event: 'Welcome to BLack Mercy! Your adventure begins now.'
         }
       ]);
 
@@ -219,7 +215,6 @@ app.post('/api/auth/check', async (req, res) => {
       throw eventsError;
     }
 
-    // Get travelers for day 1
     const { data: day1Travelers } = await supabase
       .from('travelers')
       .select('*')
@@ -234,7 +229,7 @@ app.post('/api/auth/check', async (req, res) => {
       session: newSession,
       reputation: { town: 1, church: 1, apothecary: 1 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
-      events: [{ event: 'Welcome to Shattered Crown! Your adventure begins now.' }],
+      events: [{ event: 'Welcome to Black Mercy! Your adventure begins now.' }],
       travelers: day1Travelers || []
     });
 
@@ -244,7 +239,6 @@ app.post('/api/auth/check', async (req, res) => {
   }
 });
 
-// Simple endpoint to get travelers for a day
 app.post('/api/travelers/get-day', async (req, res) => {
   try {
     const { chatId, day } = req.body;
@@ -253,7 +247,6 @@ app.post('/api/travelers/get-day', async (req, res) => {
       return res.status(400).json({ error: 'chatId and day are required' });
     }
 
-    // Get player
     const { data: player } = await supabase
       .from('players')
       .select('*')
@@ -264,7 +257,6 @@ app.post('/api/travelers/get-day', async (req, res) => {
       return res.status(404).json({ error: 'Player not found' });
     }
 
-    // Get active session
     const { data: session } = await supabase
       .from('sessions')
       .select('*')
@@ -276,7 +268,6 @@ app.post('/api/travelers/get-day', async (req, res) => {
       return res.status(404).json({ error: 'Active session not found' });
     }
 
-    // Get travelers for requested day
     const { data: travelers } = await supabase
       .from('travelers')
       .select('*')
@@ -297,7 +288,6 @@ app.post('/api/travelers/get-day', async (req, res) => {
   }
 });
 
-// Simple endpoint to advance day
 app.post('/api/game/advance-day', async (req, res) => {
   try {
     const { chatId } = req.body;
@@ -306,7 +296,6 @@ app.post('/api/game/advance-day', async (req, res) => {
       return res.status(400).json({ error: 'chatId is required' });
     }
 
-    // Get player
     const { data: player } = await supabase
       .from('players')
       .select('*')
@@ -317,7 +306,6 @@ app.post('/api/game/advance-day', async (req, res) => {
       return res.status(404).json({ error: 'Player not found' });
     }
 
-    // Get active session
     const { data: session } = await supabase
       .from('sessions')
       .select('*')
@@ -331,7 +319,6 @@ app.post('/api/game/advance-day', async (req, res) => {
 
     const nextDay = session.day + 1;
     
-    // Update session day
     const { data: updatedSession } = await supabase
       .from('sessions')
       .update({ day: nextDay })
@@ -339,7 +326,6 @@ app.post('/api/game/advance-day', async (req, res) => {
       .select()
       .single();
 
-    // Get travelers for next day
     const { data: nextDayTravelers } = await supabase
       .from('travelers')
       .select('*')
@@ -357,6 +343,196 @@ app.post('/api/game/advance-day', async (req, res) => {
 
   } catch (error) {
     console.error('Advance day error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/travelers/decision', async (req, res) => {
+  try {
+    const { chatId, travelerId, decision } = req.body;
+
+    if (!chatId || !travelerId || !decision) {
+      return res.status(400).json({ error: 'chatId, travelerId, and decision are required' });
+    }
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) {
+      return res.status(404).json({ error: 'Active session not found' });
+    }
+
+    const { data: traveler } = await supabase
+      .from('travelers')
+      .select('*')
+      .eq('id', travelerId)
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .single();
+
+    if (!traveler) {
+      return res.status(404).json({ error: 'Traveler not found' });
+    }
+
+    const travelerData = traveler.traveler;
+    let effectToApply = null;
+    let hiddenEffectToApply = null;
+
+    if (decision === 'allow') {
+      effectToApply = travelerData.effect_in;
+      hiddenEffectToApply = travelerData.effect_in_hidden;
+    } else if (decision === 'deny') {
+      effectToApply = travelerData.effect_out;
+    } else if (decision === 'execute') {
+      effectToApply = travelerData.effect_ex;
+    }
+
+    const { data: reputation } = await supabase
+      .from('reputation')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .single();
+
+    let updatedReputation = reputation?.reputation || { town: 5, church: 3, apothecary: 3 };
+    let updatedHiddenReputation = reputation?.hidden_reputation || { cult: 0, inquisition: 0 };
+
+    if (effectToApply) {
+      const faction = travelerData.faction;
+      if (faction === 'human' && travelerData.effect_in === 'church +1') {
+        updatedReputation.church = Math.max(1, Math.min(10, updatedReputation.church + 1));
+      } else if (faction === 'infected' && travelerData.effect_in === 'apothecary -1') {
+        updatedReputation.apothecary = Math.max(1, Math.min(10, updatedReputation.apothecary - 1));
+      } else if (faction === 'possessed') {
+        if (decision === 'allow') {
+          updatedReputation.church = Math.max(1, Math.min(10, updatedReputation.church - 1));
+        } else if (decision === 'deny' && travelerData.effect_out === 'church +1') {
+          updatedReputation.church = Math.max(1, Math.min(10, updatedReputation.church + 1));
+        } else if (decision === 'execute' && travelerData.effect_ex === 'cult -1') {
+          updatedHiddenReputation.cult = Math.max(0, Math.min(10, updatedHiddenReputation.cult - 1));
+        }
+      }
+    }
+
+    if (hiddenEffectToApply) {
+      const faction = travelerData.faction;
+      if (faction === 'infected' && hiddenEffectToApply === 'undead +1') {
+        updatedHiddenReputation.undead = Math.max(0, Math.min(10, (updatedHiddenReputation.undead || 0) + 1));
+      } else if (faction === 'possessed' && hiddenEffectToApply === 'cult +1') {
+        updatedHiddenReputation.cult = Math.max(0, Math.min(10, updatedHiddenReputation.cult + 1));
+      }
+    }
+
+    await supabase
+      .from('reputation')
+      .update({
+        reputation: updatedReputation,
+        hidden_reputation: updatedHiddenReputation
+      })
+      .eq('id', reputation.id);
+
+    await supabase
+      .from('travelers')
+      .update({
+        complete: true,
+        decision: decision
+      })
+      .eq('id', travelerId);
+
+    const eventMessage = `${travelerData.name} (${travelerData.faction}) was ${decision}ed.`;
+    
+    await supabase
+      .from('events')
+      .insert([
+        {
+          player: player.id,
+          session: session.id,
+          event: eventMessage
+        }
+      ]);
+
+    return res.json({
+      success: true,
+      message: `Traveler ${travelerData.name} processed with decision: ${decision}`,
+      reputation: updatedReputation,
+      hidden_reputation: updatedHiddenReputation
+    });
+
+  } catch (error) {
+    console.error('Traveler decision error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/inventory/update', async (req, res) => {
+  try {
+    const { chatId, item, amount } = req.body;
+
+    if (!chatId || !item) {
+      return res.status(400).json({ error: 'chatId and item are required' });
+    }
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) {
+      return res.status(404).json({ error: 'Active session not found' });
+    }
+
+    const { data: inventory } = await supabase
+      .from('inventory')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .single();
+
+    if (!inventory) {
+      return res.status(404).json({ error: 'Inventory not found' });
+    }
+
+    const currentItems = inventory.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 };
+    currentItems[item] = Math.max(0, (currentItems[item] || 0) + (amount || -1));
+
+    await supabase
+      .from('inventory')
+      .update({ items: currentItems })
+      .eq('id', inventory.id);
+
+    return res.json({
+      success: true,
+      items: currentItems
+    });
+
+  } catch (error) {
+    console.error('Inventory update error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

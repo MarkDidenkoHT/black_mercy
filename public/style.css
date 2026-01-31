@@ -216,6 +216,178 @@ body {
     background: rgba(255, 215, 0, 0.9);
 }
 
+.bottom-button.glow {
+    animation: glow 1s infinite alternate;
+    box-shadow: 0 0 20px #ffd700;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 0 10px #ffd700;
+    }
+    to {
+        box-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700;
+    }
+}
+
+#travelers-screen {
+    background-image: url('assets/art/town_day.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    flex-direction: column;
+}
+
+.travelers-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.traveler-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.back-button {
+    background: rgb(177 73 40 / 70%);
+    border: 2px solid #ddbd13;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.traveler-day {
+    font-size: 20px;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.traveler-art-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.traveler-art {
+    max-width: 80%;
+    max-height: 40%;
+    border: 3px solid #ffd700;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.traveler-description-container {
+    max-height: 15%;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #ffd700;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.traveler-description {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #ffffff;
+}
+
+.traveler-dialog-container {
+    max-height: 15%;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #ffd700;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.traveler-dialog {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #ffffff;
+    font-style: italic;
+}
+
+.traveler-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.action-row {
+    display: flex;
+    gap: 10px;
+}
+
+.action-button {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #ddbd13;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.action-button.continue {
+    background: linear-gradient(135deg, #4a4a4a 0%, #2d2d2d 100%);
+    color: #ffffff;
+}
+
+.action-button.check-papers {
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+    color: #ffffff;
+}
+
+.action-button.holy-water {
+    background: linear-gradient(135deg, #1E90FF 0%, #00BFFF 100%);
+    color: #ffffff;
+}
+
+.action-button.medicinal-herbs {
+    background: linear-gradient(135deg, #228B22 0%, #32CD32 100%);
+    color: #ffffff;
+}
+
+.action-button.allow {
+    background: linear-gradient(135deg, #006400 0%, #008000 100%);
+    color: #ffffff;
+}
+
+.action-button.deny {
+    background: linear-gradient(135deg, #8B0000 0%, #B22222 100%);
+    color: #ffffff;
+}
+
+.action-button.execute {
+    background: linear-gradient(135deg, #4B0082 0%, #8A2BE2 100%);
+    color: #ffffff;
+}
+
+.action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
 .modal-overlay {
     display: none;
     position: fixed;
@@ -324,5 +496,15 @@ body {
 
     .bottom-button {
         font-size: 14px;
+    }
+
+    .action-button {
+        font-size: 12px;
+        padding: 10px;
+    }
+
+    .traveler-description,
+    .traveler-dialog {
+        font-size: 12px;
     }
 }
