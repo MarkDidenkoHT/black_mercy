@@ -55,10 +55,7 @@ async function initializeApp() {
         renderInventory();
         renderEvents();
         setupModalEvents();
-
-        document.getElementById('settings-button').addEventListener('click', () => {
-            alert('Settings functionality will be added later.');
-        });
+        setupBottomButtons();
 
         await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -163,6 +160,43 @@ function setupModalEvents() {
         if (e.target === document.getElementById('modal-overlay')) {
             document.getElementById('modal-overlay').classList.remove('active');
         }
+    });
+}
+
+function setupBottomButtons() {
+    const travelersButton = document.getElementById('travelers-button');
+    const eventsButton = document.getElementById('events-button');
+    const preparationButton = document.getElementById('preparation-button');
+    const settingsButton = document.getElementById('settings-button');
+
+    travelersButton.addEventListener('click', () => {
+        alert('Travelers functionality will be added later.');
+    });
+
+    eventsButton.addEventListener('click', () => {
+        document.getElementById('events-container').style.display = 'block';
+        travelersButton.classList.remove('active');
+        eventsButton.classList.add('active');
+        preparationButton.classList.remove('active');
+        settingsButton.classList.remove('active');
+    });
+
+    preparationButton.addEventListener('click', () => {
+        document.getElementById('events-container').style.display = 'none';
+        travelersButton.classList.remove('active');
+        eventsButton.classList.remove('active');
+        preparationButton.classList.add('active');
+        settingsButton.classList.remove('active');
+        alert('Preparation functionality will be added later.');
+    });
+
+    settingsButton.addEventListener('click', () => {
+        document.getElementById('events-container').style.display = 'none';
+        travelersButton.classList.remove('active');
+        eventsButton.classList.remove('active');
+        preparationButton.classList.remove('active');
+        settingsButton.classList.add('active');
+        alert('Settings functionality will be added later.');
     });
 }
 
