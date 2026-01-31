@@ -63,37 +63,6 @@ async function callGenerateTravelers(playerId, sessionId) {
   return await response.json();
 }
 
-function parseDialog(dialogData) {
-  if (!dialogData) return null;
-  
-  if (typeof dialogData === 'string') {
-    try {
-      return JSON.parse(dialogData);
-    } catch (e) {
-      return null;
-    }
-  }
-  
-  return dialogData;
-}
-
-function getDialogText(dialog, key, faction) {
-  if (!dialog) return null;
-  
-  const parsedDialog = parseDialog(dialog);
-  if (!parsedDialog) return null;
-  
-  if (parsedDialog[key]) {
-    if (typeof parsedDialog[key] === 'string') {
-      return parsedDialog[key];
-    } else if (parsedDialog[key][faction]) {
-      return parsedDialog[key][faction];
-    }
-  }
-  
-  return null;
-}
-
 app.post('/api/auth/check', async (req, res) => {
   try {
     const { chatId, playerName, playerLanguage } = req.body;
@@ -381,6 +350,8 @@ app.post('/api/game/advance-day', async (req, res) => {
 app.post('/api/travelers/decision', async (req, res) => {
   try {
     const { chatId, travelerId, decision } = req.body;
+    
+    console.log('Traveler decision request:', { chatId, travelerId, decision });
 
     if (!chatId || !travelerId || !decision) {
       return res.status(400).json({ error: 'chatId, travelerId, and decision are required' });
@@ -419,6 +390,8 @@ app.post('/api/travelers/decision', async (req, res) => {
       return res.status(404).json({ error: 'Traveler not found' });
     }
 
+    console.log('Found traveler:', traveler);
+
     const travelerData = traveler.traveler;
     let effectToApply = null;
     let hiddenEffectToApply = null;
@@ -430,6 +403,8 @@ app.post('/api/travelers/decision', async (req, res) => {
       effectToApply = travelerData.effect_out;
     } else if (decision === 'execute') {
       effectToApply = travelerData.effect_ex;
+    } else if (decision === 'complete_fixed') {
+      console.log('Fixed traveler completed, no effects');
     }
 
     const { data: reputation } = await supabase
@@ -441,6 +416,11 @@ app.post('/api/travelers/decision', async (req, res) => {
 
     let updatedReputation = reputation?.reputation || { town: 5, church: 3, apothecary: 3 };
     let updatedHiddenReputation = reputation?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 };
+
+    console.log('Current reputation:', updatedReputation);
+    console.log('Current hidden reputation:', updatedHiddenReputation);
+    console.log('Effect to apply:', effectToApply);
+    console.log('Hidden effect to apply:', hiddenEffectToApply);
 
     if (effectToApply && typeof effectToApply === 'string') {
       const effectParts = effectToApply.split(' ');
@@ -468,6 +448,9 @@ app.post('/api/travelers/decision', async (req, res) => {
       }
     }
 
+    console.log('Updated reputation:', updatedReputation);
+    console.log('Updated hidden reputation:', updatedHiddenReputation);
+
     await supabase
       .from('reputation')
       .update({
@@ -484,7 +467,9 @@ app.post('/api/travelers/decision', async (req, res) => {
       })
       .eq('id', travelerId);
 
-    const decisionText = decision === 'allow' ? 'allowed' : decision === 'deny' ? 'denied' : 'executed';
+    const decisionText = decision === 'allow' ? 'allowed' : 
+                        decision === 'deny' ? 'denied' : 
+                        decision === 'execute' ? 'executed' : 'completed';
     const eventMessage = `${travelerData.name} (${travelerData.faction}) was ${decisionText}.`;
     
     await supabase
