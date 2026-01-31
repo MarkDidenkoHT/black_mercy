@@ -49,7 +49,10 @@ body {
 }
 
 #home-screen {
-    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+    background-image: url('assets/art/town_day.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     flex-direction: column;
     justify-content: space-between;
     padding: 20px;
@@ -63,13 +66,7 @@ body {
     flex-direction: column;
     justify-content: space-between;
     position: relative;
-}
-
-.town-image {
-    width: 100%;
-    height: 55%;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.4);
 }
 
 .stats-overlay {
@@ -99,12 +96,16 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    border: 2px solid #ffd700;
+    background: rgba(0, 0, 0, 0.7);
 }
 
 .reputation-level {
     font-size: 16px;
     color: #ffd700;
     margin-top: 2px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .inventory-container {
@@ -125,12 +126,16 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    border: 2px solid #ffd700;
+    background: rgba(0, 0, 0, 0.7);
 }
 
 .inventory-count {
     font-size: 16px;
     color: #ffffff;
     margin-top: 2px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .day-display {
@@ -142,6 +147,7 @@ body {
     padding: 5px 15px;
     border-radius: 20px;
     border: 1px solid #ffd700;
+    backdrop-filter: blur(5px);
 }
 
 .day-text {
@@ -159,6 +165,7 @@ body {
     padding: 10px;
     margin-bottom: 10px;
     overflow-y: auto;
+    backdrop-filter: blur(5px);
 }
 
 .events-title {
@@ -166,6 +173,7 @@ body {
     color: #ffd700;
     margin-bottom: 10px;
     text-align: center;
+    font-weight: bold;
 }
 
 .event-item {
@@ -175,6 +183,7 @@ body {
     border-left: 3px solid #ffd700;
     border-radius: 5px;
     font-size: 14px;
+    backdrop-filter: blur(5px);
 }
 
 .bottom-buttons {
@@ -186,7 +195,7 @@ body {
 
 .bottom-button {
     flex: 1;
-    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+    background: rgba(0, 0, 0, 0.7);
     border: 2px solid #ffd700;
     border-radius: 10px;
     color: #ffffff;
@@ -197,19 +206,20 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
 }
 
 .bottom-button.active {
-    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    background: rgba(255, 215, 0, 0.8);
     color: #1a1a1a;
 }
 
 .bottom-button:hover {
-    background: linear-gradient(135deg, #3d3d3d 0%, #2a2a2a 100%);
+    background: rgba(255, 215, 0, 0.2);
 }
 
 .bottom-button.active:hover {
-    background: linear-gradient(135deg, #ffed4e 0%, #ffb347 100%);
+    background: rgba(255, 215, 0, 0.9);
 }
 
 .modal-overlay {
