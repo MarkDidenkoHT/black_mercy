@@ -10,7 +10,6 @@ let currentTravelers = [];
 let currentTravelerIndex = 0;
 let currentDayTravelers = [];
 let currentTraveler = null;
-let travelerState = 'description'; // 'description', 'greeting', 'action', 'decision'
 
 const factionDescriptions = {
     town: "Remaining population. Everything is lost if no townsfolk remain.",
@@ -31,6 +30,8 @@ async function initializeApp() {
         const playerName = initData?.user?.first_name || 'Player';
         const playerLanguage = initData?.user?.language_code?.toUpperCase() || 'EN';
 
+        console.log('Initializing app with chatId:', chatId);
+
         const response = await fetch('/api/auth/check', {
             method: 'POST',
             headers: {
@@ -48,12 +49,16 @@ async function initializeApp() {
         }
 
         const data = await response.json();
+        console.log('Auth check response:', data);
+        
         currentPlayer = data.player;
         currentSession = data.session;
         currentReputation = data.reputation;
         currentInventory = data.inventory;
         currentEvents = data.events || [];
         currentTravelers = data.travelers || [];
+
+        console.log('Current travelers:', currentTravelers);
 
         document.getElementById('current-day').textContent = currentSession.day || 1;
 
@@ -226,54 +231,53 @@ function setupTravelersScreen() {
     const executeButton = document.getElementById('execute');
 
     backButton.addEventListener('click', () => {
+        console.log('Back button clicked');
         switchScreen('travelers-screen', 'home-screen');
         checkForPendingTravelers();
     });
 
-    continueButton.addEventListener('click', handleContinueButton);
+    continueButton.addEventListener('click', () => {
+        console.log('Continue button clicked, currentTraveler:', currentTraveler);
+        if (currentTraveler) {
+            showTravelerGreeting();
+        }
+    });
 
     checkPapersButton.addEventListener('click', () => {
+        console.log('Check papers button clicked');
         handleTravelerAction('check_papers');
     });
 
     holyWaterButton.addEventListener('click', () => {
+        console.log('Holy water button clicked');
         handleTravelerAction('holy_water');
     });
 
     medicinalHerbsButton.addEventListener('click', () => {
+        console.log('Medicinal herbs button clicked');
         handleTravelerAction('medicinal_herbs');
     });
 
     allowButton.addEventListener('click', () => {
+        console.log('Allow button clicked');
         handleTravelerDecision('allow');
     });
 
     denyButton.addEventListener('click', () => {
+        console.log('Deny button clicked');
         handleTravelerDecision('deny');
     });
 
     executeButton.addEventListener('click', () => {
+        console.log('Execute button clicked');
         handleTravelerDecision('execute');
     });
-}
-
-function handleContinueButton() {
-    if (!currentTraveler) return;
-    
-    const travelerData = currentTraveler.traveler;
-    
-    if (travelerState === 'description') {
-        showTravelerGreeting();
-    } else if (travelerState === 'greeting') {
-        if (travelerData.is_fixed) {
-            handleFixedTravelerComplete();
-        }
-    }
 }
 
 function checkForPendingTravelers() {
     const travelersButton = document.getElementById('travelers-button');
     const pendingTravelers = currentTravelers.filter(t => !t.complete);
+    console.log('Pending travelers:', pendingTravelers.length);
     
     if (pendingTravelers.length > 0) {
         travelersButton.classList.add('glow');
@@ -284,6 +288,8 @@ function checkForPendingTravelers() {
 
 async function loadTravelersForCurrentDay() {
     try {
+        console.log('Loading travelers for day:', currentSession.day);
+        
         const response = await fetch('/api/travelers/get-day', {
             method: 'POST',
             headers: {
@@ -300,10 +306,14 @@ async function loadTravelersForCurrentDay() {
         }
 
         const data = await response.json();
+        console.log('Travelers response:', data);
+        
         currentDayTravelers = data.travelers.filter(t => !t.complete);
+        console.log('Filtered travelers (not complete):', currentDayTravelers);
         
         if (currentDayTravelers.length > 0) {
             currentTravelerIndex = 0;
+            console.log('Loading traveler index:', currentTravelerIndex);
             loadCurrentTraveler();
             switchScreen('home-screen', 'travelers-screen');
         } else {
@@ -316,7 +326,10 @@ async function loadTravelersForCurrentDay() {
 }
 
 function loadCurrentTraveler() {
+    console.log('loadCurrentTraveler called, index:', currentTravelerIndex, 'total:', currentDayTravelers.length);
+    
     if (currentTravelerIndex >= currentDayTravelers.length) {
+        console.log('No more travelers, switching to home screen');
         switchScreen('travelers-screen', 'home-screen');
         checkForPendingTravelers();
         return;
@@ -324,7 +337,9 @@ function loadCurrentTraveler() {
 
     const traveler = currentDayTravelers[currentTravelerIndex];
     currentTraveler = traveler;
-    travelerState = 'description';
+    
+    console.log('Loading traveler:', traveler);
+    console.log('Traveler data:', traveler.traveler);
     
     document.getElementById('traveler-day').textContent = `Day ${currentSession.day}`;
     document.getElementById('traveler-art').src = `assets/art/travelers/${traveler.traveler.art}.png`;
@@ -337,50 +352,90 @@ function loadCurrentTraveler() {
     const continueButton = document.getElementById('continue-button');
     const actionRows = document.querySelectorAll('.action-row');
     
+    console.log('Traveler is_fixed:', traveler.traveler.is_fixed);
+    
     continueButton.textContent = 'Continue';
     continueButton.style.display = 'block';
+    continueButton.onclick = () => {
+        console.log('Continue button clicked from loadCurrentTraveler');
+        showTravelerGreeting();
+    };
     
     actionRows.forEach(row => {
         row.style.display = 'none';
     });
+    
+    console.log('Traveler loaded successfully');
 }
 
 function showTravelerGreeting() {
-    if (!currentTraveler) return;
+    console.log('showTravelerGreeting called');
+    console.log('currentTraveler:', currentTraveler);
     
-    const travelerData = currentTraveler.traveler;
+    if (!currentTraveler) {
+        console.log('No current traveler!');
+        return;
+    }
+    
     const descriptionContainer = document.getElementById('traveler-description');
     const dialogContainer = document.getElementById('traveler-dialog');
+    const travelerData = currentTraveler.traveler;
     const continueButton = document.getElementById('continue-button');
     const actionRows = document.querySelectorAll('.action-row');
     
-    travelerState = 'greeting';
+    console.log('Traveler data:', travelerData);
+    console.log('Is fixed?', travelerData.is_fixed);
     
+    // Clear description container and show greeting in dialog container
+    descriptionContainer.textContent = '';
+    
+    if (travelerData.is_fixed) {
+        console.log('Fixed traveler detected');
+        let greetingText = "Fixed traveler - Continue to proceed.";
+        
+        if (travelerData.dialog && travelerData.dialog.greeting) {
+            greetingText = travelerData.dialog.greeting;
+        }
+        
+        dialogContainer.textContent = greetingText;
+        continueButton.style.display = 'block';
+        continueButton.textContent = 'Complete';
+        continueButton.onclick = () => {
+            console.log('Fixed traveler complete button clicked');
+            completeCurrentTraveler('complete_fixed');
+        };
+        
+        actionRows.forEach(row => {
+            row.style.display = 'none';
+        });
+        return;
+    }
+    
+    console.log('Regular traveler detected');
     let greetingText = "Greetings. I seek entry to your town.";
     
     if (travelerData.dialog && travelerData.dialog.greeting) {
         greetingText = travelerData.dialog.greeting;
+        console.log('Found greeting:', greetingText);
     }
     
-    descriptionContainer.textContent = '';
     dialogContainer.textContent = greetingText;
     
-    if (travelerData.is_fixed) {
-        continueButton.textContent = 'Continue';
-        continueButton.style.display = 'block';
-        actionRows.forEach(row => {
-            row.style.display = 'none';
-        });
-    } else {
-        continueButton.style.display = 'none';
-        actionRows.forEach(row => {
-            row.style.display = 'flex';
-        });
-    }
+    continueButton.style.display = 'none';
+    actionRows.forEach(row => {
+        row.style.display = 'flex';
+    });
+    
+    console.log('Greeting displayed');
 }
 
 async function handleTravelerAction(action) {
-    if (!currentTraveler) return;
+    console.log('handleTravelerAction called:', action);
+    
+    if (!currentTraveler) {
+        console.log('No current traveler for action');
+        return;
+    }
     
     const travelerData = currentTraveler.traveler;
     const dialogContainer = document.getElementById('traveler-dialog');
@@ -438,46 +493,14 @@ async function handleTravelerAction(action) {
     renderInventory();
 }
 
-async function handleFixedTravelerComplete() {
-    if (!currentTraveler) return;
+async function completeCurrentTraveler(decision) {
+    console.log('completeCurrentTraveler called:', decision);
+    console.log('currentTraveler:', currentTraveler);
     
-    try {
-        const response = await fetch('/api/travelers/decision', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                chatId: currentPlayer.chat_id,
-                travelerId: currentTraveler.id,
-                decision: 'complete'
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to complete fixed traveler');
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-            currentTravelerIndex++;
-            
-            if (currentTravelerIndex >= currentDayTravelers.length) {
-                switchScreen('travelers-screen', 'home-screen');
-                checkForPendingTravelers();
-            } else {
-                loadCurrentTraveler();
-            }
-        }
-    } catch (error) {
-        console.error('Error completing fixed traveler:', error);
-        alert('Failed to complete traveler.');
+    if (!currentTraveler) {
+        console.log('No current traveler to complete');
+        return;
     }
-}
-
-async function handleTravelerDecision(decision) {
-    if (!currentTraveler) return;
     
     try {
         const response = await fetch('/api/travelers/decision', {
@@ -497,11 +520,19 @@ async function handleTravelerDecision(decision) {
         }
 
         const data = await response.json();
+        console.log('Decision response:', data);
         
         if (data.success) {
-            currentTravelerIndex++;
+            console.log('Traveler completed successfully');
             
-            const reputationResponse = await fetch('/api/auth/check', {
+            // Update local reputation data
+            if (data.reputation) {
+                currentReputation = data.reputation;
+                renderReputation();
+            }
+            
+            // Update events
+            const eventsResponse = await fetch('/api/auth/check', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -513,31 +544,40 @@ async function handleTravelerDecision(decision) {
                 })
             });
             
-            if (reputationResponse.ok) {
-                const updatedData = await reputationResponse.json();
-                currentReputation = updatedData.reputation;
-                currentInventory = updatedData.inventory;
+            if (eventsResponse.ok) {
+                const updatedData = await eventsResponse.json();
                 currentEvents = updatedData.events || [];
-                
-                renderReputation();
-                renderInventory();
                 renderEvents();
             }
             
+            // Move to next traveler
+            currentTravelerIndex++;
+            console.log('New traveler index:', currentTravelerIndex);
+            
             if (currentTravelerIndex >= currentDayTravelers.length) {
+                console.log('No more travelers, going home');
                 switchScreen('travelers-screen', 'home-screen');
                 checkForPendingTravelers();
             } else {
+                console.log('Loading next traveler');
                 loadCurrentTraveler();
             }
         }
     } catch (error) {
-        console.error('Error processing decision:', error);
-        alert('Failed to process decision.');
+        console.error('Error completing traveler:', error);
+        alert('Failed to complete traveler.');
     }
 }
 
+async function handleTravelerDecision(decision) {
+    console.log('handleTravelerDecision called:', decision);
+    
+    // Call the complete function with the decision
+    await completeCurrentTraveler(decision);
+}
+
 async function updateInventory(item, amount) {
+    console.log('Updating inventory:', item, amount);
     currentInventory[item] = Math.max(0, (currentInventory[item] || 0) + amount);
     
     try {
@@ -585,6 +625,8 @@ function handleIconClick(e) {
 }
 
 function switchScreen(fromScreenId, toScreenId) {
+    console.log('Switching screen from', fromScreenId, 'to', toScreenId);
+    
     const fromScreen = document.getElementById(fromScreenId);
     const toScreen = document.getElementById(toScreenId);
 
@@ -598,7 +640,9 @@ function switchScreen(fromScreenId, toScreenId) {
 }
 
 window.addEventListener('load', () => {
+    console.log('Window loaded, initializing app');
     initializeApp();
 });
 
 tg.ready();
+console.log('Telegram Web App ready');
