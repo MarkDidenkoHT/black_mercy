@@ -143,7 +143,8 @@ app.post('/api/auth/check', async (req, res) => {
         status_hidden: { cult: 0, inquisition: 0, undead: 0 },
         active: true,
         day: 1,
-        rep_change: { town: 0, church: 0, apothecary: 0 }
+        rep_change: { town: 0, church: 0, apothecary: 0 },
+        rep_change_hidden: { cult: 0, inquisition: 0, undead: 0 }
       }])
       .select()
       .single();
@@ -269,7 +270,9 @@ app.post('/api/game/advance-day', async (req, res) => {
       .single();
 
     const currentReputation = reputation?.reputation || { town: 1, church: 1, apothecary: 1 };
+    const currentHiddenReputation = reputation?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 };
     const repChange = session.rep_change || { town: 0, church: 0, apothecary: 0 };
+    const repChangeHidden = session.rep_change_hidden || { cult: 0, inquisition: 0, undead: 0 };
 
     const newReputation = {
       town: Math.max(0, Math.min(10, currentReputation.town + repChange.town)),
@@ -277,9 +280,18 @@ app.post('/api/game/advance-day', async (req, res) => {
       apothecary: Math.max(0, Math.min(10, currentReputation.apothecary + repChange.apothecary))
     };
 
+    const newHiddenReputation = {
+      cult: Math.max(0, Math.min(10, currentHiddenReputation.cult + repChangeHidden.cult)),
+      inquisition: Math.max(0, Math.min(10, currentHiddenReputation.inquisition + repChangeHidden.inquisition)),
+      undead: Math.max(0, Math.min(10, currentHiddenReputation.undead + repChangeHidden.undead))
+    };
+
     await supabase
       .from('reputation')
-      .update({ reputation: newReputation })
+      .update({ 
+        reputation: newReputation,
+        hidden_reputation: newHiddenReputation
+      })
       .eq('id', reputation.id);
 
     const nextDay = session.day + 1;
@@ -289,7 +301,9 @@ app.post('/api/game/advance-day', async (req, res) => {
       .update({ 
         day: nextDay,
         status: newReputation,
-        rep_change: { town: 0, church: 0, apothecary: 0 }
+        status_hidden: newHiddenReputation,
+        rep_change: { town: 0, church: 0, apothecary: 0 },
+        rep_change_hidden: { cult: 0, inquisition: 0, undead: 0 }
       })
       .eq('id', session.id)
       .select()
@@ -360,8 +374,8 @@ app.post('/api/travelers/decision', async (req, res) => {
       .single();
 
     const travelerData = traveler.traveler;
-    let updatedHiddenReputation = { ...(reputation?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 }) };
     let currentRepChange = { ...(session.rep_change || { town: 0, church: 0, apothecary: 0 }) };
+    let currentHiddenRepChange = { ...(session.rep_change_hidden || { cult: 0, inquisition: 0, undead: 0 }) };
 
     const effectMap = {
       allow: [travelerData.effect_in, travelerData.effect_in_hidden],
@@ -386,19 +400,13 @@ app.post('/api/travelers/decision', async (req, res) => {
     };
 
     applyEffect(effectToApply, currentRepChange);
-    applyEffect(hiddenEffectToApply, updatedHiddenReputation);
-
-    await supabase
-      .from('reputation')
-      .update({
-        hidden_reputation: updatedHiddenReputation
-      })
-      .eq('id', reputation.id);
+    applyEffect(hiddenEffectToApply, currentHiddenRepChange);
 
     await supabase
       .from('sessions')
       .update({
-        rep_change: currentRepChange
+        rep_change: currentRepChange,
+        rep_change_hidden: currentHiddenRepChange
       })
       .eq('id', session.id);
 
@@ -423,7 +431,7 @@ app.post('/api/travelers/decision', async (req, res) => {
       success: true,
       message: `Traveler ${travelerData.name} processed with decision: ${decision}`,
       rep_change: currentRepChange,
-      hidden_reputation: updatedHiddenReputation
+      rep_change_hidden: currentHiddenRepChange
     });
 
   } catch (error) {
