@@ -304,6 +304,24 @@ async function handleTravelerAction(action) {
 async function completeCurrentTraveler(decision) {
     if (!currentTraveler) return;
     
+    const travelerData = currentTraveler.traveler;
+    const dialogContainer = document.getElementById('traveler-dialog');
+    
+    const responseDialogs = {
+        allow: travelerData.dialog?.in || "Thank you for allowing me passage.",
+        deny: travelerData.dialog?.out || "I understand. I will leave peacefully.",
+        execute: travelerData.dialog?.execution || "Please, have mercy!",
+        complete_fixed: null
+    };
+    
+    const responseDialog = responseDialogs[decision];
+    
+    if (responseDialog) {
+        dialogContainer.textContent = responseDialog;
+        document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
+        document.getElementById('continue-button').style.display = 'none';
+    }
+    
     try {
         const response = await fetch('/api/travelers/decision', {
             method: 'POST',
@@ -335,6 +353,8 @@ async function completeCurrentTraveler(decision) {
                 currentEvents = updatedData.events || [];
                 renderEvents();
             }
+            
+            await new Promise(resolve => setTimeout(resolve, 3000));
             
             currentTravelerIndex++;
             
