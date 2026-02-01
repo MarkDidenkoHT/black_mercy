@@ -243,8 +243,7 @@ function loadCurrentTraveler() {
     
     document.getElementById('traveler-day').textContent = `Day ${currentSession.day}`;
     document.getElementById('traveler-art').src = `assets/art/travelers/${travelerData.art}.png`;
-    document.getElementById('traveler-description').textContent = travelerData.description || "A traveler approaches...";
-    document.getElementById('traveler-dialog').textContent = '';
+    document.getElementById('traveler-dialog').textContent = travelerData.description || "A traveler approaches...";
     
     const continueButton = document.getElementById('continue-button');
     continueButton.textContent = 'Continue';
@@ -260,7 +259,6 @@ function showTravelerGreeting() {
     const travelerData = currentTraveler.traveler;
     const continueButton = document.getElementById('continue-button');
     
-    document.getElementById('traveler-description').textContent = '';
     document.getElementById('traveler-dialog').textContent = travelerData.dialog?.greeting || "Greetings. I seek entry to your town.";
     
     if (travelerData.is_fixed) {
@@ -322,11 +320,6 @@ async function completeCurrentTraveler(decision) {
         const data = await response.json();
         
         if (data.success) {
-            if (data.reputation) {
-                currentReputation = data.reputation;
-                renderReputation();
-            }
-            
             const eventsResponse = await fetch('/api/auth/check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

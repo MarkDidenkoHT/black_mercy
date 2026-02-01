@@ -87,6 +87,8 @@ app.post('/api/auth/check', async (req, res) => {
         .eq('session', activeSession.id)
         .single();
 
+      const displayReputation = activeSession.status || reputationData?.reputation || { town: 5, church: 3, apothecary: 3 };
+
       const { data: inventoryData } = await supabase
         .from('inventory')
         .select('*')
@@ -114,7 +116,7 @@ app.post('/api/auth/check', async (req, res) => {
         exists: true, 
         player: existingPlayer,
         session: activeSession,
-        reputation: reputationData?.reputation || { town: 5, church: 3, apothecary: 3 },
+        reputation: displayReputation,
         inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
         events: eventsData || [],
         travelers: currentTravelers || []
@@ -138,8 +140,10 @@ app.post('/api/auth/check', async (req, res) => {
       .insert([{
         player: newPlayer.id,
         status: { town: 1, church: 1, apothecary: 1 },
+        status_hidden: { cult: 0, inquisition: 0, undead: 0 },
         active: true,
-        day: 1
+        day: 1,
+        rep_change: { town: 0, church: 0, apothecary: 0 }
       }])
       .select()
       .single();
@@ -257,11 +261,36 @@ app.post('/api/game/advance-day', async (req, res) => {
 
     if (!session) return res.status(404).json({ error: 'Active session not found' });
 
+    const { data: reputation } = await supabase
+      .from('reputation')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .single();
+
+    const currentReputation = reputation?.reputation || { town: 1, church: 1, apothecary: 1 };
+    const repChange = session.rep_change || { town: 0, church: 0, apothecary: 0 };
+
+    const newReputation = {
+      town: Math.max(0, Math.min(10, currentReputation.town + repChange.town)),
+      church: Math.max(0, Math.min(10, currentReputation.church + repChange.church)),
+      apothecary: Math.max(0, Math.min(10, currentReputation.apothecary + repChange.apothecary))
+    };
+
+    await supabase
+      .from('reputation')
+      .update({ reputation: newReputation })
+      .eq('id', reputation.id);
+
     const nextDay = session.day + 1;
     
     const { data: updatedSession } = await supabase
       .from('sessions')
-      .update({ day: nextDay })
+      .update({ 
+        day: nextDay,
+        status: newReputation,
+        rep_change: { town: 0, church: 0, apothecary: 0 }
+      })
       .eq('id', session.id)
       .select()
       .single();
@@ -278,7 +307,8 @@ app.post('/api/game/advance-day', async (req, res) => {
       success: true,
       new_day: nextDay,
       travelers: nextDayTravelers || [],
-      session: updatedSession
+      session: updatedSession,
+      reputation: newReputation
     });
 
   } catch (error) {
@@ -330,8 +360,8 @@ app.post('/api/travelers/decision', async (req, res) => {
       .single();
 
     const travelerData = traveler.traveler;
-    let updatedReputation = { ...(reputation?.reputation || { town: 5, church: 3, apothecary: 3 }) };
     let updatedHiddenReputation = { ...(reputation?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 }) };
+    let currentRepChange = { ...(session.rep_change || { town: 0, church: 0, apothecary: 0 }) };
 
     const effectMap = {
       allow: [travelerData.effect_in, travelerData.effect_in_hidden],
@@ -349,22 +379,28 @@ app.post('/api/travelers/decision', async (req, res) => {
           const [factionKey, value] = parts;
           const effectValue = parseInt(value);
           if (factionKey in repObj) {
-            repObj[factionKey] = Math.max(0, Math.min(10, repObj[factionKey] + effectValue));
+            repObj[factionKey] = repObj[factionKey] + effectValue;
           }
         }
       }
     };
 
-    applyEffect(effectToApply, updatedReputation);
+    applyEffect(effectToApply, currentRepChange);
     applyEffect(hiddenEffectToApply, updatedHiddenReputation);
 
     await supabase
       .from('reputation')
       .update({
-        reputation: updatedReputation,
         hidden_reputation: updatedHiddenReputation
       })
       .eq('id', reputation.id);
+
+    await supabase
+      .from('sessions')
+      .update({
+        rep_change: currentRepChange
+      })
+      .eq('id', session.id);
 
     await supabase
       .from('travelers')
@@ -386,7 +422,7 @@ app.post('/api/travelers/decision', async (req, res) => {
     return res.json({
       success: true,
       message: `Traveler ${travelerData.name} processed with decision: ${decision}`,
-      reputation: updatedReputation,
+      rep_change: currentRepChange,
       hidden_reputation: updatedHiddenReputation
     });
 
