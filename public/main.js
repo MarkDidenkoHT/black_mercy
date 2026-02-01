@@ -32,19 +32,11 @@ async function initializeApp() {
 
         const response = await fetch('/api/auth/check', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                chatId,
-                playerName,
-                playerLanguage
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId, playerName, playerLanguage })
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to authenticate');
-        }
+        if (!response.ok) throw new Error('Failed to authenticate');
 
         const data = await response.json();
         currentPlayer = data.player;
@@ -62,11 +54,9 @@ async function initializeApp() {
         setupModalEvents();
         setupBottomButtons();
         setupTravelersScreen();
-
         checkForPendingTravelers();
 
         await new Promise(resolve => setTimeout(resolve, 1500));
-
         switchScreen('loading-screen', 'home-screen');
 
     } catch (error) {
@@ -75,82 +65,64 @@ async function initializeApp() {
 }
 
 function renderReputation() {
-    const reputationContainer = document.getElementById('reputation-container');
-    reputationContainer.innerHTML = '';
+    const container = document.getElementById('reputation-container');
+    container.innerHTML = '';
 
-    const factions = [
+    [
         { key: 'town', name: 'Town', icon: 'town' },
         { key: 'church', name: 'Church', icon: 'church' },
         { key: 'apothecary', name: 'Apothecary', icon: 'apothecary' }
-    ];
-
-    factions.forEach(faction => {
+    ].forEach(faction => {
         const level = currentReputation[faction.key] || 1;
-        
-        const repItem = document.createElement('div');
-        repItem.className = 'reputation-item';
-        repItem.dataset.type = 'faction';
-        repItem.dataset.key = faction.key;
-        repItem.dataset.name = faction.name;
-        repItem.dataset.icon = faction.icon;
-        repItem.dataset.level = level;
-        
-        repItem.innerHTML = `
+        const item = document.createElement('div');
+        item.className = 'reputation-item';
+        Object.assign(item.dataset, { type: 'faction', key: faction.key, name: faction.name, icon: faction.icon, level });
+        item.innerHTML = `
             <img src="assets/art/icons/${faction.icon}.png" alt="${faction.name}" class="reputation-icon">
             <span class="reputation-level">${level}</span>
         `;
-        
-        reputationContainer.appendChild(repItem);
+        container.appendChild(item);
     });
 }
 
 function renderInventory() {
-    const inventoryContainer = document.getElementById('inventory-container');
-    inventoryContainer.innerHTML = '';
+    const container = document.getElementById('inventory-container');
+    container.innerHTML = '';
 
-    const items = [
+    [
         { key: 'holy water', name: 'Holy Water', icon: 'holy_water' },
         { key: 'lantern fuel', name: 'Lantern Fuel', icon: 'lantern_fuel' },
         { key: 'medicinal herbs', name: 'Medicinal Herbs', icon: 'medicinal_herbs' }
-    ];
-
-    items.forEach(item => {
+    ].forEach(item => {
         const count = currentInventory[item.key] || 0;
-        
         const invItem = document.createElement('div');
         invItem.className = 'inventory-item';
-        invItem.dataset.type = 'item';
-        invItem.dataset.key = item.key;
-        invItem.dataset.name = item.name;
-        invItem.dataset.icon = item.icon;
-        invItem.dataset.count = count;
-        
+        Object.assign(invItem.dataset, { type: 'item', key: item.key, name: item.name, icon: item.icon, count });
         invItem.innerHTML = `
             <img src="assets/art/icons/${item.icon}.png" alt="${item.name}" class="inventory-icon">
             <span class="inventory-count">${count}</span>
         `;
-        
-        inventoryContainer.appendChild(invItem);
+        container.appendChild(invItem);
     });
 }
 
 function renderEvents() {
-    const eventsList = document.getElementById('events-list');
-    eventsList.innerHTML = '';
+    const list = document.getElementById('events-list');
+    list.innerHTML = '';
 
     if (currentEvents.length === 0) {
         const noEvents = document.createElement('div');
         noEvents.className = 'event-item';
         noEvents.textContent = 'No events yet. Your adventure begins now!';
-        eventsList.appendChild(noEvents);
+        list.appendChild(noEvents);
         return;
     }
 
     currentEvents.slice(-10).reverse().forEach(event => {
-        const eventElement = document.createElement('div');
-        eventElement.className = 'event-item';
-        eventElement.textContent = event.event;
-        eventsList.appendChild(eventElement);
+        const el = document.createElement('div');
+        el.className = 'event-item';
+        el.textContent = event.event;
+        list.appendChild(el);
     });
 }
 
@@ -171,119 +143,78 @@ function setupModalEvents() {
 }
 
 function setupBottomButtons() {
-    const travelersButton = document.getElementById('travelers-button');
-    const eventsButton = document.getElementById('events-button');
-    const preparationButton = document.getElementById('preparation-button');
-    const settingsButton = document.getElementById('settings-button');
+    const buttons = {
+        travelers: document.getElementById('travelers-button'),
+        events: document.getElementById('events-button'),
+        preparation: document.getElementById('preparation-button'),
+        settings: document.getElementById('settings-button')
+    };
     const eventsContainer = document.getElementById('events-container');
 
-    travelersButton.addEventListener('click', () => {
+    buttons.travelers.addEventListener('click', () => {
         eventsContainer.style.display = 'none';
-        travelersButton.classList.add('active');
-        eventsButton.classList.remove('active');
-        preparationButton.classList.remove('active');
-        settingsButton.classList.remove('active');
+        setActiveButton('travelers', buttons);
         loadTravelersForCurrentDay();
     });
 
-    eventsButton.addEventListener('click', () => {
+    buttons.events.addEventListener('click', () => {
         eventsContainer.style.display = 'block';
-        travelersButton.classList.remove('active');
-        eventsButton.classList.add('active');
-        preparationButton.classList.remove('active');
-        settingsButton.classList.remove('active');
+        setActiveButton('events', buttons);
     });
 
-    preparationButton.addEventListener('click', () => {
+    buttons.preparation.addEventListener('click', () => {
         eventsContainer.style.display = 'none';
-        travelersButton.classList.remove('active');
-        eventsButton.classList.remove('active');
-        preparationButton.classList.add('active');
-        settingsButton.classList.remove('active');
+        setActiveButton('preparation', buttons);
     });
 
-    settingsButton.addEventListener('click', () => {
+    buttons.settings.addEventListener('click', () => {
         eventsContainer.style.display = 'none';
-        travelersButton.classList.remove('active');
-        eventsButton.classList.remove('active');
-        preparationButton.classList.remove('active');
-        settingsButton.classList.add('active');
+        setActiveButton('settings', buttons);
+    });
+}
+
+function setActiveButton(active, buttons) {
+    Object.entries(buttons).forEach(([key, btn]) => {
+        btn.classList.toggle('active', key === active);
     });
 }
 
 function setupTravelersScreen() {
-    const backButton = document.getElementById('back-button');
-    const continueButton = document.getElementById('continue-button');
-    const checkPapersButton = document.getElementById('check-papers');
-    const holyWaterButton = document.getElementById('holy-water');
-    const medicinalHerbsButton = document.getElementById('medicinal-herbs');
-    const allowButton = document.getElementById('allow');
-    const denyButton = document.getElementById('deny');
-    const executeButton = document.getElementById('execute');
-
-    backButton.addEventListener('click', () => {
+    document.getElementById('back-button').addEventListener('click', () => {
         switchScreen('travelers-screen', 'home-screen');
         checkForPendingTravelers();
     });
 
-    continueButton.addEventListener('click', () => {
-        if (currentTraveler) {
-            showTravelerGreeting();
-        }
+    document.getElementById('continue-button').addEventListener('click', () => {
+        if (currentTraveler) showTravelerGreeting();
     });
 
-    checkPapersButton.addEventListener('click', () => {
-        handleTravelerAction('check_papers');
-    });
-
-    holyWaterButton.addEventListener('click', () => {
-        handleTravelerAction('holy_water');
-    });
-
-    medicinalHerbsButton.addEventListener('click', () => {
-        handleTravelerAction('medicinal_herbs');
-    });
-
-    allowButton.addEventListener('click', () => {
-        handleTravelerDecision('allow');
-    });
-
-    denyButton.addEventListener('click', () => {
-        handleTravelerDecision('deny');
-    });
-
-    executeButton.addEventListener('click', () => {
-        handleTravelerDecision('execute');
-    });
+    document.getElementById('check-papers').addEventListener('click', () => handleTravelerAction('check_papers'));
+    document.getElementById('holy-water').addEventListener('click', () => handleTravelerAction('holy_water'));
+    document.getElementById('medicinal-herbs').addEventListener('click', () => handleTravelerAction('medicinal_herbs'));
+    document.getElementById('allow').addEventListener('click', () => handleTravelerDecision('allow'));
+    document.getElementById('deny').addEventListener('click', () => handleTravelerDecision('deny'));
+    document.getElementById('execute').addEventListener('click', () => handleTravelerDecision('execute'));
 }
 
 function checkForPendingTravelers() {
-    const travelersButton = document.getElementById('travelers-button');
-    const pendingTravelers = currentTravelers.filter(t => !t.complete);
-    
-    if (pendingTravelers.length > 0) {
-        travelersButton.classList.add('glow');
-    } else {
-        travelersButton.classList.remove('glow');
-    }
+    const button = document.getElementById('travelers-button');
+    const pending = currentTravelers.filter(t => !t.complete);
+    button.classList.toggle('glow', pending.length > 0);
 }
 
 async function loadTravelersForCurrentDay() {
     try {
         const response = await fetch('/api/travelers/get-day', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chatId: currentPlayer.chat_id,
                 day: currentSession.day
             })
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to load travelers');
-        }
+        if (!response.ok) throw new Error('Failed to load travelers');
 
         const data = await response.json();
         currentDayTravelers = data.travelers.filter(t => !t.complete);
@@ -307,74 +238,40 @@ function loadCurrentTraveler() {
         return;
     }
 
-    const traveler = currentDayTravelers[currentTravelerIndex];
-    currentTraveler = traveler;
+    currentTraveler = currentDayTravelers[currentTravelerIndex];
+    const travelerData = currentTraveler.traveler;
     
     document.getElementById('traveler-day').textContent = `Day ${currentSession.day}`;
-    document.getElementById('traveler-art').src = `assets/art/travelers/${traveler.traveler.art}.png`;
-    
-    const descriptionContainer = document.getElementById('traveler-description');
-    descriptionContainer.textContent = traveler.traveler.description || "A traveler approaches...";
-    
+    document.getElementById('traveler-art').src = `assets/art/travelers/${travelerData.art}.png`;
+    document.getElementById('traveler-description').textContent = travelerData.description || "A traveler approaches...";
     document.getElementById('traveler-dialog').textContent = '';
     
     const continueButton = document.getElementById('continue-button');
-    const actionRows = document.querySelectorAll('.action-row');
-    
     continueButton.textContent = 'Continue';
     continueButton.style.display = 'block';
-    continueButton.onclick = () => {
-        showTravelerGreeting();
-    };
+    continueButton.onclick = showTravelerGreeting;
     
-    actionRows.forEach(row => {
-        row.style.display = 'none';
-    });
+    document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
 }
 
 function showTravelerGreeting() {
     if (!currentTraveler) return;
     
-    const descriptionContainer = document.getElementById('traveler-description');
-    const dialogContainer = document.getElementById('traveler-dialog');
     const travelerData = currentTraveler.traveler;
     const continueButton = document.getElementById('continue-button');
-    const actionRows = document.querySelectorAll('.action-row');
     
-    descriptionContainer.textContent = '';
+    document.getElementById('traveler-description').textContent = '';
+    document.getElementById('traveler-dialog').textContent = travelerData.dialog?.greeting || "Greetings. I seek entry to your town.";
     
     if (travelerData.is_fixed) {
-        let greetingText = "Fixed traveler - Continue to proceed.";
-        
-        if (travelerData.dialog && travelerData.dialog.greeting) {
-            greetingText = travelerData.dialog.greeting;
-        }
-        
-        dialogContainer.textContent = greetingText;
         continueButton.style.display = 'block';
         continueButton.textContent = 'Complete';
-        continueButton.onclick = () => {
-            completeCurrentTraveler('complete_fixed');
-        };
-        
-        actionRows.forEach(row => {
-            row.style.display = 'none';
-        });
-        return;
+        continueButton.onclick = () => completeCurrentTraveler('complete_fixed');
+        document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
+    } else {
+        continueButton.style.display = 'none';
+        document.querySelectorAll('.action-row').forEach(row => row.style.display = 'flex');
     }
-    
-    let greetingText = "Greetings. I seek entry to your town.";
-    
-    if (travelerData.dialog && travelerData.dialog.greeting) {
-        greetingText = travelerData.dialog.greeting;
-    }
-    
-    dialogContainer.textContent = greetingText;
-    
-    continueButton.style.display = 'none';
-    actionRows.forEach(row => {
-        row.style.display = 'flex';
-    });
 }
 
 async function handleTravelerAction(action) {
@@ -382,57 +279,27 @@ async function handleTravelerAction(action) {
     
     const travelerData = currentTraveler.traveler;
     const dialogContainer = document.getElementById('traveler-dialog');
+    const itemMap = {
+        check_papers: 'lantern fuel',
+        holy_water: 'holy water',
+        medicinal_herbs: 'medicinal herbs'
+    };
     
-    if (action === 'check_papers') {
-        if (currentInventory['lantern fuel'] <= 0) {
-            dialogContainer.textContent = "Not enough lantern fuel to check papers.";
-            return;
-        }
-        
-        let papersText = "The papers seem to be in order.";
-        
-        if (travelerData.dialog && travelerData.dialog.papers) {
-            papersText = travelerData.dialog.papers;
-        }
-        
-        dialogContainer.textContent = papersText;
-        await updateInventory('lantern fuel', -1);
-        
-    } else if (action === 'holy_water') {
-        if (currentInventory['holy water'] <= 0) {
-            dialogContainer.textContent = "Not enough holy water.";
-            return;
-        }
-        
-        let holyWaterText = travelerData.faction === 'possessed' 
-            ? "The traveler shrieks in pain!" 
-            : "The traveler reacts normally to the holy water.";
-        
-        if (travelerData.dialog && travelerData.dialog.holy_water) {
-            holyWaterText = travelerData.dialog.holy_water;
-        }
-        
-        dialogContainer.textContent = holyWaterText;
-        await updateInventory('holy water', -1);
-        
-    } else if (action === 'medicinal_herbs') {
-        if (currentInventory['medicinal herbs'] <= 0) {
-            dialogContainer.textContent = "Not enough medicinal herbs.";
-            return;
-        }
-        
-        let medicinalHerbsText = travelerData.faction === 'infected'
-            ? "The traveler coughs violently!"
-            : "The traveler shows no unusual reaction.";
-        
-        if (travelerData.dialog && travelerData.dialog.medicinal_herbs) {
-            medicinalHerbsText = travelerData.dialog.medicinal_herbs;
-        }
-        
-        dialogContainer.textContent = medicinalHerbsText;
-        await updateInventory('medicinal herbs', -1);
+    const item = itemMap[action];
+    
+    if (currentInventory[item] <= 0) {
+        dialogContainer.textContent = `Not enough ${item}.`;
+        return;
     }
     
+    const responses = {
+        check_papers: travelerData.dialog?.papers || "The papers seem to be in order.",
+        holy_water: travelerData.dialog?.holy_water || (travelerData.faction === 'possessed' ? "The traveler shrieks in pain!" : "The traveler reacts normally to the holy water."),
+        medicinal_herbs: travelerData.dialog?.medicinal_herbs || (travelerData.faction === 'infected' ? "The traveler coughs violently!" : "The traveler shows no unusual reaction.")
+    };
+    
+    dialogContainer.textContent = responses[action];
+    await updateInventory(item, -1);
     renderInventory();
 }
 
@@ -442,9 +309,7 @@ async function completeCurrentTraveler(decision) {
     try {
         const response = await fetch('/api/travelers/decision', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chatId: currentPlayer.chat_id,
                 travelerId: currentTraveler.id,
@@ -452,9 +317,7 @@ async function completeCurrentTraveler(decision) {
             })
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to process decision');
-        }
+        if (!response.ok) throw new Error('Failed to process decision');
 
         const data = await response.json();
         
@@ -466,9 +329,7 @@ async function completeCurrentTraveler(decision) {
             
             const eventsResponse = await fetch('/api/auth/check', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     chatId: currentPlayer.chat_id,
                     playerName: currentPlayer.player_name,
@@ -506,9 +367,7 @@ async function updateInventory(item, amount) {
     try {
         await fetch('/api/inventory/update', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chatId: currentPlayer.chat_id,
                 item: item,
@@ -516,52 +375,40 @@ async function updateInventory(item, amount) {
             })
         });
     } catch (error) {
-        // Silently fail inventory update
     }
 }
 
 function handleIconClick(e) {
     const item = e.currentTarget;
-    const type = item.dataset.type;
-    const key = item.dataset.key;
-    const name = item.dataset.name;
-    const icon = item.dataset.icon;
-    const value = item.dataset.level || item.dataset.count;
+    const { type, key, name, icon, level, count } = item.dataset;
+    const value = level || count;
 
-    const modalOverlay = document.getElementById('modal-overlay');
+    const overlay = document.getElementById('modal-overlay');
     const modalIcon = document.getElementById('modal-icon');
     const modalTitle = document.getElementById('modal-title');
-    const modalDescription = document.getElementById('modal-description');
+    const modalDesc = document.getElementById('modal-description');
 
     modalIcon.src = `assets/art/icons/${icon}.png`;
     modalIcon.alt = name;
     
     if (type === 'faction') {
         modalTitle.textContent = `${name} Reputation: Level ${value}`;
-        modalDescription.textContent = factionDescriptions[key] || "No description available.";
+        modalDesc.textContent = factionDescriptions[key] || "No description available.";
     } else {
         modalTitle.textContent = `${name}: ${value}`;
-        modalDescription.textContent = itemDescriptions[key] || "No description available.";
+        modalDesc.textContent = itemDescriptions[key] || "No description available.";
     }
 
-    modalOverlay.classList.add('active');
+    overlay.classList.add('active');
 }
 
 function switchScreen(fromScreenId, toScreenId) {
     const fromScreen = document.getElementById(fromScreenId);
     const toScreen = document.getElementById(toScreenId);
 
-    if (fromScreen) {
-        fromScreen.classList.remove('active');
-    }
-
-    if (toScreen) {
-        toScreen.classList.add('active');
-    }
+    if (fromScreen) fromScreen.classList.remove('active');
+    if (toScreen) toScreen.classList.add('active');
 }
 
-window.addEventListener('load', () => {
-    initializeApp();
-});
-
+window.addEventListener('load', initializeApp);
 tg.ready();
