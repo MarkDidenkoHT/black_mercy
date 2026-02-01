@@ -234,7 +234,6 @@ app.post('/api/auth/check', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Auth error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -283,7 +282,6 @@ app.post('/api/travelers/get-day', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get travelers error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -342,7 +340,6 @@ app.post('/api/game/advance-day', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Advance day error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -399,8 +396,6 @@ app.post('/api/travelers/decision', async (req, res) => {
       effectToApply = travelerData.effect_out;
     } else if (decision === 'execute') {
       effectToApply = travelerData.effect_ex;
-    } else if (decision === 'complete') {
-      console.log('Fixed traveler completed');
     }
 
     const { data: reputation } = await supabase
@@ -455,9 +450,7 @@ app.post('/api/travelers/decision', async (req, res) => {
       })
       .eq('id', travelerId);
 
-    const decisionText = decision === 'allow' ? 'allowed' : 
-                        decision === 'deny' ? 'denied' : 
-                        decision === 'execute' ? 'executed' : 'completed';
+    const decisionText = decision === 'allow' ? 'allowed' : decision === 'deny' ? 'denied' : 'executed';
     const eventMessage = `${travelerData.name} (${travelerData.faction}) was ${decisionText}.`;
     
     await supabase
@@ -478,7 +471,6 @@ app.post('/api/travelers/decision', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Traveler decision error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -537,7 +529,6 @@ app.post('/api/inventory/update', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Inventory update error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
