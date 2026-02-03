@@ -62,7 +62,7 @@ async function callGenerateTravelers(playerId, sessionId) {
 
 app.post('/api/auth/check', async (req, res) => {
   try {
-    const { chatId, playerName, playerLanguage } = req.body;
+    const { chatId, playerName, playerLanguage, timezone } = req.body;
 
     if (!chatId) return res.status(400).json({ error: 'Chat ID is required' });
 
@@ -73,6 +73,14 @@ app.post('/api/auth/check', async (req, res) => {
       .single();
 
     if (existingPlayer) {
+      if (timezone && timezone !== existingPlayer.timezone) {
+        await supabase
+          .from('players')
+          .update({ timezone: timezone })
+          .eq('id', existingPlayer.id);
+        existingPlayer.timezone = timezone;
+      }
+
       const { data: activeSession } = await supabase
         .from('sessions')
         .select('*')
@@ -128,7 +136,8 @@ app.post('/api/auth/check', async (req, res) => {
       .insert([{
         chat_id: chatId,
         player_name: playerName || 'Player',
-        player_language: playerLanguage || 'EN'
+        player_language: playerLanguage || 'EN',
+        timezone: timezone || null
       }])
       .select()
       .single();
@@ -169,7 +178,7 @@ app.post('/api/auth/check', async (req, res) => {
     await supabase.from('events').insert([{
       player: newPlayer.id,
       session: newSession.id,
-      event: 'Welcome to Shattered Crown! Your adventure begins now.'
+      event: 'Your adventure begins.'
     }]);
 
     const { data: day1Travelers } = await supabase
@@ -186,7 +195,7 @@ app.post('/api/auth/check', async (req, res) => {
       session: newSession,
       reputation: { town: 1, church: 1, apothecary: 1 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
-      events: [{ event: 'Welcome to Shattered Crown! Your adventure begins now.' }],
+      events: [{ event: 'Your adventure begins.' }],
       travelers: day1Travelers || []
     });
 
