@@ -29,11 +29,17 @@ async function initializeApp() {
         const chatId = initData?.user?.id?.toString() || 'test_user';
         const playerName = initData?.user?.first_name || 'Player';
         const playerLanguage = initData?.user?.language_code?.toUpperCase() || 'EN';
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
         const response = await fetch('/api/auth/check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chatId, playerName, playerLanguage })
+            body: JSON.stringify({ 
+                chatId, 
+                playerName, 
+                playerLanguage,
+                timezone
+            })
         });
 
         if (!response.ok) throw new Error('Failed to authenticate');
@@ -344,7 +350,8 @@ async function completeCurrentTraveler(decision) {
                 body: JSON.stringify({
                     chatId: currentPlayer.chat_id,
                     playerName: currentPlayer.player_name,
-                    playerLanguage: currentPlayer.player_language
+                    playerLanguage: currentPlayer.player_language,
+                    timezone: currentPlayer.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
                 })
             });
             
