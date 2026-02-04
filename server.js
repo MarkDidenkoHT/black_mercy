@@ -60,6 +60,33 @@ async function callGenerateTravelers(playerId, sessionId) {
   return await response.json();
 }
 
+// Helper function to calculate total NPC counts from structures
+async function calculateStructureTotals(playerId, sessionId) {
+  const { data: structures } = await supabase
+    .from('structures')
+    .select('status')
+    .eq('player', playerId)
+    .eq('session', sessionId);
+
+  const totals = {
+    human: 0,
+    infected: 0,
+    possessed: 0
+  };
+
+  if (structures && structures.length > 0) {
+    structures.forEach(structure => {
+      if (structure.status) {
+        totals.human += parseInt(structure.status.human || 0);
+        totals.infected += parseInt(structure.status.infected || 0);
+        totals.possessed += parseInt(structure.status.possessed || 0);
+      }
+    });
+  }
+
+  return totals;
+}
+
 app.post('/api/auth/check', async (req, res) => {
   try {
     const { chatId, playerName, playerLanguage, timezone } = req.body;
@@ -95,7 +122,8 @@ app.post('/api/auth/check', async (req, res) => {
         .eq('session', activeSession.id)
         .single();
 
-      const displayReputation = activeSession.status || reputationData?.reputation || { town: 5, church: 3, apothecary: 3 };
+      // Calculate structure totals for display
+      const structureTotals = await calculateStructureTotals(existingPlayer.id, activeSession.id);
 
       const { data: inventoryData } = await supabase
         .from('inventory')
@@ -124,7 +152,8 @@ app.post('/api/auth/check', async (req, res) => {
         exists: true, 
         player: existingPlayer,
         session: activeSession,
-        reputation: displayReputation,
+        population: structureTotals,
+        hidden_reputation: reputationData?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 },
         inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
         events: eventsData || [],
         travelers: currentTravelers || []
@@ -148,12 +177,8 @@ app.post('/api/auth/check', async (req, res) => {
       .from('sessions')
       .insert([{
         player: newPlayer.id,
-        status: { town: 1, church: 1, apothecary: 1 },
-        status_hidden: { cult: 0, inquisition: 0, undead: 0 },
         active: true,
-        day: 1,
-        rep_change: { town: 0, church: 0, apothecary: 0 },
-        rep_change_hidden: { cult: 0, inquisition: 0, undead: 0 }
+        day: 1
       }])
       .select()
       .single();
@@ -165,8 +190,15 @@ app.post('/api/auth/check', async (req, res) => {
     await supabase.from('reputation').insert([{
       player: newPlayer.id,
       session: newSession.id,
-      reputation: { town: 1, church: 1, apothecary: 1 },
       hidden_reputation: { cult: 0, inquisition: 0, undead: 0 }
+    }]);
+
+    // Create initial structure (assuming structure template id 4 is the starting town)
+    await supabase.from('structures').insert([{
+      player: newPlayer.id,
+      session: newSession.id,
+      structure: 4,
+      status: { human: 3, infected: 0, possessed: 0 }
     }]);
 
     await supabase.from('inventory').insert([{
@@ -193,7 +225,8 @@ app.post('/api/auth/check', async (req, res) => {
       exists: false, 
       player: newPlayer,
       session: newSession,
-      reputation: { town: 1, church: 1, apothecary: 1 },
+      population: { human: 3, infected: 0, possessed: 0 },
+      hidden_reputation: { cult: 0, inquisition: 0, undead: 0 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
       events: [{ event: 'Your adventure begins.' }],
       travelers: day1Travelers || []
@@ -248,98 +281,6 @@ app.post('/api/travelers/get-day', async (req, res) => {
   }
 });
 
-app.post('/api/game/advance-day', async (req, res) => {
-  try {
-    const { chatId } = req.body;
-
-    if (!chatId) return res.status(400).json({ error: 'chatId is required' });
-
-    const { data: player } = await supabase
-      .from('players')
-      .select('*')
-      .eq('chat_id', chatId)
-      .single();
-
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-
-    const { data: session } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('player', player.id)
-      .eq('active', true)
-      .single();
-
-    if (!session) return res.status(404).json({ error: 'Active session not found' });
-
-    const { data: reputation } = await supabase
-      .from('reputation')
-      .select('*')
-      .eq('player', player.id)
-      .eq('session', session.id)
-      .single();
-
-    const currentReputation = reputation?.reputation || { town: 1, church: 1, apothecary: 1 };
-    const currentHiddenReputation = reputation?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 };
-    const repChange = session.rep_change || { town: 0, church: 0, apothecary: 0 };
-    const repChangeHidden = session.rep_change_hidden || { cult: 0, inquisition: 0, undead: 0 };
-
-    const newReputation = {
-      town: Math.max(0, Math.min(10, currentReputation.town + repChange.town)),
-      church: Math.max(0, Math.min(10, currentReputation.church + repChange.church)),
-      apothecary: Math.max(0, Math.min(10, currentReputation.apothecary + repChange.apothecary))
-    };
-
-    const newHiddenReputation = {
-      cult: Math.max(0, Math.min(10, currentHiddenReputation.cult + repChangeHidden.cult)),
-      inquisition: Math.max(0, Math.min(10, currentHiddenReputation.inquisition + repChangeHidden.inquisition)),
-      undead: Math.max(0, Math.min(10, currentHiddenReputation.undead + repChangeHidden.undead))
-    };
-
-    await supabase
-      .from('reputation')
-      .update({ 
-        reputation: newReputation,
-        hidden_reputation: newHiddenReputation
-      })
-      .eq('id', reputation.id);
-
-    const nextDay = session.day + 1;
-    
-    const { data: updatedSession } = await supabase
-      .from('sessions')
-      .update({ 
-        day: nextDay,
-        status: newReputation,
-        status_hidden: newHiddenReputation,
-        rep_change: { town: 0, church: 0, apothecary: 0 },
-        rep_change_hidden: { cult: 0, inquisition: 0, undead: 0 }
-      })
-      .eq('id', session.id)
-      .select()
-      .single();
-
-    const { data: nextDayTravelers } = await supabase
-      .from('travelers')
-      .select('*')
-      .eq('player', player.id)
-      .eq('session', session.id)
-      .eq('day', nextDay)
-      .order('order->position');
-
-    return res.json({
-      success: true,
-      new_day: nextDay,
-      travelers: nextDayTravelers || [],
-      session: updatedSession,
-      reputation: newReputation
-    });
-
-  } catch (error) {
-    console.error('Advance day error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 app.post('/api/travelers/decision', async (req, res) => {
   try {
     const { chatId, travelerId, decision } = req.body;
@@ -383,42 +324,74 @@ app.post('/api/travelers/decision', async (req, res) => {
       .single();
 
     const travelerData = traveler.traveler;
-    let currentRepChange = { ...(session.rep_change || { town: 0, church: 0, apothecary: 0 }) };
-    let currentHiddenRepChange = { ...(session.rep_change_hidden || { cult: 0, inquisition: 0, undead: 0 }) };
+    
+    // Get the structure this traveler affects
+    const structureId = travelerData.structure;
+    
+    const { data: structure } = await supabase
+      .from('structures')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .eq('structure', structureId)
+      .single();
 
-    const effectMap = {
-      allow: [travelerData.effect_in, travelerData.effect_in_hidden],
-      deny: [travelerData.effect_out, null],
-      execute: [travelerData.effect_ex, null],
-      complete_fixed: [null, null]
-    };
+    if (!structure) {
+      return res.status(404).json({ error: 'Structure not found' });
+    }
 
-    const [effectToApply, hiddenEffectToApply] = effectMap[decision] || [null, null];
+    let currentStatus = { ...structure.status };
+    let currentHiddenRep = { ...(reputation.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 }) };
 
-    const applyEffect = (effect, repObj) => {
+    // Apply effects based on decision
+    const applyEffect = (effect, target) => {
       if (effect && typeof effect === 'string') {
         const parts = effect.split(' ');
         if (parts.length === 2) {
-          const [factionKey, value] = parts;
+          const [key, value] = parts;
           const effectValue = parseInt(value);
-          if (factionKey in repObj) {
-            repObj[factionKey] = repObj[factionKey] + effectValue;
+          if (key in target) {
+            target[key] = Math.max(0, Math.min(10, target[key] + effectValue));
           }
         }
       }
     };
 
-    applyEffect(effectToApply, currentRepChange);
-    applyEffect(hiddenEffectToApply, currentHiddenRepChange);
+    if (decision === 'allow') {
+      // Apply effect_in to structure
+      if (travelerData.effect_in && typeof travelerData.effect_in === 'string') {
+        const parts = travelerData.effect_in.split(' ');
+        if (parts.length === 2) {
+          const [type, value] = parts;
+          const amount = parseInt(value);
+          if (type in currentStatus) {
+            currentStatus[type] = parseInt(currentStatus[type] || 0) + amount;
+          }
+        }
+      }
+      // Apply effect_in_hidden to hidden reputation
+      applyEffect(travelerData.effect_in_hidden, currentHiddenRep);
+    } else if (decision === 'deny') {
+      // Apply effect_out to hidden reputation
+      applyEffect(travelerData.effect_out, currentHiddenRep);
+    } else if (decision === 'execute') {
+      // Apply effect_ex to hidden reputation
+      applyEffect(travelerData.effect_ex, currentHiddenRep);
+    }
 
+    // Update structure
     await supabase
-      .from('sessions')
-      .update({
-        rep_change: currentRepChange,
-        rep_change_hidden: currentHiddenRepChange
-      })
-      .eq('id', session.id);
+      .from('structures')
+      .update({ status: currentStatus })
+      .eq('id', structure.id);
 
+    // Update hidden reputation
+    await supabase
+      .from('reputation')
+      .update({ hidden_reputation: currentHiddenRep })
+      .eq('id', reputation.id);
+
+    // Mark traveler as complete
     await supabase
       .from('travelers')
       .update({
@@ -427,6 +400,7 @@ app.post('/api/travelers/decision', async (req, res) => {
       })
       .eq('id', travelerId);
 
+    // Add event
     if (decision !== 'complete_fixed') {
       const decisionText = { allow: 'allowed', deny: 'denied', execute: 'executed' }[decision];
       await supabase.from('events').insert([{
@@ -436,11 +410,14 @@ app.post('/api/travelers/decision', async (req, res) => {
       }]);
     }
 
+    // Calculate updated structure totals
+    const structureTotals = await calculateStructureTotals(player.id, session.id);
+
     return res.json({
       success: true,
       message: `Traveler ${travelerData.name} processed with decision: ${decision}`,
-      rep_change: currentRepChange,
-      rep_change_hidden: currentHiddenRepChange
+      population: structureTotals,
+      hidden_reputation: currentHiddenRep
     });
 
   } catch (error) {

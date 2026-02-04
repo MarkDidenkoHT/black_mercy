@@ -3,7 +3,8 @@ tg.expand();
 
 let currentPlayer = null;
 let currentSession = null;
-let currentReputation = null;
+let currentPopulation = null;
+let currentHiddenReputation = null;
 let currentInventory = null;
 let currentEvents = [];
 let currentTravelers = [];
@@ -11,10 +12,8 @@ let currentTravelerIndex = 0;
 let currentDayTravelers = [];
 let currentTraveler = null;
 
-const factionDescriptions = {
-    town: "Remaining population. Everything is lost if no townsfolk remain.",
-    church: "Members of the church. They can provide holy water supplies.",
-    apothecary: "Apothecaries. Provides medicinal herbs."
+const populationDescriptions = {
+    total: "Total population in your town. Everything is lost if no one remains."
 };
 
 const itemDescriptions = {
@@ -47,14 +46,15 @@ async function initializeApp() {
         const data = await response.json();
         currentPlayer = data.player;
         currentSession = data.session;
-        currentReputation = data.reputation;
+        currentPopulation = data.population;
+        currentHiddenReputation = data.hidden_reputation;
         currentInventory = data.inventory;
         currentEvents = data.events || [];
         currentTravelers = data.travelers || [];
 
         document.getElementById('current-day').textContent = currentSession.day || 1;
 
-        renderReputation();
+        renderPopulation();
         renderInventory();
         renderEvents();
         setupModalEvents();
@@ -70,25 +70,21 @@ async function initializeApp() {
     }
 }
 
-function renderReputation() {
+function renderPopulation() {
     const container = document.getElementById('reputation-container');
     container.innerHTML = '';
 
-    [
-        { key: 'town', name: 'Town', icon: 'town' },
-        { key: 'church', name: 'Church', icon: 'church' },
-        { key: 'apothecary', name: 'Apothecary', icon: 'apothecary' }
-    ].forEach(faction => {
-        const level = currentReputation[faction.key] || 1;
-        const item = document.createElement('div');
-        item.className = 'reputation-item';
-        Object.assign(item.dataset, { type: 'faction', key: faction.key, name: faction.name, icon: faction.icon, level });
-        item.innerHTML = `
-            <img src="assets/art/icons/${faction.icon}.png" alt="${faction.name}" class="reputation-icon">
-            <span class="reputation-level">${level}</span>
-        `;
-        container.appendChild(item);
-    });
+    // Calculate total population
+    const totalPop = (currentPopulation.human || 0) + (currentPopulation.infected || 0) + (currentPopulation.possessed || 0);
+    
+    const item = document.createElement('div');
+    item.className = 'reputation-item';
+    Object.assign(item.dataset, { type: 'population', key: 'total', name: 'Population', icon: 'town', count: totalPop });
+    item.innerHTML = `
+        <img src="assets/art/icons/town.png" alt="Population" class="reputation-icon">
+        <span class="reputation-level">${totalPop}</span>
+    `;
+    container.appendChild(item);
 }
 
 function renderInventory() {
@@ -188,7 +184,7 @@ function setActiveButton(active, buttons) {
 function setupTravelersScreen() {
     document.getElementById('back-button').addEventListener('click', () => {
         switchScreen('travelers-screen', 'home-screen');
-        checkForPendingTravelers();
+        refreshGameData();
     });
 
     document.getElementById('continue-button').addEventListener('click', () => {
@@ -240,7 +236,7 @@ async function loadTravelersForCurrentDay() {
 function loadCurrentTraveler() {
     if (currentTravelerIndex >= currentDayTravelers.length) {
         switchScreen('travelers-screen', 'home-screen');
-        checkForPendingTravelers();
+        refreshGameData();
         return;
     }
 
@@ -344,33 +340,19 @@ async function completeCurrentTraveler(decision) {
         const data = await response.json();
         
         if (data.success) {
-            const eventsResponse = await fetch('/api/auth/check', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chatId: currentPlayer.chat_id,
-                    playerName: currentPlayer.player_name,
-                    playerLanguage: currentPlayer.player_language,
-                    timezone: currentPlayer.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-                })
-            });
-            
-            if (eventsResponse.ok) {
-                const updatedData = await eventsResponse.json();
-                currentEvents = updatedData.events || [];
-                renderEvents();
+            // Update local data
+            if (data.population) {
+                currentPopulation = data.population;
+            }
+            if (data.hidden_reputation) {
+                currentHiddenReputation = data.hidden_reputation;
             }
             
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
-            currentTravelerIndex++;
-            
-            if (currentTravelerIndex >= currentDayTravelers.length) {
-                switchScreen('travelers-screen', 'home-screen');
-                checkForPendingTravelers();
-            } else {
-                loadCurrentTraveler();
-            }
+            // Return to town after each traveler
+            switchScreen('travelers-screen', 'home-screen');
+            await refreshGameData();
         }
     } catch (error) {
         alert('Failed to complete traveler.');
@@ -379,6 +361,39 @@ async function completeCurrentTraveler(decision) {
 
 async function handleTravelerDecision(decision) {
     await completeCurrentTraveler(decision);
+}
+
+async function refreshGameData() {
+    try {
+        const response = await fetch('/api/auth/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chatId: currentPlayer.chat_id,
+                playerName: currentPlayer.player_name,
+                playerLanguage: currentPlayer.player_language,
+                timezone: currentPlayer.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            currentSession = data.session;
+            currentPopulation = data.population;
+            currentHiddenReputation = data.hidden_reputation;
+            currentInventory = data.inventory;
+            currentEvents = data.events || [];
+            currentTravelers = data.travelers || [];
+            
+            document.getElementById('current-day').textContent = currentSession.day || 1;
+            renderPopulation();
+            renderInventory();
+            renderEvents();
+            checkForPendingTravelers();
+        }
+    } catch (error) {
+        console.error('Failed to refresh game data:', error);
+    }
 }
 
 async function updateInventory(item, amount) {
@@ -411,9 +426,9 @@ function handleIconClick(e) {
     modalIcon.src = `assets/art/icons/${icon}.png`;
     modalIcon.alt = name;
     
-    if (type === 'faction') {
-        modalTitle.textContent = `${name} Reputation: Level ${value}`;
-        modalDesc.textContent = factionDescriptions[key] || "No description available.";
+    if (type === 'population') {
+        modalTitle.textContent = `${name}: ${value}`;
+        modalDesc.textContent = populationDescriptions[key] || "No description available.";
     } else {
         modalTitle.textContent = `${name}: ${value}`;
         modalDesc.textContent = itemDescriptions[key] || "No description available.";
