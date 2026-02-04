@@ -140,7 +140,7 @@ app.post('/api/auth/check', async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      // Get all travelers for current day (both arrived and not arrived)
+      // Get all travelers for current day
       const { data: currentTravelers } = await supabase
         .from('travelers')
         .select('*')
@@ -257,7 +257,6 @@ app.post('/api/travelers/get-day', async (req, res) => {
 
     if (!session) return res.status(404).json({ error: 'Active session not found' });
 
-    // Return all travelers for the day, frontend will filter by arrived status
     const { data: travelers } = await supabase
       .from('travelers')
       .select('*')
@@ -312,11 +311,6 @@ app.post('/api/travelers/decision', async (req, res) => {
       .single();
 
     if (!traveler) return res.status(404).json({ error: 'Traveler not found' });
-
-    // Verify traveler has arrived before allowing decision
-    if (!traveler.arrived) {
-      return res.status(400).json({ error: 'Traveler has not arrived yet' });
-    }
 
     const { data: reputation } = await supabase
       .from('reputation')
@@ -424,6 +418,98 @@ app.post('/api/travelers/decision', async (req, res) => {
 
   } catch (error) {
     console.error('Decision error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/day/advance', async (req, res) => {
+  try {
+    const { chatId } = req.body;
+
+    if (!chatId) return res.status(400).json({ error: 'chatId is required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Active session not found' });
+
+    // Check if all 6 travelers for current day are complete
+    const { data: currentDayTravelers } = await supabase
+      .from('travelers')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .eq('day', session.day);
+
+    const completedCount = currentDayTravelers?.filter(t => t.complete).length || 0;
+
+    if (completedCount < 6) {
+      return res.status(400).json({ 
+        error: 'Cannot advance day until all 6 travelers are processed',
+        completedCount,
+        requiredCount: 6
+      });
+    }
+
+    // Advance to next day
+    const nextDay = (session.day || 1) + 1;
+
+    const { data: updatedSession, error: updateError } = await supabase
+      .from('sessions')
+      .update({ day: nextDay })
+      .eq('id', session.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Add event for new day
+    await supabase.from('events').insert([{
+      player: player.id,
+      session: session.id,
+      event: `Day ${nextDay} begins. New travelers approach the town.`
+    }]);
+
+    // Get new day travelers
+    const { data: newDayTravelers } = await supabase
+      .from('travelers')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .eq('day', nextDay)
+      .order('order->position');
+
+    // Get updated events
+    const { data: eventsData } = await supabase
+      .from('events')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    return res.json({
+      success: true,
+      message: `Advanced to day ${nextDay}`,
+      session: updatedSession,
+      travelers: newDayTravelers || [],
+      events: eventsData || []
+    });
+
+  } catch (error) {
+    console.error('Day advance error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

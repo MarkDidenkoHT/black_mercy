@@ -22,6 +22,8 @@ const itemDescriptions = {
     'medicinal herbs': "Medicinal herbs. Burning these causes the infected to cough."
 };
 
+const dayPhases = ['Dawn', 'Morning', 'Noon', 'Afternoon', 'Dusk', 'Night'];
+
 async function initializeApp() {
     try {
         const initData = tg.initDataUnsafe;
@@ -52,8 +54,7 @@ async function initializeApp() {
         currentEvents = data.events || [];
         currentTravelers = data.travelers || [];
 
-        document.getElementById('current-day').textContent = currentSession.day || 1;
-
+        updateDayDisplay();
         renderPopulation();
         renderInventory();
         renderEvents();
@@ -68,6 +69,18 @@ async function initializeApp() {
     } catch (error) {
         document.querySelector('.loading-text').textContent = 'Error loading game. Please try again.';
     }
+}
+
+function updateDayDisplay() {
+    const dayElement = document.getElementById('current-day');
+    const phase = getCurrentPhase();
+    dayElement.textContent = `Day ${currentSession.day || 1} - ${phase}`;
+}
+
+function getCurrentPhase() {
+    const completedCount = currentTravelers.filter(t => t.complete).length;
+    const phaseIndex = Math.min(completedCount, 5);
+    return dayPhases[phaseIndex];
 }
 
 function renderPopulation() {
@@ -146,6 +159,7 @@ function setupModalEvents() {
 function setupBottomButtons() {
     const buttons = {
         travelers: document.getElementById('travelers-button'),
+        endDay: document.getElementById('end-day-button'),
         events: document.getElementById('events-button'),
         preparation: document.getElementById('preparation-button'),
         settings: document.getElementById('settings-button')
@@ -156,6 +170,11 @@ function setupBottomButtons() {
         eventsContainer.style.display = 'none';
         setActiveButton('travelers', buttons);
         loadTravelersForCurrentDay();
+    });
+
+    buttons.endDay.addEventListener('click', async () => {
+        eventsContainer.style.display = 'none';
+        await handleEndDay();
     });
 
     buttons.events.addEventListener('click', () => {
@@ -199,9 +218,30 @@ function setupTravelersScreen() {
 }
 
 function checkForPendingTravelers() {
-    const button = document.getElementById('travelers-button');
-    const pending = currentTravelers.filter(t => !t.complete && t.arrived === true);
-    button.classList.toggle('glow', pending.length > 0);
+    const travelersButton = document.getElementById('travelers-button');
+    const endDayButton = document.getElementById('end-day-button');
+    
+    const pendingTravelers = currentTravelers.filter(t => !t.complete);
+    const completedTravelers = currentTravelers.filter(t => t.complete);
+    
+    // Show travelers button with glow if there are pending travelers
+    if (pendingTravelers.length > 0) {
+        travelersButton.style.display = 'flex';
+        travelersButton.classList.add('glow');
+        endDayButton.style.display = 'none';
+    } 
+    // Show end day button if all 6 travelers are complete
+    else if (completedTravelers.length === 6) {
+        travelersButton.style.display = 'none';
+        endDayButton.style.display = 'flex';
+        endDayButton.classList.add('glow');
+    }
+    // Default state
+    else {
+        travelersButton.style.display = 'flex';
+        travelersButton.classList.remove('glow');
+        endDayButton.style.display = 'none';
+    }
 }
 
 async function loadTravelersForCurrentDay() {
@@ -219,19 +259,14 @@ async function loadTravelersForCurrentDay() {
 
         const data = await response.json();
         
-        currentDayTravelers = data.travelers.filter(t => !t.complete && t.arrived === true);
+        currentDayTravelers = data.travelers.filter(t => !t.complete);
         
         if (currentDayTravelers.length > 0) {
             currentTravelerIndex = 0;
             loadCurrentTraveler();
             switchScreen('home-screen', 'travelers-screen');
         } else {
-            const waitingTravelers = data.travelers.filter(t => !t.complete && t.arrived === false);
-            if (waitingTravelers.length > 0) {
-                alert('Travelers are on their way. Please wait for their arrival.');
-            } else {
-                alert('No travelers available for today.');
-            }
+            alert('No travelers available for today. All travelers have been processed.');
         }
     } catch (error) {
         alert('Failed to load travelers.');
@@ -248,7 +283,8 @@ function loadCurrentTraveler() {
     currentTraveler = currentDayTravelers[currentTravelerIndex];
     const travelerData = currentTraveler.traveler;
     
-    document.getElementById('traveler-day').textContent = `Day ${currentSession.day}`;
+    const phase = getCurrentPhase();
+    document.getElementById('traveler-day').textContent = `Day ${currentSession.day} - ${phase}`;
     document.getElementById('traveler-art').src = `assets/art/travelers/${travelerData.art}.png`;
     document.getElementById('traveler-dialog').textContent = travelerData.description || "A traveler approaches...";
     
@@ -374,6 +410,36 @@ async function handleTravelerDecision(decision) {
     await completeCurrentTraveler(decision);
 }
 
+async function handleEndDay() {
+    try {
+        const response = await fetch('/api/day/advance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chatId: currentPlayer.chat_id
+            })
+        });
+
+        if (!response.ok) throw new Error('Failed to advance day');
+
+        const data = await response.json();
+        
+        if (data.success) {
+            currentSession = data.session;
+            currentTravelers = data.travelers || [];
+            currentEvents = data.events || [];
+            
+            updateDayDisplay();
+            renderEvents();
+            checkForPendingTravelers();
+            
+            alert(`Day ${data.session.day} begins!`);
+        }
+    } catch (error) {
+        alert('Failed to advance to next day.');
+    }
+}
+
 async function refreshGameData() {
     try {
         const response = await fetch('/api/auth/check', {
@@ -396,7 +462,7 @@ async function refreshGameData() {
             currentEvents = data.events || [];
             currentTravelers = data.travelers || [];
             
-            document.getElementById('current-day').textContent = currentSession.day || 1;
+            updateDayDisplay();
             renderPopulation();
             renderInventory();
             renderEvents();
