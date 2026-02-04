@@ -6,7 +6,7 @@
 
 @font-face {
     font-family: 'Trajan Pro';
-    src: url('/fonts/Trajan_Pro_3.ttf') format('truetype');
+    src: url('fonts/Trajan_Pro_3.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -18,6 +18,10 @@ body {
     overflow: hidden;
     width: 100vw;
     height: 100vh;
+}
+
+button {
+    font-family: inherit;
 }
 
 .screen {
