@@ -261,7 +261,17 @@ function showTravelerGreeting() {
     const travelerData = currentTraveler.traveler;
     const continueButton = document.getElementById('continue-button');
     
-    document.getElementById('traveler-dialog').textContent = travelerData.dialog?.greeting || "Greetings. I seek entry to your town.";
+    // Handle different dialog structures
+    let greetingText;
+    if (travelerData.is_fixed) {
+        // Fixed travelers use greeting1/greeting2
+        greetingText = travelerData.dialog?.greeting1 || travelerData.dialog?.greeting2 || "A special visitor arrives.";
+    } else {
+        // Regular travelers use greeting
+        greetingText = travelerData.dialog?.greeting || "Greetings. I seek entry to your town.";
+    }
+    
+    document.getElementById('traveler-dialog').textContent = greetingText;
     
     if (travelerData.is_fixed) {
         continueButton.style.display = 'block';
