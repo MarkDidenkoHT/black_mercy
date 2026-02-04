@@ -193,14 +193,6 @@ app.post('/api/auth/check', async (req, res) => {
       hidden_reputation: { cult: 0, inquisition: 0, undead: 0 }
     }]);
 
-    // Create initial structure (assuming structure template id 4 is the starting town)
-    await supabase.from('structures').insert([{
-      player: newPlayer.id,
-      session: newSession.id,
-      structure: 4,
-      status: { human: 3, infected: 0, possessed: 0 }
-    }]);
-
     await supabase.from('inventory').insert([{
       player: newPlayer.id,
       session: newSession.id,
@@ -221,11 +213,14 @@ app.post('/api/auth/check', async (req, res) => {
       .eq('day', 1)
       .order('order->position');
 
+    // Get structure totals created by generate-travelers
+    const structureTotals = await calculateStructureTotals(newPlayer.id, newSession.id);
+
     return res.json({ 
       exists: false, 
       player: newPlayer,
       session: newSession,
-      population: { human: 3, infected: 0, possessed: 0 },
+      population: structureTotals,
       hidden_reputation: { cult: 0, inquisition: 0, undead: 0 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
       events: [{ event: 'Your adventure begins.' }],
