@@ -337,6 +337,7 @@ async function completeCurrentTraveler(decision) {
     
     const responseDialog = responseDialogs[decision];
     
+    // Only show response dialog for regular travelers (not fixed)
     if (responseDialog) {
         dialogContainer.textContent = responseDialog;
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
@@ -367,7 +368,10 @@ async function completeCurrentTraveler(decision) {
                 currentHiddenReputation = data.hidden_reputation;
             }
             
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Only add delay for regular travelers with response dialogs (not fixed travelers)
+            if (responseDialog && decision !== 'complete_fixed') {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
             
             // Return to town after each traveler
             switchScreen('travelers-screen', 'home-screen');
