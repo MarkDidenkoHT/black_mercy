@@ -74,7 +74,6 @@ function renderPopulation() {
     const container = document.getElementById('reputation-container');
     container.innerHTML = '';
 
-    // Calculate total population
     const totalPop = (currentPopulation.human || 0) + (currentPopulation.infected || 0) + (currentPopulation.possessed || 0);
     
     const item = document.createElement('div');
@@ -201,7 +200,6 @@ function setupTravelersScreen() {
 
 function checkForPendingTravelers() {
     const button = document.getElementById('travelers-button');
-    // Only glow if there are incomplete travelers that have arrived
     const pending = currentTravelers.filter(t => !t.complete && t.arrived === true);
     button.classList.toggle('glow', pending.length > 0);
 }
@@ -221,7 +219,6 @@ async function loadTravelersForCurrentDay() {
 
         const data = await response.json();
         
-        // Filter for incomplete travelers that have arrived
         currentDayTravelers = data.travelers.filter(t => !t.complete && t.arrived === true);
         
         if (currentDayTravelers.length > 0) {
@@ -229,7 +226,6 @@ async function loadTravelersForCurrentDay() {
             loadCurrentTraveler();
             switchScreen('home-screen', 'travelers-screen');
         } else {
-            // Check if there are travelers waiting to arrive
             const waitingTravelers = data.travelers.filter(t => !t.complete && t.arrived === false);
             if (waitingTravelers.length > 0) {
                 alert('Travelers are on their way. Please wait for their arrival.');
@@ -270,22 +266,22 @@ function showTravelerGreeting() {
     const travelerData = currentTraveler.traveler;
     const continueButton = document.getElementById('continue-button');
     
-    // Handle different dialog structures
     let greetingText;
     if (travelerData.is_fixed) {
-        // Fixed travelers use greeting1/greeting2
         greetingText = travelerData.dialog?.greeting1 || travelerData.dialog?.greeting2 || "A special visitor arrives.";
     } else {
-        // Regular travelers use greeting
         greetingText = travelerData.dialog?.greeting || "Greetings. I seek entry to your town.";
     }
     
     document.getElementById('traveler-dialog').textContent = greetingText;
     
     if (travelerData.is_fixed) {
-        continueButton.style.display = 'block';
-        continueButton.textContent = 'Complete';
-        continueButton.onclick = () => completeCurrentTraveler('complete_fixed');
+        const newButton = continueButton.cloneNode(true);
+        continueButton.parentNode.replaceChild(newButton, continueButton);
+        
+        newButton.style.display = 'block';
+        newButton.textContent = 'Complete';
+        newButton.onclick = () => completeCurrentTraveler('complete_fixed');
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
     } else {
         continueButton.style.display = 'none';
@@ -337,7 +333,6 @@ async function completeCurrentTraveler(decision) {
     
     const responseDialog = responseDialogs[decision];
     
-    // Only show response dialog for regular travelers (not fixed)
     if (responseDialog) {
         dialogContainer.textContent = responseDialog;
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
@@ -360,7 +355,6 @@ async function completeCurrentTraveler(decision) {
         const data = await response.json();
         
         if (data.success) {
-            // Update local data
             if (data.population) {
                 currentPopulation = data.population;
             }
@@ -368,12 +362,6 @@ async function completeCurrentTraveler(decision) {
                 currentHiddenReputation = data.hidden_reputation;
             }
             
-            // Only add delay for regular travelers with response dialogs (not fixed travelers)
-            if (responseDialog && decision !== 'complete_fixed') {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-            
-            // Return to town after each traveler
             switchScreen('travelers-screen', 'home-screen');
             await refreshGameData();
         }
