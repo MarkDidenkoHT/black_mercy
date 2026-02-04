@@ -201,7 +201,8 @@ function setupTravelersScreen() {
 
 function checkForPendingTravelers() {
     const button = document.getElementById('travelers-button');
-    const pending = currentTravelers.filter(t => !t.complete);
+    // Only glow if there are incomplete travelers that have arrived
+    const pending = currentTravelers.filter(t => !t.complete && t.arrived === true);
     button.classList.toggle('glow', pending.length > 0);
 }
 
@@ -219,14 +220,22 @@ async function loadTravelersForCurrentDay() {
         if (!response.ok) throw new Error('Failed to load travelers');
 
         const data = await response.json();
-        currentDayTravelers = data.travelers.filter(t => !t.complete);
+        
+        // Filter for incomplete travelers that have arrived
+        currentDayTravelers = data.travelers.filter(t => !t.complete && t.arrived === true);
         
         if (currentDayTravelers.length > 0) {
             currentTravelerIndex = 0;
             loadCurrentTraveler();
             switchScreen('home-screen', 'travelers-screen');
         } else {
-            alert('No travelers available for today.');
+            // Check if there are travelers waiting to arrive
+            const waitingTravelers = data.travelers.filter(t => !t.complete && t.arrived === false);
+            if (waitingTravelers.length > 0) {
+                alert('Travelers are on their way. Please wait for their arrival.');
+            } else {
+                alert('No travelers available for today.');
+            }
         }
     } catch (error) {
         alert('Failed to load travelers.');
@@ -321,7 +330,7 @@ async function completeCurrentTraveler(decision) {
     
     const responseDialogs = {
         allow: travelerData.dialog?.in || "Thank you for allowing me passage.",
-        deny: travelerData.dialog?.out || "I understand. I will leave peacefully.",
+        deny: travelerData.dialog?.out || "Very well. I will leave peacefully.",
         execute: travelerData.dialog?.execution || "Please, have mercy!",
         complete_fixed: null
     };

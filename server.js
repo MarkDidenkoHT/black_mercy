@@ -140,6 +140,7 @@ app.post('/api/auth/check', async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(10);
 
+      // Get all travelers for current day (both arrived and not arrived)
       const { data: currentTravelers } = await supabase
         .from('travelers')
         .select('*')
@@ -256,6 +257,7 @@ app.post('/api/travelers/get-day', async (req, res) => {
 
     if (!session) return res.status(404).json({ error: 'Active session not found' });
 
+    // Return all travelers for the day, frontend will filter by arrived status
     const { data: travelers } = await supabase
       .from('travelers')
       .select('*')
@@ -310,6 +312,11 @@ app.post('/api/travelers/decision', async (req, res) => {
       .single();
 
     if (!traveler) return res.status(404).json({ error: 'Traveler not found' });
+
+    // Verify traveler has arrived before allowing decision
+    if (!traveler.arrived) {
+      return res.status(400).json({ error: 'Traveler has not arrived yet' });
+    }
 
     const { data: reputation } = await supabase
       .from('reputation')
