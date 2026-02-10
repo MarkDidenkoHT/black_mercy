@@ -120,9 +120,8 @@ button {
 }
 
 .inventory-container {
-    width: 30%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 5px;
 }
 
@@ -160,6 +159,8 @@ button {
     border: 1px solid #ffd700;
     backdrop-filter: blur(5px);
     z-index: 10;
+    width: 50%;
+    text-align: center;
 }
 
 .day-text {
