@@ -43,7 +43,11 @@ async function initializeApp() {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to authenticate');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Auth failed:', response.status, errorText);
+            throw new Error('Failed to authenticate');
+        }
 
         const data = await response.json();
         currentPlayer = data.player;
@@ -67,6 +71,7 @@ async function initializeApp() {
         switchScreen('loading-screen', 'home-screen');
 
     } catch (error) {
+        console.error('Init failed:', error.message, error.stack);
         document.querySelector('.loading-text').textContent = 'Error loading game. Please try again.';
     }
 }
@@ -224,19 +229,16 @@ function checkForPendingTravelers() {
     const pendingTravelers = currentTravelers.filter(t => !t.complete);
     const completedTravelers = currentTravelers.filter(t => t.complete);
     
-    // Show travelers button with glow if there are pending travelers
     if (pendingTravelers.length > 0) {
         travelersButton.style.display = 'flex';
         travelersButton.classList.add('glow');
         endDayButton.style.display = 'none';
     } 
-    // Show end day button if all 6 travelers are complete
     else if (completedTravelers.length === 6) {
         travelersButton.style.display = 'none';
         endDayButton.style.display = 'flex';
         endDayButton.classList.add('glow');
     }
-    // Default state
     else {
         travelersButton.style.display = 'flex';
         travelersButton.classList.remove('glow');
@@ -255,7 +257,11 @@ async function loadTravelersForCurrentDay() {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to load travelers');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Load travelers failed:', response.status, errorText);
+            throw new Error('Failed to load travelers');
+        }
 
         const data = await response.json();
         
@@ -269,6 +275,7 @@ async function loadTravelersForCurrentDay() {
             alert('No travelers available for today. All travelers have been processed.');
         }
     } catch (error) {
+        console.error('Load travelers error:', error.message, error.stack);
         alert('Failed to load travelers.');
     }
 }
@@ -386,22 +393,23 @@ async function completeCurrentTraveler(decision) {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to process decision');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Decision failed:', response.status, errorText);
+            throw new Error('Failed to process decision');
+        }
 
         const data = await response.json();
         
         if (data.success) {
-            if (data.population) {
-                currentPopulation = data.population;
-            }
-            if (data.hidden_reputation) {
-                currentHiddenReputation = data.hidden_reputation;
-            }
+            if (data.population) currentPopulation = data.population;
+            if (data.hidden_reputation) currentHiddenReputation = data.hidden_reputation;
             
             switchScreen('travelers-screen', 'home-screen');
             await refreshGameData();
         }
     } catch (error) {
+        console.error('Complete traveler error:', error.message, error.stack);
         alert('Failed to complete traveler.');
     }
 }
@@ -420,7 +428,11 @@ async function handleEndDay() {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to advance day');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('End day failed:', response.status, errorText);
+            throw new Error('Failed to advance day');
+        }
 
         const data = await response.json();
         
@@ -436,6 +448,7 @@ async function handleEndDay() {
             alert(`Day ${data.session.day} begins!`);
         }
     } catch (error) {
+        console.error('End day error:', error.message, error.stack);
         alert('Failed to advance to next day.');
     }
 }
@@ -453,23 +466,27 @@ async function refreshGameData() {
             })
         });
         
-        if (response.ok) {
-            const data = await response.json();
-            currentSession = data.session;
-            currentPopulation = data.population;
-            currentHiddenReputation = data.hidden_reputation;
-            currentInventory = data.inventory;
-            currentEvents = data.events || [];
-            currentTravelers = data.travelers || [];
-            
-            updateDayDisplay();
-            renderPopulation();
-            renderInventory();
-            renderEvents();
-            checkForPendingTravelers();
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Refresh failed:', response.status, errorText);
+            return;
         }
+        
+        const data = await response.json();
+        currentSession = data.session;
+        currentPopulation = data.population;
+        currentHiddenReputation = data.hidden_reputation;
+        currentInventory = data.inventory;
+        currentEvents = data.events || [];
+        currentTravelers = data.travelers || [];
+        
+        updateDayDisplay();
+        renderPopulation();
+        renderInventory();
+        renderEvents();
+        checkForPendingTravelers();
     } catch (error) {
-        console.error('Failed to refresh game data:', error);
+        console.error('Refresh error:', error.message, error.stack);
     }
 }
 
@@ -487,6 +504,7 @@ async function updateInventory(item, amount) {
             })
         });
     } catch (error) {
+        console.error('Inventory update error:', error.message);
     }
 }
 
