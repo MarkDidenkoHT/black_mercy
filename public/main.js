@@ -78,6 +78,10 @@ async function initializeApp() {
 
 function updateDayDisplay() {
     const dayElement = document.getElementById('current-day');
+    if (!dayElement) {
+        console.error('Day element not found');
+        return;
+    }
     const phase = getCurrentPhase();
     dayElement.textContent = `Day ${currentSession.day || 1} - ${phase}`;
 }
@@ -90,6 +94,10 @@ function getCurrentPhase() {
 
 function renderPopulation() {
     const container = document.getElementById('reputation-container');
+    if (!container) {
+        console.error('Reputation container not found');
+        return;
+    }
     container.innerHTML = '';
 
     const totalPop = (currentPopulation.human || 0) + (currentPopulation.infected || 0) + (currentPopulation.possessed || 0);
@@ -106,6 +114,10 @@ function renderPopulation() {
 
 function renderInventory() {
     const container = document.getElementById('inventory-container');
+    if (!container) {
+        console.error('Inventory container not found');
+        return;
+    }
     container.innerHTML = '';
 
     [
@@ -127,6 +139,10 @@ function renderInventory() {
 
 function renderEvents() {
     const list = document.getElementById('events-list');
+    if (!list) {
+        console.error('Events list not found');
+        return;
+    }
     list.innerHTML = '';
 
     if (currentEvents.length === 0) {
@@ -146,17 +162,28 @@ function renderEvents() {
 }
 
 function setupModalEvents() {
+    const modalClose = document.getElementById('modal-close');
+    const modalOverlay = document.getElementById('modal-overlay');
+
+    if (!modalClose || !modalOverlay) {
+        console.error('Missing modal elements:', {
+            modalClose: !!modalClose,
+            modalOverlay: !!modalOverlay
+        });
+        return;
+    }
+
     document.querySelectorAll('.reputation-item, .inventory-item').forEach(item => {
         item.addEventListener('click', handleIconClick);
     });
 
-    document.getElementById('modal-close').addEventListener('click', () => {
-        document.getElementById('modal-overlay').classList.remove('active');
+    modalClose.addEventListener('click', () => {
+        modalOverlay.classList.remove('active');
     });
 
-    document.getElementById('modal-overlay').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('modal-overlay')) {
-            document.getElementById('modal-overlay').classList.remove('active');
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            modalOverlay.classList.remove('active');
         }
     });
 }
@@ -170,6 +197,18 @@ function setupBottomButtons() {
         settings: document.getElementById('settings-button')
     };
     const eventsContainer = document.getElementById('events-container');
+
+    if (!buttons.travelers || !buttons.endDay || !buttons.events || !buttons.preparation || !buttons.settings || !eventsContainer) {
+        console.error('Missing button elements:', {
+            travelers: !!buttons.travelers,
+            endDay: !!buttons.endDay,
+            events: !!buttons.events,
+            preparation: !!buttons.preparation,
+            settings: !!buttons.settings,
+            eventsContainer: !!eventsContainer
+        });
+        return;
+    }
 
     buttons.travelers.addEventListener('click', () => {
         eventsContainer.style.display = 'none';
@@ -200,32 +239,60 @@ function setupBottomButtons() {
 
 function setActiveButton(active, buttons) {
     Object.entries(buttons).forEach(([key, btn]) => {
-        btn.classList.toggle('active', key === active);
+        if (btn) btn.classList.toggle('active', key === active);
     });
 }
 
 function setupTravelersScreen() {
-    document.getElementById('back-button').addEventListener('click', () => {
+    const backButton = document.getElementById('back-button');
+    const continueButton = document.getElementById('continue-button');
+    const checkPapers = document.getElementById('check-papers');
+    const holyWater = document.getElementById('holy-water');
+    const medicinalHerbs = document.getElementById('medicinal-herbs');
+    const allow = document.getElementById('allow');
+    const deny = document.getElementById('deny');
+    const execute = document.getElementById('execute');
+
+    if (!backButton || !continueButton || !checkPapers || !holyWater || !medicinalHerbs || !allow || !deny || !execute) {
+        console.error('Missing traveler screen elements:', {
+            backButton: !!backButton,
+            continueButton: !!continueButton,
+            checkPapers: !!checkPapers,
+            holyWater: !!holyWater,
+            medicinalHerbs: !!medicinalHerbs,
+            allow: !!allow,
+            deny: !!deny,
+            execute: !!execute
+        });
+        return;
+    }
+
+    backButton.addEventListener('click', () => {
         switchScreen('travelers-screen', 'home-screen');
         refreshGameData();
     });
 
-    document.getElementById('continue-button').addEventListener('click', () => {
+    continueButton.addEventListener('click', () => {
         if (currentTraveler) showTravelerGreeting();
     });
 
-    document.getElementById('check-papers').addEventListener('click', () => handleTravelerAction('check_papers'));
-    document.getElementById('holy-water').addEventListener('click', () => handleTravelerAction('holy_water'));
-    document.getElementById('medicinal-herbs').addEventListener('click', () => handleTravelerAction('medicinal_herbs'));
-    document.getElementById('allow').addEventListener('click', () => handleTravelerDecision('allow'));
-    document.getElementById('deny').addEventListener('click', () => handleTravelerDecision('deny'));
-    document.getElementById('execute').addEventListener('click', () => handleTravelerDecision('execute'));
+    checkPapers.addEventListener('click', () => handleTravelerAction('check_papers'));
+    holyWater.addEventListener('click', () => handleTravelerAction('holy_water'));
+    medicinalHerbs.addEventListener('click', () => handleTravelerAction('medicinal_herbs'));
+    allow.addEventListener('click', () => handleTravelerDecision('allow'));
+    deny.addEventListener('click', () => handleTravelerDecision('deny'));
+    execute.addEventListener('click', () => handleTravelerDecision('execute'));
 }
 
 function checkForPendingTravelers() {
     const travelersButton = document.getElementById('travelers-button');
     const endDayButton = document.getElementById('end-day-button');
     
+    if (!travelersButton || !endDayButton) {
+        console.error('Missing pending travelers buttons');
+        return;
+    }
+
     const pendingTravelers = currentTravelers.filter(t => !t.complete);
     const completedTravelers = currentTravelers.filter(t => t.complete);
     
@@ -291,11 +358,20 @@ function loadCurrentTraveler() {
     const travelerData = currentTraveler.traveler;
     
     const phase = getCurrentPhase();
-    document.getElementById('traveler-day').textContent = `Day ${currentSession.day} - ${phase}`;
-    document.getElementById('traveler-art').src = `assets/art/travelers/${travelerData.art}.png`;
-    document.getElementById('traveler-dialog').textContent = travelerData.description || "A traveler approaches...";
-    
+    const travelerDay = document.getElementById('traveler-day');
+    const travelerArt = document.getElementById('traveler-art');
+    const travelerDialog = document.getElementById('traveler-dialog');
     const continueButton = document.getElementById('continue-button');
+
+    if (!travelerDay || !travelerArt || !travelerDialog || !continueButton) {
+        console.error('Missing traveler display elements');
+        return;
+    }
+
+    travelerDay.textContent = `Day ${currentSession.day} - ${phase}`;
+    travelerArt.src = `assets/art/travelers/${travelerData.art}.png`;
+    travelerDialog.textContent = travelerData.description || "A traveler approaches...";
+    
     continueButton.textContent = 'Continue';
     continueButton.style.display = 'block';
     continueButton.onclick = showTravelerGreeting;
@@ -308,6 +384,12 @@ function showTravelerGreeting() {
     
     const travelerData = currentTraveler.traveler;
     const continueButton = document.getElementById('continue-button');
+    const travelerDialog = document.getElementById('traveler-dialog');
+
+    if (!continueButton || !travelerDialog) {
+        console.error('Missing greeting elements');
+        return;
+    }
     
     let greetingText;
     if (travelerData.is_fixed) {
@@ -316,7 +398,7 @@ function showTravelerGreeting() {
         greetingText = travelerData.dialog?.greeting || "Greetings. I seek entry to your town.";
     }
     
-    document.getElementById('traveler-dialog').textContent = greetingText;
+    travelerDialog.textContent = greetingText;
     
     if (travelerData.is_fixed) {
         const newButton = continueButton.cloneNode(true);
@@ -337,6 +419,12 @@ async function handleTravelerAction(action) {
     
     const travelerData = currentTraveler.traveler;
     const dialogContainer = document.getElementById('traveler-dialog');
+    
+    if (!dialogContainer) {
+        console.error('Dialog container not found');
+        return;
+    }
+
     const itemMap = {
         check_papers: 'lantern fuel',
         holy_water: 'holy water',
@@ -367,6 +455,11 @@ async function completeCurrentTraveler(decision) {
     const travelerData = currentTraveler.traveler;
     const dialogContainer = document.getElementById('traveler-dialog');
     
+    if (!dialogContainer) {
+        console.error('Dialog container not found');
+        return;
+    }
+
     const responseDialogs = {
         allow: travelerData.dialog?.in || "Thank you for allowing me passage.",
         deny: travelerData.dialog?.out || "Very well. I will leave peacefully.",
@@ -379,7 +472,8 @@ async function completeCurrentTraveler(decision) {
     if (responseDialog) {
         dialogContainer.textContent = responseDialog;
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
-        document.getElementById('continue-button').style.display = 'none';
+        const continueButton = document.getElementById('continue-button');
+        if (continueButton) continueButton.style.display = 'none';
     }
     
     try {
@@ -517,6 +611,11 @@ function handleIconClick(e) {
     const modalIcon = document.getElementById('modal-icon');
     const modalTitle = document.getElementById('modal-title');
     const modalDesc = document.getElementById('modal-description');
+
+    if (!overlay || !modalIcon || !modalTitle || !modalDesc) {
+        console.error('Missing modal elements for icon click');
+        return;
+    }
 
     modalIcon.src = `assets/art/icons/${icon}.png`;
     modalIcon.alt = name;
