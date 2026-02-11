@@ -6,12 +6,12 @@ let currentSession = null;
 let currentPopulation = null;
 let currentHiddenReputation = null;
 let currentInventory = null;
+let currentAvailableInteractions = [];
 let currentEvents = [];
 let currentTravelers = [];
 let currentTravelerIndex = 0;
 let currentDayTravelers = [];
 let currentTraveler = null;
-let availableInteractions = ['check-papers']; // Default interactions
 
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
@@ -24,16 +24,6 @@ const itemDescriptions = {
 };
 
 const dayPhases = ['Dawn', 'Morning', 'Noon', 'Afternoon', 'Dusk', 'Night'];
-
-// Map interaction names to button IDs
-const interactionButtonMap = {
-    'check-papers': 'check-papers',
-    'holy-water': 'holy-water',
-    'medicinal-herbs': 'medicinal-herbs',
-    'allow': 'allow',
-    'deny': 'deny',
-    'execute': 'execute'
-};
 
 async function initializeApp() {
     try {
@@ -66,9 +56,9 @@ async function initializeApp() {
         currentPopulation = data.population;
         currentHiddenReputation = data.hidden_reputation;
         currentInventory = data.inventory;
+        currentAvailableInteractions = data.available_interactions || ['check-papers', 'let-in', 'push-out'];
         currentEvents = data.events || [];
         currentTravelers = data.travelers || [];
-        availableInteractions = data.available_interactions || ['check-papers'];
 
         updateDayDisplay();
         renderPopulation();
@@ -132,20 +122,26 @@ function renderInventory() {
     }
     container.innerHTML = '';
 
-    [
+    const allItems = [
         { key: 'holy water', name: 'Holy Water', icon: 'holy_water' },
         { key: 'lantern fuel', name: 'Lantern Fuel', icon: 'lantern_fuel' },
         { key: 'medicinal herbs', name: 'Medicinal Herbs', icon: 'medicinal_herbs' }
-    ].forEach(item => {
+    ];
+
+    allItems.forEach(item => {
         const count = currentInventory[item.key] || 0;
-        const invItem = document.createElement('div');
-        invItem.className = 'inventory-item';
-        Object.assign(invItem.dataset, { type: 'item', key: item.key, name: item.name, icon: item.icon, count });
-        invItem.innerHTML = `
-            <img src="assets/art/icons/${item.icon}.png" alt="${item.name}" class="inventory-icon">
-            <span class="inventory-count">${count}</span>
-        `;
-        container.appendChild(invItem);
+        
+        // Only render items that player has
+        if (count > 0) {
+            const invItem = document.createElement('div');
+            invItem.className = 'inventory-item';
+            Object.assign(invItem.dataset, { type: 'item', key: item.key, name: item.name, icon: item.icon, count });
+            invItem.innerHTML = `
+                <img src="assets/art/icons/${item.icon}.png" alt="${item.name}" class="inventory-icon">
+                <span class="inventory-count">${count}</span>
+            `;
+            container.appendChild(invItem);
+        }
     });
 }
 
@@ -258,23 +254,11 @@ function setActiveButton(active, buttons) {
 function setupTravelersScreen() {
     const backButton = document.getElementById('back-button');
     const continueButton = document.getElementById('continue-button');
-    const checkPapers = document.getElementById('check-papers');
-    const holyWater = document.getElementById('holy-water');
-    const medicinalHerbs = document.getElementById('medicinal-herbs');
-    const allow = document.getElementById('allow');
-    const deny = document.getElementById('deny');
-    const execute = document.getElementById('execute');
 
-    if (!backButton || !continueButton || !checkPapers || !holyWater || !medicinalHerbs || !allow || !deny || !execute) {
+    if (!backButton || !continueButton) {
         console.error('Missing traveler screen elements:', {
             backButton: !!backButton,
-            continueButton: !!continueButton,
-            checkPapers: !!checkPapers,
-            holyWater: !!holyWater,
-            medicinalHerbs: !!medicinalHerbs,
-            allow: !!allow,
-            deny: !!deny,
-            execute: !!execute
+            continueButton: !!continueButton
         });
         return;
     }
@@ -287,35 +271,6 @@ function setupTravelersScreen() {
     continueButton.addEventListener('click', () => {
         if (currentTraveler) showTravelerGreeting();
     });
-
-    checkPapers.addEventListener('click', () => handleTravelerAction('check_papers'));
-    holyWater.addEventListener('click', () => handleTravelerAction('holy_water'));
-    medicinalHerbs.addEventListener('click', () => handleTravelerAction('medicinal_herbs'));
-    allow.addEventListener('click', () => handleTravelerDecision('allow'));
-    deny.addEventListener('click', () => handleTravelerDecision('deny'));
-    execute.addEventListener('click', () => handleTravelerDecision('execute'));
-}
-
-function updateAvailableInteractions() {
-    // Update action buttons based on available interactions
-    const actionButtons = {
-        'check-papers': document.getElementById('check-papers'),
-        'holy-water': document.getElementById('holy-water'),
-        'medicinal-herbs': document.getElementById('medicinal-herbs'),
-        'allow': document.getElementById('allow'),
-        'deny': document.getElementById('deny'),
-        'execute': document.getElementById('execute')
-    };
-
-    // Hide unavailable buttons, show available ones
-    Object.entries(actionButtons).forEach(([key, button]) => {
-        if (button) {
-            const isAvailable = availableInteractions.includes(key);
-            button.style.display = isAvailable ? '' : 'none';
-        }
-    });
-
-    console.log('Available interactions updated:', availableInteractions);
 }
 
 function checkForPendingTravelers() {
@@ -370,7 +325,7 @@ async function loadTravelersForCurrentDay() {
         
         // Update available interactions from server response
         if (data.available_interactions) {
-            availableInteractions = data.available_interactions;
+            currentAvailableInteractions = data.available_interactions;
         }
         
         if (currentDayTravelers.length > 0) {
@@ -416,9 +371,93 @@ function loadCurrentTraveler() {
     continueButton.onclick = showTravelerGreeting;
     
     document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
+}
+
+function setupDynamicActionButtons() {
+    // Get action button containers
+    const actionRow1 = document.querySelectorAll('.action-row')[0];
+    const actionRow2 = document.querySelectorAll('.action-row')[1];
     
-    // Update available interactions for this traveler
-    updateAvailableInteractions();
+    if (!actionRow1 || !actionRow2) {
+        console.error('Action rows not found');
+        return;
+    }
+    
+    // Clear existing action buttons
+    actionRow1.innerHTML = '';
+    actionRow2.innerHTML = '';
+    
+    // Map interaction IDs to button data
+    const interactionMap = {
+        'check-papers': {
+            row: 1,
+            text: 'Check Papers',
+            class: 'check-papers',
+            action: 'check_papers',
+            requiresItem: 'lantern fuel'
+        },
+        'holy-water': {
+            row: 1,
+            text: 'Holy Water',
+            class: 'holy-water',
+            action: 'holy_water',
+            requiresItem: 'holy water'
+        },
+        'medicinal-herbs': {
+            row: 1,
+            text: 'Medicinal Herbs',
+            class: 'medicinal-herbs',
+            action: 'medicinal_herbs',
+            requiresItem: 'medicinal herbs'
+        },
+        'let-in': {
+            row: 2,
+            text: 'Let In',
+            class: 'allow',
+            decision: 'allow'
+        },
+        'push-out': {
+            row: 2,
+            text: 'Push Out',
+            class: 'deny',
+            decision: 'deny'
+        },
+        'execute': {
+            row: 2,
+            text: 'Execute',
+            class: 'execute',
+            decision: 'execute'
+        }
+    };
+    
+    // Create buttons based on available interactions
+    currentAvailableInteractions.forEach(interactionId => {
+        const buttonData = interactionMap[interactionId];
+        
+        if (!buttonData) return;
+        
+        // For action buttons (row 1), check if player has the required item
+        if (buttonData.row === 1) {
+            const hasItem = currentInventory[buttonData.requiresItem] && currentInventory[buttonData.requiresItem] > 0;
+            
+            // Only create button if player has the item
+            if (hasItem) {
+                const button = document.createElement('button');
+                button.className = `action-button ${buttonData.class}`;
+                button.textContent = buttonData.text;
+                button.addEventListener('click', () => handleTravelerAction(buttonData.action));
+                actionRow1.appendChild(button);
+            }
+        } 
+        // For decision buttons (row 2), always create
+        else if (buttonData.row === 2) {
+            const button = document.createElement('button');
+            button.className = `action-button ${buttonData.class}`;
+            button.textContent = buttonData.text;
+            button.addEventListener('click', () => handleTravelerDecision(buttonData.decision));
+            actionRow2.appendChild(button);
+        }
+    });
 }
 
 function showTravelerGreeting() {
@@ -452,10 +491,11 @@ function showTravelerGreeting() {
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
     } else {
         continueButton.style.display = 'none';
-        document.querySelectorAll('.action-row').forEach(row => row.style.display = 'flex');
         
-        // Update available interactions when showing action buttons
-        updateAvailableInteractions();
+        // Setup dynamic action buttons based on available interactions and inventory
+        setupDynamicActionButtons();
+        
+        document.querySelectorAll('.action-row').forEach(row => row.style.display = 'flex');
     }
 }
 
@@ -492,6 +532,9 @@ async function handleTravelerAction(action) {
     dialogContainer.textContent = responses[action];
     await updateInventory(item, -1);
     renderInventory();
+    
+    // Refresh action buttons after inventory update
+    setupDynamicActionButtons();
 }
 
 async function completeCurrentTraveler(decision) {
@@ -616,9 +659,9 @@ async function refreshGameData() {
         currentPopulation = data.population;
         currentHiddenReputation = data.hidden_reputation;
         currentInventory = data.inventory;
+        currentAvailableInteractions = data.available_interactions || ['check-papers', 'let-in', 'push-out'];
         currentEvents = data.events || [];
         currentTravelers = data.travelers || [];
-        availableInteractions = data.available_interactions || ['check-papers'];
         
         updateDayDisplay();
         renderPopulation();

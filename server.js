@@ -152,10 +152,10 @@ app.post('/api/auth/check', async (req, res) => {
         session: activeSession,
         population: structureTotals,
         hidden_reputation: reputationData?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 },
-        inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
+        inventory: inventoryData?.items || {},
+        available_interactions: activeSession.available_interactions || ['check-papers', 'let-in', 'push-out'],
         events: eventsData || [],
-        travelers: currentTravelers || [],
-        available_interactions: activeSession?.available_interactions || ['check-papers', 'let-in', 'push-out']
+        travelers: currentTravelers || []
       });
     }
 
@@ -177,8 +177,7 @@ app.post('/api/auth/check', async (req, res) => {
       .insert([{
         player: newPlayer.id,
         active: true,
-        day: 1,
-        available_interactions: ['check-papers', 'let-in', 'push-out']
+        day: 1
       }])
       .select()
       .single();
@@ -222,9 +221,9 @@ app.post('/api/auth/check', async (req, res) => {
       population: structureTotals,
       hidden_reputation: { cult: 0, inquisition: 0, undead: 0 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
+      available_interactions: ['check-papers', 'let-in', 'push-out'],
       events: [{ event: 'Your adventure begins.' }],
-      travelers: day1Travelers || [],
-      available_interactions: ['check-papers', 'let-in', 'push-out']
+      travelers: day1Travelers || []
     });
 
   } catch (error) {
@@ -268,7 +267,7 @@ app.post('/api/travelers/get-day', async (req, res) => {
       success: true,
       day: day,
       travelers: travelers || [],
-      available_interactions: session?.available_interactions || ['check-papers', 'let-in', 'push-out']
+      available_interactions: session.available_interactions || ['check-papers', 'let-in', 'push-out']
     });
 
   } catch (error) {
@@ -354,17 +353,7 @@ app.post('/api/travelers/decision', async (req, res) => {
     if (decision === 'allow') {
       if (travelerData.effect_in && typeof travelerData.effect_in === 'string') {
         const parts = travelerData.effect_in.split(' ');
-        
-        // Handle both formats: "+1" (use traveler faction) or "human +1" (explicit faction)
-        if (parts.length === 1) {
-          // Format: "+1" - use traveler's faction
-          const amount = parseInt(parts[0]);
-          const faction = travelerData.faction;
-          if (faction && faction in currentStatus) {
-            currentStatus[faction] = parseInt(currentStatus[faction] || 0) + amount;
-          }
-        } else if (parts.length === 2) {
-          // Format: "human +1" - explicit faction
+        if (parts.length === 2) {
           const [type, value] = parts;
           const amount = parseInt(value);
           if (type in currentStatus) {
@@ -540,7 +529,7 @@ app.post('/api/inventory/update', async (req, res) => {
 
     if (!inventory) return res.status(404).json({ error: 'Inventory not found' });
 
-    const currentItems = { ...(inventory.items || { 'lantern fuel': 2}) };
+    const currentItems = { ...(inventory.items || {}) };
     currentItems[item] = Math.max(0, (currentItems[item] || 0) + (amount || -1));
 
     await supabase
