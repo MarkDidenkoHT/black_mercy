@@ -155,7 +155,7 @@ app.post('/api/auth/check', async (req, res) => {
         inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
         events: eventsData || [],
         travelers: currentTravelers || [],
-        available_interactions: activeSession?.available_interactions || ['check-papers']
+        available_interactions: activeSession?.available_interactions || ['check-papers', 'let-in', 'push-out']
       });
     }
 
@@ -178,7 +178,7 @@ app.post('/api/auth/check', async (req, res) => {
         player: newPlayer.id,
         active: true,
         day: 1,
-        available_interactions: ['check-papers']
+        available_interactions: ['check-papers', 'let-in', 'push-out']
       }])
       .select()
       .single();
@@ -224,7 +224,7 @@ app.post('/api/auth/check', async (req, res) => {
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
       events: [{ event: 'Your adventure begins.' }],
       travelers: day1Travelers || [],
-      available_interactions: ['check-papers']
+      available_interactions: ['check-papers', 'let-in', 'push-out']
     });
 
   } catch (error) {
@@ -268,7 +268,7 @@ app.post('/api/travelers/get-day', async (req, res) => {
       success: true,
       day: day,
       travelers: travelers || [],
-      available_interactions: session?.available_interactions || ['check-papers']
+      available_interactions: session?.available_interactions || ['check-papers', 'let-in', 'push-out']
     });
 
   } catch (error) {
@@ -354,7 +354,17 @@ app.post('/api/travelers/decision', async (req, res) => {
     if (decision === 'allow') {
       if (travelerData.effect_in && typeof travelerData.effect_in === 'string') {
         const parts = travelerData.effect_in.split(' ');
-        if (parts.length === 2) {
+        
+        // Handle both formats: "+1" (use traveler faction) or "human +1" (explicit faction)
+        if (parts.length === 1) {
+          // Format: "+1" - use traveler's faction
+          const amount = parseInt(parts[0]);
+          const faction = travelerData.faction;
+          if (faction && faction in currentStatus) {
+            currentStatus[faction] = parseInt(currentStatus[faction] || 0) + amount;
+          }
+        } else if (parts.length === 2) {
+          // Format: "human +1" - explicit faction
           const [type, value] = parts;
           const amount = parseInt(value);
           if (type in currentStatus) {
