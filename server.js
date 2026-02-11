@@ -60,7 +60,6 @@ async function callGenerateTravelers(playerId, sessionId) {
   return await response.json();
 }
 
-// Helper function to calculate total NPC counts from structures
 async function calculateStructureTotals(playerId, sessionId) {
   const { data: structures } = await supabase
     .from('structures')
@@ -122,7 +121,6 @@ app.post('/api/auth/check', async (req, res) => {
         .eq('session', activeSession.id)
         .single();
 
-      // Calculate structure totals for display
       const structureTotals = await calculateStructureTotals(existingPlayer.id, activeSession.id);
 
       const { data: inventoryData } = await supabase
@@ -140,7 +138,6 @@ app.post('/api/auth/check', async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      // Get all travelers for current day
       const { data: currentTravelers } = await supabase
         .from('travelers')
         .select('*')
@@ -214,7 +211,6 @@ app.post('/api/auth/check', async (req, res) => {
       .eq('day', 1)
       .order('order->position');
 
-    // Get structure totals created by generate-travelers
     const structureTotals = await calculateStructureTotals(newPlayer.id, newSession.id);
 
     return res.json({ 
@@ -321,7 +317,6 @@ app.post('/api/travelers/decision', async (req, res) => {
 
     const travelerData = traveler.traveler;
     
-    // Get the structure this traveler affects
     const structureId = travelerData.structure;
     
     const { data: structure } = await supabase
@@ -339,7 +334,6 @@ app.post('/api/travelers/decision', async (req, res) => {
     let currentStatus = { ...structure.status };
     let currentHiddenRep = { ...(reputation.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 }) };
 
-    // Apply effects based on decision
     const applyEffect = (effect, target) => {
       if (effect && typeof effect === 'string') {
         const parts = effect.split(' ');
@@ -354,7 +348,6 @@ app.post('/api/travelers/decision', async (req, res) => {
     };
 
     if (decision === 'allow') {
-      // Apply effect_in to structure
       if (travelerData.effect_in && typeof travelerData.effect_in === 'string') {
         const parts = travelerData.effect_in.split(' ');
         if (parts.length === 2) {
@@ -365,29 +358,23 @@ app.post('/api/travelers/decision', async (req, res) => {
           }
         }
       }
-      // Apply effect_in_hidden to hidden reputation
       applyEffect(travelerData.effect_in_hidden, currentHiddenRep);
     } else if (decision === 'deny') {
-      // Apply effect_out to hidden reputation
       applyEffect(travelerData.effect_out, currentHiddenRep);
     } else if (decision === 'execute') {
-      // Apply effect_ex to hidden reputation
       applyEffect(travelerData.effect_ex, currentHiddenRep);
     }
 
-    // Update structure
     await supabase
       .from('structures')
       .update({ status: currentStatus })
       .eq('id', structure.id);
 
-    // Update hidden reputation
     await supabase
       .from('reputation')
       .update({ hidden_reputation: currentHiddenRep })
       .eq('id', reputation.id);
 
-    // Mark traveler as complete
     await supabase
       .from('travelers')
       .update({
@@ -396,7 +383,6 @@ app.post('/api/travelers/decision', async (req, res) => {
       })
       .eq('id', travelerId);
 
-    // Add event
     if (decision !== 'complete_fixed') {
       const decisionText = { allow: 'allowed', deny: 'denied', execute: 'executed' }[decision];
       await supabase.from('events').insert([{
@@ -406,7 +392,6 @@ app.post('/api/travelers/decision', async (req, res) => {
       }]);
     }
 
-    // Calculate updated structure totals
     const structureTotals = await calculateStructureTotals(player.id, session.id);
 
     return res.json({
@@ -445,7 +430,6 @@ app.post('/api/day/advance', async (req, res) => {
 
     if (!session) return res.status(404).json({ error: 'Active session not found' });
 
-    // Check if all 6 travelers for current day are complete
     const { data: currentDayTravelers } = await supabase
       .from('travelers')
       .select('*')
@@ -463,7 +447,6 @@ app.post('/api/day/advance', async (req, res) => {
       });
     }
 
-    // Advance to next day
     const nextDay = (session.day || 1) + 1;
 
     const { data: updatedSession, error: updateError } = await supabase
@@ -475,14 +458,12 @@ app.post('/api/day/advance', async (req, res) => {
 
     if (updateError) throw updateError;
 
-    // Add event for new day
     await supabase.from('events').insert([{
       player: player.id,
       session: session.id,
       event: `Day ${nextDay} begins. New travelers approach the town.`
     }]);
 
-    // Get new day travelers
     const { data: newDayTravelers } = await supabase
       .from('travelers')
       .select('*')
@@ -491,7 +472,6 @@ app.post('/api/day/advance', async (req, res) => {
       .eq('day', nextDay)
       .order('order->position');
 
-    // Get updated events
     const { data: eventsData } = await supabase
       .from('events')
       .select('*')
