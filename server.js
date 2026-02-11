@@ -154,7 +154,8 @@ app.post('/api/auth/check', async (req, res) => {
         hidden_reputation: reputationData?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 },
         inventory: inventoryData?.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
         events: eventsData || [],
-        travelers: currentTravelers || []
+        travelers: currentTravelers || [],
+        available_interactions: activeSession?.available_interactions || ['check-papers']
       });
     }
 
@@ -176,7 +177,8 @@ app.post('/api/auth/check', async (req, res) => {
       .insert([{
         player: newPlayer.id,
         active: true,
-        day: 1
+        day: 1,
+        available_interactions: ['check-papers']
       }])
       .select()
       .single();
@@ -221,7 +223,8 @@ app.post('/api/auth/check', async (req, res) => {
       hidden_reputation: { cult: 0, inquisition: 0, undead: 0 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
       events: [{ event: 'Your adventure begins.' }],
-      travelers: day1Travelers || []
+      travelers: day1Travelers || [],
+      available_interactions: ['check-papers']
     });
 
   } catch (error) {
@@ -264,7 +267,8 @@ app.post('/api/travelers/get-day', async (req, res) => {
     return res.json({
       success: true,
       day: day,
-      travelers: travelers || []
+      travelers: travelers || [],
+      available_interactions: session?.available_interactions || ['check-papers']
     });
 
   } catch (error) {
@@ -526,7 +530,7 @@ app.post('/api/inventory/update', async (req, res) => {
 
     if (!inventory) return res.status(404).json({ error: 'Inventory not found' });
 
-    const currentItems = { ...(inventory.items || { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 }) };
+    const currentItems = { ...(inventory.items || { 'lantern fuel': 2}) };
     currentItems[item] = Math.max(0, (currentItems[item] || 0) + (amount || -1));
 
     await supabase
