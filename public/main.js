@@ -474,7 +474,8 @@ function showTravelerGreeting() {
     
     let greetingText;
     if (travelerData.is_fixed) {
-        greetingText = travelerData.dialog?.greeting1 || travelerData.dialog?.greeting2 || "A special visitor arrives.";
+        greetingText = travelerData.dialog?.greeting || "A special visitor arrives.";
+        executeTrigger(travelerData.dialog?.trigger, travelerData, currentSession);
     } else {
         greetingText = travelerData.dialog?.greeting || "Greetings. I seek entry to your town.";
     }
@@ -491,10 +492,7 @@ function showTravelerGreeting() {
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
     } else {
         continueButton.style.display = 'none';
-        
-        // Setup dynamic action buttons based on available interactions and inventory
         setupDynamicActionButtons();
-        
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'flex');
     }
 }
