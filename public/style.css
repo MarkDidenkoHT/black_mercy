@@ -38,7 +38,7 @@ button {
 }
 
 #loading-screen {
-    background-image: url('assets/art/black_mercy_loading.jpg');
+    background-image: url('assets/art/loading.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
