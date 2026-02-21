@@ -38,7 +38,7 @@ button {
 }
 
 #loading-screen {
-    background-image: url('assets/art/loading.png');
+    background-image: url('assets/art/black_mercy_losding.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
