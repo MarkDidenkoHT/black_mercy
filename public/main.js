@@ -100,9 +100,9 @@ function animateLoadingBar() {
 
 function finishLoadingBar() {
     const bar = document.getElementById('loading-bar-fill');
-    if (bar) bar.style.width = '100%';
+    if (!bar) return;
+    setTimeout(() => { bar.style.width = '100%'; }, 400);
 }
-
 function updateDayDisplay() {
     const dayElement = document.getElementById('current-day');
     if (!dayElement) {
