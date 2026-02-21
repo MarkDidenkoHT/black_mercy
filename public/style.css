@@ -61,11 +61,11 @@ button {
 
 .loading-bar-track {
     position: absolute;
-    bottom: 22%;          /* ← tune this */
+    bottom:28.7px;       /* ← tune this */
     left: 50%;
     transform: translateX(-50%);
-    width: 62%;           /* ← tune this */
-    height: 12px;         /* ← tune this */
+    width: 90%;           /* ← tune this */
+    height: 15px;         /* ← tune this */
     background: transparent;
     border-radius: 2px;
     overflow: hidden;
