@@ -548,6 +548,102 @@ app.post('/api/inventory/update', async (req, res) => {
   }
 });
 
+app.post('/api/inventory/give', async (req, res) => {
+  try {
+    const { chatId, items } = req.body;
+
+    if (!chatId || !items) return res.status(400).json({ error: 'chatId and items are required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Active session not found' });
+
+    const { data: inventory } = await supabase
+      .from('inventory')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .single();
+
+    if (!inventory) return res.status(404).json({ error: 'Inventory not found' });
+
+    const updatedItems = { ...inventory.items };
+    Object.entries(items).forEach(([key, amount]) => {
+      updatedItems[key] = (updatedItems[key] || 0) + amount;
+    });
+
+    await supabase
+      .from('inventory')
+      .update({ items: updatedItems })
+      .eq('id', inventory.id);
+
+    return res.json({ success: true, inventory: updatedItems });
+
+  } catch (error) {
+    console.error('Inventory give error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/structures/set-active', async (req, res) => {
+  try {
+    const { chatId, structureTemplateId } = req.body;
+
+    if (!chatId || !structureTemplateId) return res.status(400).json({ error: 'chatId and structureTemplateId are required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Active session not found' });
+
+    const { data: structure } = await supabase
+      .from('structures')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .eq('structure', structureTemplateId)
+      .single();
+
+    if (!structure) return res.status(404).json({ error: 'Structure not found' });
+
+    await supabase
+      .from('structures')
+      .update({ is_active: true })
+      .eq('id', structure.id);
+
+    return res.json({ success: true });
+
+  } catch (error) {
+    console.error('Structure set-active error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

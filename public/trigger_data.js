@@ -4,9 +4,46 @@ const TRIGGER_HANDLERS = {
         // TODO: implement Revelation logic
     },
 
-    Explanation_H: (traveler, session) => {
+    Explanation_H: async (traveler, session) => {
         console.log('[TRIGGER] Explanation_H fired by:', traveler.name);
-        // TODO: implement Explanation_H logic (Mithrail teaches how to detect humans)
+
+        try {
+            const [itemsRes, structureRes] = await Promise.all([
+                fetch('/api/inventory/give', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chatId: currentPlayer.chat_id, items: { 'holy water': 2 } })
+                }),
+                fetch('/api/structures/set-active', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chatId: currentPlayer.chat_id, structureTemplateId: 1 })
+                })
+            ]);
+
+            if (!itemsRes.ok || !structureRes.ok) throw new Error('Explanation_H trigger request failed');
+
+            const itemsData = await itemsRes.json();
+
+            if (itemsData.success) {
+                currentInventory = itemsData.inventory;
+                renderInventory();
+            }
+
+            await fetch('/api/events/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chatId: currentPlayer.chat_id,
+                    event: 'Mithrail of the Inquisition blessed your supplies. You received 2 Holy Water. The Church is now active.'
+                })
+            });
+
+            renderEvents();
+
+        } catch (error) {
+            console.error('[TRIGGER] Explanation_H error:', error);
+        }
     },
 
     Inquisition: (traveler, session) => {
