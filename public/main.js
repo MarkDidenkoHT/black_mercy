@@ -27,6 +27,8 @@ const dayPhases = ['Dawn', 'Morning', 'Noon', 'Afternoon', 'Dusk', 'Night'];
 
 async function initializeApp() {
     try {
+        animateLoadingBar();
+
         const initData = tg.initDataUnsafe;
         const chatId = initData?.user?.id?.toString() || 'test_user';
         const playerName = initData?.user?.first_name || 'Player';
@@ -69,13 +71,36 @@ async function initializeApp() {
         setupTravelersScreen();
         checkForPendingTravelers();
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        finishLoadingBar();
+        await new Promise(resolve => setTimeout(resolve, 600));
         switchScreen('loading-screen', 'home-screen');
 
     } catch (error) {
         console.error('Init failed:', error.message, error.stack);
-        document.querySelector('.loading-text').textContent = 'Error loading game. Please try again.';
+        document.querySelector('.loading-text').style.display = 'block';
+        document.querySelector('.loading-text').textContent = 'Error loading. Please try again.';
     }
+}
+
+function animateLoadingBar() {
+    const bar = document.getElementById('loading-bar-fill');
+    if (!bar) return;
+    const steps = [
+        { target: 15, delay: 0 },
+        { target: 35, delay: 300 },
+        { target: 55, delay: 700 },
+        { target: 72, delay: 1200 },
+        { target: 85, delay: 1900 },
+        { target: 90, delay: 2600 },
+    ];
+    steps.forEach(({ target, delay }) => {
+        setTimeout(() => { bar.style.width = target + '%'; }, delay);
+    });
+}
+
+function finishLoadingBar() {
+    const bar = document.getElementById('loading-bar-fill');
+    if (bar) bar.style.width = '100%';
 }
 
 function updateDayDisplay() {

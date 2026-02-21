@@ -38,7 +38,7 @@ button {
 }
 
 #loading-screen {
-    background-image: url('assets/art/black_mercy_losding.png');
+    background-image: url('assets/art/black_mercy_loading.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -57,6 +57,46 @@ button {
     text-align: center;
     font-size: 24px;
     color: #ffffff;
+}
+
+.loading-bar-track {
+    position: absolute;
+    bottom: 22%;          /* ← tune this */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 62%;           /* ← tune this */
+    height: 12px;         /* ← tune this */
+    background: transparent;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(
+        90deg,
+        #5a2e05 0%,
+        #a05010 20%,
+        #c8922a 50%,
+        #f0c060 56%,
+        #c8922a 62%,
+        #a05010 80%,
+        #5a2e05 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    box-shadow:
+        0 0 8px rgba(200, 146, 42, 0.8),
+        0 0 18px rgba(200, 100, 0, 0.35),
+        inset 0 1px 0 rgba(255, 220, 100, 0.3);
+    animation: barShimmer 1.6s linear infinite;
+}
+
+@keyframes barShimmer {
+    0%   { background-position: 200% center; }
+    100% { background-position: -200% center; }
 }
 
 #home-screen {
