@@ -13,7 +13,6 @@ let currentTravelerIndex = 0;
 let currentDayTravelers = [];
 let currentTraveler = null;
 let currentPet = null;
-let petAnimationTimers = [];
 
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
@@ -26,11 +25,6 @@ const itemDescriptions = {
 };
 
 const dayPhases = ['Dawn', 'Morning', 'Noon', 'Afternoon', 'Dusk', 'Night'];
-
-const petAnimations = {
-    cat: ['pet_cat_animation_1.mp4', 'pet_cat_animation_2.mp4'],
-    owl: ['pet_owl_animation_1.mp4']
-};
 
 async function initializeApp() {
     try {
@@ -128,33 +122,52 @@ function setupPetSelection() {
     const owlOption = document.getElementById('pet-owl-option');
     const confirmButton = document.getElementById('confirm-pet-button');
     
+    const catImage = document.getElementById('cat-media');
+    const catAnimation = document.getElementById('cat-animation');
+    const owlImage = document.getElementById('owl-media');
+    const owlAnimation = document.getElementById('owl-animation');
+    
     let selectedPet = null;
-    let catAnimationTimer, owlAnimationTimer;
     
-    const catVideo = document.getElementById('cat-animation');
-    const owlVideo = document.getElementById('owl-animation');
-    
-    const catAnimations = ['pet_cat_animation_1.mp4', 'pet_cat_animation_2.mp4'];
-    let catIndex = 0;
-    
-    function cycleCatAnimation() {
-        catIndex = (catIndex + 1) % catAnimations.length;
-        catVideo.src = `assets/art/pets/${catAnimations[catIndex]}`;
-        catVideo.load();
-        catVideo.play().catch(e => console.log('Cat video play prevented:', e));
+    function setupPetAnimation(image, animation, petType) {
+        const animations = petType === 'cat' 
+            ? ['pet_cat_animation_1.mp4', 'pet_cat_animation_2.mp4']
+            : ['pet_owl_animation_1.mp4'];
+        
+        function playRandomAnimation() {
+            if (animation.style.display !== 'none') return;
+            
+            image.style.display = 'none';
+            animation.style.display = 'block';
+            
+            if (petType === 'cat') {
+                const randomIndex = Math.floor(Math.random() * animations.length);
+                animation.src = `assets/art/pets/${animations[randomIndex]}`;
+            }
+            
+            animation.load();
+            animation.play().catch(e => console.log('Animation play failed:', e));
+            
+            setTimeout(() => {
+                animation.pause();
+                animation.style.display = 'none';
+                image.style.display = 'block';
+                
+                const nextDelay = 5000 + Math.random() * 10000;
+                setTimeout(playRandomAnimation, nextDelay);
+            }, 3000);
+        }
+        
+        const initialDelay = 5000 + Math.random() * 10000;
+        setTimeout(playRandomAnimation, initialDelay);
     }
     
-    if (catVideo) {
-        catVideo.play().catch(e => console.log('Cat video autoplay prevented:', e));
-        catAnimationTimer = setInterval(cycleCatAnimation, 5000);
+    if (catImage && catAnimation) {
+        setupPetAnimation(catImage, catAnimation, 'cat');
     }
     
-    if (owlVideo) {
-        owlVideo.play().catch(e => console.log('Owl video autoplay prevented:', e));
-        owlAnimationTimer = setInterval(() => {
-            owlVideo.load();
-            owlVideo.play().catch(e => console.log('Owl video reload prevented:', e));
-        }, 5000);
+    if (owlImage && owlAnimation) {
+        setupPetAnimation(owlImage, owlAnimation, 'owl');
     }
     
     catOption.addEventListener('click', () => {
@@ -173,9 +186,6 @@ function setupPetSelection() {
     
     confirmButton.addEventListener('click', async () => {
         if (!selectedPet) return;
-        
-        if (catAnimationTimer) clearInterval(catAnimationTimer);
-        if (owlAnimationTimer) clearInterval(owlAnimationTimer);
         
         confirmButton.disabled = true;
         confirmButton.textContent = 'Choosing...';
@@ -232,38 +242,61 @@ function setupPetSelection() {
 
 function setupPetDisplay(petType) {
     const petDisplay = document.getElementById('pet-display');
-    const petAnimation = document.getElementById('pet-display-animation');
     
-    if (!petDisplay || !petAnimation) return;
+    if (!petDisplay) return;
     
     petDisplay.style.display = 'block';
+    petDisplay.innerHTML = '';
     
-    petAnimationTimers.forEach(timer => clearTimeout(timer));
-    petAnimationTimers = [];
+    const image = document.createElement('img');
+    image.src = `assets/art/pets/pet_${petType}_1.webp`;
+    image.className = 'pet-display-media';
+    image.style.display = 'block';
     
-    const animations = petAnimations[petType];
-    let currentAnimationIndex = 0;
+    const video = document.createElement('video');
+    video.className = 'pet-display-media';
+    video.muted = true;
+    video.playsinline = true;
+    video.loop = false;
+    video.style.display = 'none';
     
-    function playNextAnimation() {
-        if (!petAnimation) return;
+    const animations = petType === 'cat' 
+        ? ['pet_cat_animation_1.mp4', 'pet_cat_animation_2.mp4']
+        : ['pet_owl_animation_1.mp4'];
+    
+    petDisplay.appendChild(image);
+    petDisplay.appendChild(video);
+    
+    function playRandomAnimation() {
+        if (video.style.display !== 'none') return;
         
-        const animationFile = animations[currentAnimationIndex];
-        petAnimation.src = `assets/art/pets/${animationFile}`;
-        petAnimation.load();
-        petAnimation.play().catch(e => console.log('Pet animation play prevented:', e));
+        image.style.display = 'none';
+        video.style.display = 'block';
         
-        const nextIndex = (currentAnimationIndex + 1) % animations.length;
-        const timer = setTimeout(() => {
-            currentAnimationIndex = nextIndex;
-            playNextAnimation();
-        }, 5000);
+        if (petType === 'cat') {
+            const randomIndex = Math.floor(Math.random() * animations.length);
+            video.src = `assets/art/pets/${animations[randomIndex]}`;
+        } else {
+            video.src = `assets/art/pets/${animations[0]}`;
+        }
         
-        petAnimationTimers.push(timer);
+        video.load();
+        video.play().catch(e => console.log('Pet animation play failed:', e));
+        
+        setTimeout(() => {
+            video.pause();
+            video.style.display = 'none';
+            image.style.display = 'block';
+            
+            const nextDelay = 5000 + Math.random() * 10000;
+            setTimeout(playRandomAnimation, nextDelay);
+        }, 3000);
     }
     
-    playNextAnimation();
+    const initialDelay = 5000 + Math.random() * 10000;
+    setTimeout(playRandomAnimation, initialDelay);
     
-    petDisplay.addEventListener('click', () => {
+    image.addEventListener('click', () => {
         const messages = {
             cat: [
                 "Your cat purrs contentedly.",
