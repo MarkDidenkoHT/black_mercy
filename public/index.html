@@ -19,28 +19,36 @@
     </div>
 
     <div id="pet-selection-screen" class="screen">
-        <div class="pet-selection-container">
-            <h1 class="pet-selection-title">Choose Your Companion</h1>
-            
-            <div class="pet-options">
-                <div class="pet-option" id="pet-cat-option">
-                    <img src="assets/art/pets/pet_cat_1.webp" class="pet-media" id="cat-media">
-                    <video class="pet-media" id="cat-animation" muted playsinline style="display: none;">
-                        <source src="assets/art/pets/pet_cat_animation_1.mp4" type="video/mp4">
-                        <source src="assets/art/pets/pet_cat_animation_2.mp4" type="video/mp4">
-                    </video>
-                </div>
-                
-                <div class="pet-option" id="pet-owl-option">
-                    <img src="assets/art/pets/pet_owl_1.webp" class="pet-media" id="owl-media">
-                    <video class="pet-media" id="owl-animation" muted playsinline style="display: none;">
-                        <source src="assets/art/pets/pet_owl_animation_1.mp4" type="video/mp4">
-                    </video>
-                </div>
+        <h1 class="pet-selection-title">Choose Your Companion</h1>
+        
+        <div class="pet-options">
+            <div class="pet-option" id="pet-cat-option">
+                <img src="assets/art/pets/pet_cat_1.webp" class="pet-media" id="cat-media">
+                <video class="pet-media" id="cat-animation" muted playsinline style="display: none;">
+                    <source src="assets/art/pets/pet_cat_animation_1.mp4" type="video/mp4">
+                    <source src="assets/art/pets/pet_cat_animation_2.mp4" type="video/mp4">
+                </video>
             </div>
             
-            <button class="confirm-pet-button" id="confirm-pet-button" disabled>Confirm Choice</button>
+            <div class="pet-option" id="pet-owl-option">
+                <img src="assets/art/pets/pet_owl_1.webp" class="pet-media" id="owl-media">
+                <video class="pet-media" id="owl-animation" muted playsinline style="display: none;">
+                    <source src="assets/art/pets/pet_owl_animation_1.mp4" type="video/mp4">
+                </video>
+            </div>
+            
+            <div class="pet-option coming-soon" id="pet-fox-option">
+                <div class="coming-soon-text">COMING SOON</div>
+            </div>
+            
+            <div class="pet-option coming-soon" id="pet-raven-option">
+                <div class="coming-soon-text">COMING SOON</div>
+            </div>
         </div>
+        
+        <div class="pet-description" id="pet-description">Select a pet to see its description</div>
+        
+        <button class="confirm-pet-button" id="confirm-pet-button" disabled>Confirm Choice</button>
     </div>
 
     <div id="home-screen" class="screen">

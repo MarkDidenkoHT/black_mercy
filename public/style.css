@@ -100,17 +100,10 @@ button {
 }
 
 #pet-selection-screen {
-    background-image: url('assets/art/town_day.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: rgba(0, 0, 0, 0.8);
     flex-direction: column;
     justify-content: center;
     align-items: center;
-}
-
-.pet-selection-container {
-    background: rgba(0, 0, 0, 0.8);
     padding: 10px;
 }
 
@@ -123,22 +116,24 @@ button {
 }
 
 .pet-options {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
     width: 100%;
-    margin-bottom: 10px;
-    align-items: center;
+    max-width: 400px;
+    margin-bottom: 15px;
+    justify-items: center;
 }
 
 .pet-option {
-    width: 200px;
-    height: 200px;
+    width: 180px;
+    height: 180px;
     border: 2px solid #ddbd13;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
     overflow: hidden;
+    position: relative;
 }
 
 .pet-option:hover {
@@ -151,14 +146,48 @@ button {
     box-shadow: 0 0 20px #ffd700;
 }
 
+.pet-option.coming-soon {
+    opacity: 0.6;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.pet-option.coming-soon:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.coming-soon-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffd700;
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black;
+    z-index: 2;
+}
+
 .pet-media {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
+.pet-description {
+    text-align: center;
+    color: #ffffff;
+    font-size: 14px;
+    padding: 10px;
+    min-height: 50px;
+    max-width: 400px;
+    margin-bottom: 15px;
+}
+
 .confirm-pet-button {
     width: calc(100% - 20px);
+    max-width: 400px;
     padding: 15px;
     background: linear-gradient(135deg, #006400 0%, #008000 100%);
     border: 2px solid #ffd700;
@@ -168,8 +197,6 @@ button {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
-    position: relative;
-    bottom: 20px;
 }
 
 .confirm-pet-button:hover:not(:disabled) {

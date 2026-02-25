@@ -120,7 +120,10 @@ function finishLoadingBar() {
 function setupPetSelection() {
     const catOption = document.getElementById('pet-cat-option');
     const owlOption = document.getElementById('pet-owl-option');
+    const foxOption = document.getElementById('pet-fox-option');
+    const ravenOption = document.getElementById('pet-raven-option');
     const confirmButton = document.getElementById('confirm-pet-button');
+    const petDescription = document.getElementById('pet-description');
     
     const catImage = document.getElementById('cat-media');
     const catAnimation = document.getElementById('cat-animation');
@@ -128,6 +131,28 @@ function setupPetSelection() {
     const owlAnimation = document.getElementById('owl-animation');
     
     let selectedPet = null;
+    
+    async function showPetDescription(pet) {
+        if (pet === 'fox' || pet === 'raven') {
+            petDescription.textContent = 'Coming soon...';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/pets/description', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pet })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                petDescription.textContent = data.description;
+            }
+        } catch (error) {
+            console.error('Failed to load pet description:', error);
+        }
+    }
     
     function setupPetAnimation(image, animation, petType) {
         const animations = petType === 'cat' 
@@ -172,15 +197,29 @@ function setupPetSelection() {
     catOption.addEventListener('click', () => {
         catOption.classList.add('selected');
         owlOption.classList.remove('selected');
+        foxOption.classList.remove('selected');
+        ravenOption.classList.remove('selected');
         selectedPet = 'cat';
         confirmButton.disabled = false;
+        showPetDescription('cat');
     });
     
     owlOption.addEventListener('click', () => {
         owlOption.classList.add('selected');
         catOption.classList.remove('selected');
+        foxOption.classList.remove('selected');
+        ravenOption.classList.remove('selected');
         selectedPet = 'owl';
         confirmButton.disabled = false;
+        showPetDescription('owl');
+    });
+    
+    foxOption.addEventListener('click', () => {
+        showPetDescription('fox');
+    });
+    
+    ravenOption.addEventListener('click', () => {
+        showPetDescription('raven');
     });
     
     confirmButton.addEventListener('click', async () => {

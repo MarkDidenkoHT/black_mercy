@@ -686,6 +686,33 @@ app.post('/api/structures/set-active', async (req, res) => {
   }
 });
 
+app.post('/api/pets/description', async (req, res) => {
+  try {
+    const { pet } = req.body;
+
+    if (!pet) {
+      return res.status(400).json({ error: 'pet is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('pets')
+      .select('description')
+      .eq('pet', pet)
+      .single();
+
+    if (error) throw error;
+
+    return res.json({
+      success: true,
+      description: data?.description || 'A faithful companion.'
+    });
+
+  } catch (error) {
+    console.error('Pet description error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
