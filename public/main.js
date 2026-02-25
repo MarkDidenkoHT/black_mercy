@@ -129,17 +129,32 @@ function setupPetSelection() {
     const confirmButton = document.getElementById('confirm-pet-button');
     
     let selectedPet = null;
+    let catAnimationTimer, owlAnimationTimer;
     
-    // Setup video elements
     const catVideo = document.getElementById('cat-animation');
     const owlVideo = document.getElementById('owl-animation');
     
+    const catAnimations = ['pet_cat_animation_1.mp4', 'pet_cat_animation_2.mp4'];
+    let catIndex = 0;
+    
+    function cycleCatAnimation() {
+        catIndex = (catIndex + 1) % catAnimations.length;
+        catVideo.src = `assets/art/pets/${catAnimations[catIndex]}`;
+        catVideo.load();
+        catVideo.play().catch(e => console.log('Cat video play prevented:', e));
+    }
+    
     if (catVideo) {
         catVideo.play().catch(e => console.log('Cat video autoplay prevented:', e));
+        catAnimationTimer = setInterval(cycleCatAnimation, 5000);
     }
     
     if (owlVideo) {
         owlVideo.play().catch(e => console.log('Owl video autoplay prevented:', e));
+        owlAnimationTimer = setInterval(() => {
+            owlVideo.load();
+            owlVideo.play().catch(e => console.log('Owl video reload prevented:', e));
+        }, 5000);
     }
     
     catOption.addEventListener('click', () => {
@@ -158,6 +173,9 @@ function setupPetSelection() {
     
     confirmButton.addEventListener('click', async () => {
         if (!selectedPet) return;
+        
+        if (catAnimationTimer) clearInterval(catAnimationTimer);
+        if (owlAnimationTimer) clearInterval(owlAnimationTimer);
         
         confirmButton.disabled = true;
         confirmButton.textContent = 'Choosing...';
@@ -220,7 +238,6 @@ function setupPetDisplay(petType) {
     
     petDisplay.style.display = 'block';
     
-    // Clear any existing timers
     petAnimationTimers.forEach(timer => clearTimeout(timer));
     petAnimationTimers = [];
     
@@ -235,23 +252,18 @@ function setupPetDisplay(petType) {
         petAnimation.load();
         petAnimation.play().catch(e => console.log('Pet animation play prevented:', e));
         
-        // Schedule next animation change
         const nextIndex = (currentAnimationIndex + 1) % animations.length;
-        const delay = 5000 + Math.random() * 5000; // Random between 5-10 seconds
-        
         const timer = setTimeout(() => {
             currentAnimationIndex = nextIndex;
             playNextAnimation();
-        }, delay);
+        }, 5000);
         
         petAnimationTimers.push(timer);
     }
     
     playNextAnimation();
     
-    // Click handler for pet interaction
     petDisplay.addEventListener('click', () => {
-        // Show a random interaction message
         const messages = {
             cat: [
                 "Your cat purrs contentedly.",
@@ -268,7 +280,6 @@ function setupPetDisplay(petType) {
         const petMessages = messages[petType] || ["Your pet looks at you curiously."];
         const randomMessage = petMessages[Math.floor(Math.random() * petMessages.length)];
         
-        // Show a temporary event
         const eventItem = document.createElement('div');
         eventItem.className = 'event-item';
         eventItem.textContent = randomMessage;
@@ -277,7 +288,6 @@ function setupPetDisplay(petType) {
         if (eventsList) {
             eventsList.insertBefore(eventItem, eventsList.firstChild);
             
-            // Remove after 5 seconds
             setTimeout(() => {
                 if (eventItem.parentNode) {
                     eventItem.remove();

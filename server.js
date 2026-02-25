@@ -274,8 +274,6 @@ app.post('/api/pet/select', async (req, res) => {
   }
 });
 
-// Rest of your existing endpoints remain the same...
-
 app.post('/api/travelers/get-day', async (req, res) => {
   try {
     const { chatId, day } = req.body;

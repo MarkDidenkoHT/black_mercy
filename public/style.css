@@ -61,11 +61,11 @@ button {
 
 .loading-bar-track {
     position: absolute;
-    bottom:28.7%;      /* ← tune this */
+    bottom:28.7%;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;           /* ← tune this */
-    height: 15px;         /* ← tune this */
+    width: 90%;
+    height: 15px;
     background: transparent;
     border-radius: 2px;
     overflow: hidden;
@@ -97,6 +97,111 @@ button {
 @keyframes barShimmer {
     0%   { background-position: 200% center; }
     100% { background-position: -200% center; }
+}
+
+#pet-selection-screen {
+    background-image: url('assets/art/town_day.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.pet-selection-container {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #ffd700;
+    border-radius: 15px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.pet-selection-title {
+    font-size: 24px;
+    color: #ffd700;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.pet-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.pet-option {
+    width: 250px;
+    height: 250px;
+    background: rgba(50, 50, 50, 0.8);
+    border: 2px solid #ddbd13;
+    border-radius: 10px;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.pet-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.pet-option.selected {
+    border: 3px solid #ffd700;
+    background: rgba(100, 80, 20, 0.8);
+    box-shadow: 0 0 20px #ffd700;
+}
+
+.pet-animation-container {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pet-animation {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 10px;
+}
+
+.confirm-pet-button {
+    width: calc(100% - 20px);
+    padding: 15px;
+    background: linear-gradient(135deg, #006400 0%, #008000 100%);
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    bottom: 20px;
+}
+
+.confirm-pet-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-pet-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 #home-screen {
@@ -279,6 +384,29 @@ button {
     to {
         box-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700;
     }
+}
+
+.pet-display {
+    position: absolute;
+    bottom: 80px;
+    right: 10px;
+    width: 80px;
+    height: 80px;
+    z-index: 15;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.pet-display:hover {
+    transform: scale(1.1);
+}
+
+.pet-display-animation {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    border: 2px solid #ffd700;
+    background: rgba(0, 0, 0, 0.5);
 }
 
 #travelers-screen {
@@ -513,6 +641,20 @@ button {
         font-size: 20px;
     }
 
+    .pet-selection-title {
+        font-size: 20px;
+    }
+    
+    .pet-option {
+        width: 220px;
+        height: 220px;
+    }
+    
+    .pet-animation-container {
+        width: 180px;
+        height: 180px;
+    }
+
     .reputation-icon,
     .inventory-icon {
         width: 30px;
@@ -558,132 +700,10 @@ button {
     .traveler-dialog {
         font-size: 12px;
     }
-}
 
-/* Add to your existing CSS */
-
-/* Pet selection screen */
-#pet-selection-screen {
-    background-image: url('assets/art/town_day.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.pet-selection-container {
-    width: 90%;
-    max-width: 400px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid #ffd700;
-    border-radius: 15px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    backdrop-filter: blur(5px);
-}
-
-.pet-selection-title {
-    font-size: 24px;
-    color: #ffd700;
-    margin-bottom: 20px;
-    text-align: center;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.pet-selection-subtitle {
-    font-size: 16px;
-    color: #ffffff;
-    margin-bottom: 30px;
-    text-align: center;
-    opacity: 0.9;
-}
-
-.pet-options {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-    margin-bottom: 30px;
-}
-
-.pet-option {
-    width: 100%;
-    border: 2px solid #ddbd13;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.pet-option:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-}
-
-.pet-option.selected {
-    border: 3px solid #ffd700;
-    background: rgba(100, 80, 20, 0.8);
-    box-shadow: 0 0 20px #ffd700;
-}
-
-.pet-animation {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 10px;
-}
-
-.pet-name {
-    font-size: 18px;
-    color: #ffd700;
-    font-weight: bold;
-    margin-top: 5px;
-}
-
-.confirm-pet-button {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #006400 0%, #008000 100%);
-    border: 2px solid #ffd700;
-    border-radius: 10px;
-    color: #ffffff;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.confirm-pet-button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.confirm-pet-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.pet-display {
-    position: absolute;
-    bottom: 80px;
-    right: 10px;
-    width: 80px;
-    height: 80px;
-    z-index: 15;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.pet-display:hover {
-    transform: scale(1.1);
-}
-
-.pet-display-animation {
-    width: 100%;
-    height: 100%;
-    border-radius: 10px;
-    border: 2px solid #ffd700;
-    background: rgba(0, 0, 0, 0.5);
+    .pet-display {
+        width: 60px;
+        height: 60px;
+        bottom: 70px;
+    }
 }
