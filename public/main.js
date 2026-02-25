@@ -148,14 +148,13 @@ function setupPetSelection() {
             animation.load();
             animation.play().catch(e => console.log('Animation play failed:', e));
             
-            setTimeout(() => {
-                animation.pause();
+            animation.onended = () => {
                 animation.style.display = 'none';
                 image.style.display = 'block';
                 
                 const nextDelay = 5000 + Math.random() * 10000;
                 setTimeout(playRandomAnimation, nextDelay);
-            }, 3000);
+            };
         }
         
         const initialDelay = 5000 + Math.random() * 10000;
