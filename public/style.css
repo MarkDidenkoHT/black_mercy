@@ -612,15 +612,10 @@ button {
 
 .pet-option {
     width: 100%;
-    background: rgba(50, 50, 50, 0.8);
     border: 2px solid #ddbd13;
     border-radius: 10px;
-    padding: 15px;
     cursor: pointer;
     transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 .pet-option:hover {
@@ -632,15 +627,6 @@ button {
     border: 3px solid #ffd700;
     background: rgba(100, 80, 20, 0.8);
     box-shadow: 0 0 20px #ffd700;
-}
-
-.pet-animation-container {
-    width: 150px;
-    height: 150px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .pet-animation {
@@ -700,29 +686,4 @@ button {
     border-radius: 10px;
     border: 2px solid #ffd700;
     background: rgba(0, 0, 0, 0.5);
-}
-
-@media (max-width: 480px) {
-    .pet-selection-title {
-        font-size: 20px;
-    }
-    
-    .pet-selection-subtitle {
-        font-size: 14px;
-    }
-    
-    .pet-animation-container {
-        width: 120px;
-        height: 120px;
-    }
-    
-    .pet-name {
-        font-size: 16px;
-    }
-    
-    .pet-display {
-        width: 60px;
-        height: 60px;
-        bottom: 70px;
-    }
 }
