@@ -12,6 +12,8 @@ let currentTravelers = [];
 let currentTravelerIndex = 0;
 let currentDayTravelers = [];
 let currentTraveler = null;
+let currentPet = null;
+let petAnimationTimers = [];
 
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
@@ -24,6 +26,11 @@ const itemDescriptions = {
 };
 
 const dayPhases = ['Dawn', 'Morning', 'Noon', 'Afternoon', 'Dusk', 'Night'];
+
+const petAnimations = {
+    cat: ['pet_cat_animation_1.mp4', 'pet_cat_animation_2.mp4'],
+    owl: ['pet_owl_animation_1.mp4']
+};
 
 async function initializeApp() {
     try {
@@ -54,26 +61,38 @@ async function initializeApp() {
 
         const data = await response.json();
         currentPlayer = data.player;
-        currentSession = data.session;
-        currentPopulation = data.population;
-        currentHiddenReputation = data.hidden_reputation;
-        currentInventory = data.inventory;
-        currentAvailableInteractions = data.available_interactions || ['check-papers', 'let-in', 'push-out'];
-        currentEvents = data.events || [];
-        currentTravelers = data.travelers || [];
-
-        updateDayDisplay();
-        renderPopulation();
-        renderInventory();
-        renderEvents();
-        setupModalEvents();
-        setupBottomButtons();
-        setupTravelersScreen();
-        checkForPendingTravelers();
-
+        
         finishLoadingBar();
         await new Promise(resolve => setTimeout(resolve, 600));
-        switchScreen('loading-screen', 'home-screen');
+        
+        if (data.needsPetSelection) {
+            switchScreen('loading-screen', 'pet-selection-screen');
+            setupPetSelection();
+        } else {
+            currentSession = data.session;
+            currentPopulation = data.population;
+            currentHiddenReputation = data.hidden_reputation;
+            currentInventory = data.inventory;
+            currentAvailableInteractions = data.available_interactions || ['check-papers', 'let-in', 'push-out'];
+            currentEvents = data.events || [];
+            currentTravelers = data.travelers || [];
+            currentPet = data.pet || null;
+            
+            updateDayDisplay();
+            renderPopulation();
+            renderInventory();
+            renderEvents();
+            setupModalEvents();
+            setupBottomButtons();
+            setupTravelersScreen();
+            checkForPendingTravelers();
+            
+            if (currentPet) {
+                setupPetDisplay(currentPet);
+            }
+            
+            switchScreen('loading-screen', 'home-screen');
+        }
 
     } catch (error) {
         console.error('Init failed:', error.message, error.stack);
@@ -103,6 +122,171 @@ function finishLoadingBar() {
     if (!bar) return;
     setTimeout(() => { bar.style.width = '100%'; }, 400);
 }
+
+function setupPetSelection() {
+    const catOption = document.getElementById('pet-cat-option');
+    const owlOption = document.getElementById('pet-owl-option');
+    const confirmButton = document.getElementById('confirm-pet-button');
+    
+    let selectedPet = null;
+    
+    // Setup video elements
+    const catVideo = document.getElementById('cat-animation');
+    const owlVideo = document.getElementById('owl-animation');
+    
+    if (catVideo) {
+        catVideo.play().catch(e => console.log('Cat video autoplay prevented:', e));
+    }
+    
+    if (owlVideo) {
+        owlVideo.play().catch(e => console.log('Owl video autoplay prevented:', e));
+    }
+    
+    catOption.addEventListener('click', () => {
+        catOption.classList.add('selected');
+        owlOption.classList.remove('selected');
+        selectedPet = 'cat';
+        confirmButton.disabled = false;
+    });
+    
+    owlOption.addEventListener('click', () => {
+        owlOption.classList.add('selected');
+        catOption.classList.remove('selected');
+        selectedPet = 'owl';
+        confirmButton.disabled = false;
+    });
+    
+    confirmButton.addEventListener('click', async () => {
+        if (!selectedPet) return;
+        
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'Choosing...';
+        
+        try {
+            const initData = tg.initDataUnsafe;
+            const chatId = initData?.user?.id?.toString() || 'test_user';
+            
+            const response = await fetch('/api/pet/select', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chatId,
+                    pet: selectedPet
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to select pet');
+            }
+            
+            const data = await response.json();
+            
+            currentSession = data.session;
+            currentPopulation = data.population;
+            currentHiddenReputation = data.hidden_reputation;
+            currentInventory = data.inventory;
+            currentAvailableInteractions = data.available_interactions;
+            currentEvents = data.events;
+            currentTravelers = data.travelers;
+            currentPet = data.pet;
+            
+            updateDayDisplay();
+            renderPopulation();
+            renderInventory();
+            renderEvents();
+            setupModalEvents();
+            setupBottomButtons();
+            setupTravelersScreen();
+            checkForPendingTravelers();
+            
+            setupPetDisplay(currentPet);
+            
+            switchScreen('pet-selection-screen', 'home-screen');
+            
+        } catch (error) {
+            console.error('Pet selection error:', error);
+            alert('Failed to select pet. Please try again.');
+            confirmButton.disabled = false;
+            confirmButton.textContent = 'Confirm Choice';
+        }
+    });
+}
+
+function setupPetDisplay(petType) {
+    const petDisplay = document.getElementById('pet-display');
+    const petAnimation = document.getElementById('pet-display-animation');
+    
+    if (!petDisplay || !petAnimation) return;
+    
+    petDisplay.style.display = 'block';
+    
+    // Clear any existing timers
+    petAnimationTimers.forEach(timer => clearTimeout(timer));
+    petAnimationTimers = [];
+    
+    const animations = petAnimations[petType];
+    let currentAnimationIndex = 0;
+    
+    function playNextAnimation() {
+        if (!petAnimation) return;
+        
+        const animationFile = animations[currentAnimationIndex];
+        petAnimation.src = `assets/art/pets/${animationFile}`;
+        petAnimation.load();
+        petAnimation.play().catch(e => console.log('Pet animation play prevented:', e));
+        
+        // Schedule next animation change
+        const nextIndex = (currentAnimationIndex + 1) % animations.length;
+        const delay = 5000 + Math.random() * 5000; // Random between 5-10 seconds
+        
+        const timer = setTimeout(() => {
+            currentAnimationIndex = nextIndex;
+            playNextAnimation();
+        }, delay);
+        
+        petAnimationTimers.push(timer);
+    }
+    
+    playNextAnimation();
+    
+    // Click handler for pet interaction
+    petDisplay.addEventListener('click', () => {
+        // Show a random interaction message
+        const messages = {
+            cat: [
+                "Your cat purrs contentedly.",
+                "The cat rubs against your leg.",
+                "Your feline companion watches you with knowing eyes."
+            ],
+            owl: [
+                "Your owl hoots softly.",
+                "The owl turns its head almost all the way around.",
+                "Your feathered friend blinks slowly at you."
+            ]
+        };
+        
+        const petMessages = messages[petType] || ["Your pet looks at you curiously."];
+        const randomMessage = petMessages[Math.floor(Math.random() * petMessages.length)];
+        
+        // Show a temporary event
+        const eventItem = document.createElement('div');
+        eventItem.className = 'event-item';
+        eventItem.textContent = randomMessage;
+        
+        const eventsList = document.getElementById('events-list');
+        if (eventsList) {
+            eventsList.insertBefore(eventItem, eventsList.firstChild);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (eventItem.parentNode) {
+                    eventItem.remove();
+                }
+            }, 5000);
+        }
+    });
+}
+
 function updateDayDisplay() {
     const dayElement = document.getElementById('current-day');
     if (!dayElement) {
@@ -156,7 +340,6 @@ function renderInventory() {
     allItems.forEach(item => {
         const count = currentInventory[item.key] || 0;
         
-        // Only render items that player has
         if (count > 0) {
             const invItem = document.createElement('div');
             invItem.className = 'inventory-item';
@@ -348,7 +531,6 @@ async function loadTravelersForCurrentDay() {
         
         currentDayTravelers = data.travelers.filter(t => !t.complete);
         
-        // Update available interactions from server response
         if (data.available_interactions) {
             currentAvailableInteractions = data.available_interactions;
         }
@@ -399,7 +581,6 @@ function loadCurrentTraveler() {
 }
 
 function setupDynamicActionButtons() {
-    // Get action button containers
     const actionRow1 = document.querySelectorAll('.action-row')[0];
     const actionRow2 = document.querySelectorAll('.action-row')[1];
     
@@ -408,11 +589,9 @@ function setupDynamicActionButtons() {
         return;
     }
     
-    // Clear existing action buttons
     actionRow1.innerHTML = '';
     actionRow2.innerHTML = '';
     
-    // Map interaction IDs to button data
     const interactionMap = {
         'check-papers': {
             row: 1,
@@ -455,17 +634,14 @@ function setupDynamicActionButtons() {
         }
     };
     
-    // Create buttons based on available interactions
     currentAvailableInteractions.forEach(interactionId => {
         const buttonData = interactionMap[interactionId];
         
         if (!buttonData) return;
         
-        // For action buttons (row 1), check if player has the required item
         if (buttonData.row === 1) {
             const hasItem = currentInventory[buttonData.requiresItem] && currentInventory[buttonData.requiresItem] > 0;
             
-            // Only create button if player has the item
             if (hasItem) {
                 const button = document.createElement('button');
                 button.className = `action-button ${buttonData.class}`;
@@ -474,7 +650,6 @@ function setupDynamicActionButtons() {
                 actionRow1.appendChild(button);
             }
         } 
-        // For decision buttons (row 2), always create
         else if (buttonData.row === 2) {
             const button = document.createElement('button');
             button.className = `action-button ${buttonData.class}`;
@@ -556,7 +731,6 @@ async function handleTravelerAction(action) {
     await updateInventory(item, -1);
     renderInventory();
     
-    // Refresh action buttons after inventory update
     setupDynamicActionButtons();
 }
 
