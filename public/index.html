@@ -46,7 +46,7 @@
             </div>
         </div>
 
-        <div class="pet-description" id="pet-description">Select a companion to learn about them</div>
+        <div class="pet-description" id="pet-description"></div>
 
         <button class="confirm-pet-button" id="confirm-pet-button" disabled>Confirm Choice</button>
     </div>
@@ -58,15 +58,16 @@
                 <video class="pet-video" id="naming-pet-video" muted playsinline preload="none"></video>
             </div>
             <h2 class="naming-title">Name Your Companion</h2>
-            <p class="naming-hint">Leave blank to keep them nameless</p>
-            <input
-                type="text"
-                class="pet-name-input"
-                id="pet-name-input"
-                placeholder="Enter a name..."
-                maxlength="24"
-                autocomplete="off"
-            >
+            <div class="naming-input-row">
+                <input
+                    type="text"
+                    class="pet-name-input"
+                    id="pet-name-input"
+                    maxlength="24"
+                    autocomplete="off"
+                >
+                <button class="dice-button" id="dice-button">⚄</button>
+            </div>
             <button class="confirm-pet-button" id="begin-button">Begin</button>
         </div>
     </div>

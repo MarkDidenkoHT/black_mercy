@@ -203,11 +203,14 @@ button {
     text-align: center;
     color: #ffffff;
     font-size: 14px;
-    padding: 10px;
-    min-height: 50px;
-    max-width: 400px;
-    margin-bottom: 15px;
+    padding: 0 10px;
+    height: 50px;
+    max-width: 480px;
     line-height: 1.5;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #pet-naming-screen {
@@ -245,15 +248,15 @@ button {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.naming-hint {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.45);
-    text-align: center;
-    margin-top: -8px;
+.naming-input-row {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 .pet-name-input {
-    width: 100%;
+    flex: 1;
     padding: 14px 15px;
     background: rgba(0, 0, 0, 0.5);
     border: 2px solid #ddbd13;
@@ -266,13 +269,30 @@ button {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.pet-name-input::placeholder {
-    color: rgba(255, 255, 255, 0.3);
-}
-
 .pet-name-input:focus {
     border-color: #ffd700;
     box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+}
+
+.dice-button {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #ddbd13;
+    border-radius: 10px;
+    color: #ffd700;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.dice-button:active {
+    transform: rotate(20deg) scale(0.92);
+    border-color: #ffd700;
 }
 
 .confirm-pet-button {

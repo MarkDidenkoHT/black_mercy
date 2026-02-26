@@ -18,6 +18,16 @@ const Pet = (() => {
         ],
     };
 
+    const RANDOM_NAMES = {
+        cat: ['Ash', 'Sable', 'Ember', 'Mira', 'Dusk'],
+        owl: ['Sage', 'Oryn', 'Vex', 'Lumen', 'Nox'],
+    };
+
+    function randomName(petType) {
+        const pool = RANDOM_NAMES[petType] || ['Shadow'];
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
     function createAnimationController(containerEl, petType) {
         const img   = containerEl.querySelector('.pet-static');
         const video = containerEl.querySelector('.pet-video');
@@ -156,18 +166,35 @@ const Pet = (() => {
             video.appendChild(source);
         });
 
-        nameInput.value = '';
+        nameInput.value = randomName(petType);
         nameInput.focus();
+        nameInput.select();
+
+        const diceBtn = document.getElementById('dice-button');
+        if (diceBtn) {
+            diceBtn.addEventListener('click', () => {
+                nameInput.value = randomName(petType);
+                nameInput.focus();
+                nameInput.select();
+            });
+        }
 
         const ctrl = createAnimationController(preview, petType);
         preview.addEventListener('click', () => ctrl.playAnimation());
 
         beginBtn.addEventListener('click', async () => {
+            const name = nameInput.value.trim();
+            if (!name) {
+                nameInput.value = randomName(petType);
+                nameInput.select();
+                return;
+            }
+
             beginBtn.disabled    = true;
             beginBtn.textContent = 'Beginning…';
 
             try {
-                await onConfirm({ type: petType, name: nameInput.value.trim() });
+                await onConfirm({ type: petType, name });
             } catch (err) {
                 console.error('Pet: confirm failed', err);
                 alert('Failed to start. Please try again.');
