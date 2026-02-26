@@ -22,21 +22,26 @@
         <h1 class="pet-selection-title">Choose Your Companion</h1>
         
         <div class="pet-options">
+            <!-- Cat -->
             <div class="pet-option" id="pet-cat-option">
-                <img src="assets/art/pets/pet_cat_1.webp" class="pet-media" id="cat-media">
-                <video class="pet-media" id="cat-animation" muted playsinline style="display: none;">
+                <img src="assets/art/pets/pet_cat_1.webp" class="pet-static" alt="Cat">
+                <video class="pet-video" muted playsinline preload="none">
                     <source src="assets/art/pets/pet_cat_animation_1.mp4" type="video/mp4">
                     <source src="assets/art/pets/pet_cat_animation_2.mp4" type="video/mp4">
                 </video>
+                <div class="pet-tap-hint">Tap to preview</div>
             </div>
             
+            <!-- Owl -->
             <div class="pet-option" id="pet-owl-option">
-                <img src="assets/art/pets/pet_owl_1.webp" class="pet-media" id="owl-media">
-                <video class="pet-media" id="owl-animation" muted playsinline style="display: none;">
+                <img src="assets/art/pets/pet_owl_1.webp" class="pet-static" alt="Owl">
+                <video class="pet-video" muted playsinline preload="none">
                     <source src="assets/art/pets/pet_owl_animation_1.mp4" type="video/mp4">
                 </video>
+                <div class="pet-tap-hint">Tap to preview</div>
             </div>
             
+            <!-- Coming soon -->
             <div class="pet-option coming-soon" id="pet-fox-option">
                 <div class="coming-soon-text">COMING SOON</div>
             </div>
@@ -46,7 +51,7 @@
             </div>
         </div>
         
-        <div class="pet-description" id="pet-description">Select a pet to see its description</div>
+        <div class="pet-description" id="pet-description">Select a companion to learn about them</div>
         
         <button class="confirm-pet-button" id="confirm-pet-button" disabled>Confirm Choice</button>
     </div>
@@ -116,6 +121,7 @@
         </div>
     </div>
 
+    <script src="pet.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
