@@ -345,14 +345,23 @@ function setActiveButton(active, buttons) {
     });
 }
 
-const BUILDING_TEMPLATES = [
-    { id: 1, name: 'Church',      emoji: '⛪', x: 20, y: 30 },
-    { id: 2, name: 'Apothecary', emoji: '⚗️',  x: 75, y: 25 },
-    { id: 3, name: 'Barracks',   emoji: '⚔️',  x: 50, y: 20 },
-    { id: 4, name: 'Market',     emoji: '🏪',  x: 25, y: 60 },
-    { id: 5, name: 'Inn',        emoji: '🏠',  x: 70, y: 60 },
-    { id: 6, name: 'Well',       emoji: '🪣',  x: 50, y: 70 },
-];
+const BUILDING_POSITIONS = {
+    1: { x: 20, y: 30 },
+    2: { x: 75, y: 25 },
+    3: { x: 55, y: 55 },
+    4: { x: 25, y: 60 },
+    5: { x: 70, y: 60 },
+    6: { x: 50, y: 70 },
+};
+
+const BUILDING_EMOJIS = {
+    church:          '⛪',
+    apothecary:      '⚗️',
+    inn:             '🏠',
+    'post office':   '✉️',
+    'fortune teller':'🔮',
+    blacksmith:      '⚒️',
+};
 
 const PHASE_BACKGROUNDS = {
     Dawn:      'assets/art/town_dawn.jpg',
@@ -364,42 +373,44 @@ const PHASE_BACKGROUNDS = {
 };
 
 function openCityScreen() {
-    const phase      = getCurrentPhase();
-    const bg         = document.getElementById('city-bg');
-    const label      = document.getElementById('city-phase-label');
+    const phase       = getCurrentPhase();
+    const bg          = document.getElementById('city-bg');
+    const label       = document.getElementById('city-phase-label');
     const buildingsEl = document.getElementById('city-buildings');
-    const backBtn    = document.getElementById('city-back-button');
+    const backBtn     = document.getElementById('city-back-button');
 
     bg.style.backgroundImage = `url('${PHASE_BACKGROUNDS[phase] || PHASE_BACKGROUNDS.Noon}')`;
     label.textContent = `Day ${currentSession.day} — ${phase}`;
 
     buildingsEl.innerHTML = '';
 
-    BUILDING_TEMPLATES.forEach(template => {
-        const structure = currentStructures.find(s => Number(s.structure) === template.id);
-        const isActive  = structure?.is_active || false;
-        const pop       = structure
-            ? (parseInt(structure.status?.human     || 0)
-             + parseInt(structure.status?.infected  || 0)
-             + parseInt(structure.status?.possessed || 0))
-            : 0;
+    currentStructures.forEach(structure => {
+        const template   = structure.structures_templates;
+        const templateId = Number(structure.structure);
+        const pos        = BUILDING_POSITIONS[templateId] || { x: 50, y: 50 };
+        const name       = template?.name || `Building ${templateId}`;
+        const emoji      = BUILDING_EMOJIS[name.toLowerCase()] || '🏛️';
+        const isActive   = structure.is_active || false;
+        const pop        = parseInt(structure.status?.human     || 0)
+                         + parseInt(structure.status?.infected  || 0)
+                         + parseInt(structure.status?.possessed || 0);
 
         const marker = document.createElement('div');
-        marker.className = 'building-marker' + (isActive ? '' : ' inactive');
-        marker.style.left = `${template.x}%`;
-        marker.style.top  = `${template.y}%`;
+        marker.className  = 'building-marker' + (isActive ? '' : ' inactive');
+        marker.style.left = `${pos.x}%`;
+        marker.style.top  = `${pos.y}%`;
 
         marker.innerHTML = `
             <div class="building-icon-wrap">
-                <div class="building-badge">${template.emoji}</div>
+                <div class="building-badge">${emoji}</div>
                 ${isActive ? `<div class="building-pop">${pop}</div>` : ''}
             </div>
-            <div class="building-label">${template.name}</div>
+            <div class="building-label">${name}</div>
         `;
 
         if (isActive) {
             marker.addEventListener('click', () => {
-                console.log(`[Building] Clicked: ${template.name} (id=${template.id})`, { structure, pop });
+                console.log(`[Building] Clicked: ${name} (template_id=${templateId})`, { structure, pop });
             });
         }
 

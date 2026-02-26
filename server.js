@@ -156,7 +156,7 @@ app.post('/api/auth/check', async (req, res) => {
 
       const { data: structuresData } = await supabase
         .from('structures')
-        .select('*')
+        .select('*, structures_templates(id, name, effects)')
         .eq('player', existingPlayer.id)
         .eq('session', activeSession.id);
 
@@ -271,7 +271,7 @@ app.post('/api/pet/select', async (req, res) => {
 
     const { data: newStructuresData } = await supabase
       .from('structures')
-      .select('*')
+      .select('*, structures_templates(id, name, effects)')
       .eq('player', player.id)
       .eq('session', newSession.id);
 
