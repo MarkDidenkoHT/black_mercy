@@ -1,10 +1,3 @@
-/**
- * main.js
- * ─────────────────────────────────────────────────────────────
- * Core game logic. Pet behaviour lives in pet.js.
- * ─────────────────────────────────────────────────────────────
- */
-
 const tg = window.Telegram.WebApp;
 tg.expand();
 
@@ -98,28 +91,35 @@ function _initPetSelection() {
             return data.description;
         },
 
-        onConfirm: async (selectedPet) => {
-            const initData = tg.initDataUnsafe;
-            const chatId   = initData?.user?.id?.toString() || 'test_user';
+        onPetChosen: (petType) => {
+            switchScreen('pet-selection-screen', 'pet-naming-screen');
 
-            const res = await fetch('/api/pet/select', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chatId, pet: selectedPet })
+            Pet.setupNaming({
+                petType,
+                onConfirm: async (pet) => {
+                    const initData = tg.initDataUnsafe;
+                    const chatId   = initData?.user?.id?.toString() || 'test_user';
+
+                    const res = await fetch('/api/pet/select', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chatId, pet })
+                    });
+
+                    if (!res.ok) throw new Error('Failed to select pet');
+
+                    const data = await res.json();
+                    _applySessionData(data);
+
+                    setupModalEvents();
+                    setupBottomButtons();
+                    setupTravelersScreen();
+                    checkForPendingTravelers();
+                    Pet.setupHomeWidget(currentPet);
+
+                    switchScreen('pet-naming-screen', 'home-screen');
+                }
             });
-
-            if (!res.ok) throw new Error('Failed to select pet');
-
-            const data = await res.json();
-            _applySessionData(data);
-
-            setupModalEvents();
-            setupBottomButtons();
-            setupTravelersScreen();
-            checkForPendingTravelers();
-            Pet.setupHomeWidget(currentPet);
-
-            switchScreen('pet-selection-screen', 'home-screen');
         }
     });
 }
@@ -619,7 +619,6 @@ function switchScreen(fromId, toId) {
     if (from) from.classList.remove('active');
     if (to)   to.classList.add('active');
 }
-
 
 window.addEventListener('load', initializeApp);
 tg.ready();

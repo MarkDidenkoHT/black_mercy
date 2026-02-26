@@ -20,9 +20,8 @@
 
     <div id="pet-selection-screen" class="screen">
         <h1 class="pet-selection-title">Choose Your Companion</h1>
-        
+
         <div class="pet-options">
-            <!-- Cat -->
             <div class="pet-option" id="pet-cat-option">
                 <img src="assets/art/pets/pet_cat_1.webp" class="pet-static" alt="Cat">
                 <video class="pet-video" muted playsinline preload="none">
@@ -30,37 +29,46 @@
                     <source src="assets/art/pets/pet_cat_animation_2.mp4" type="video/mp4">
                 </video>
             </div>
-            
-            <!-- Owl -->
+
             <div class="pet-option" id="pet-owl-option">
                 <img src="assets/art/pets/pet_owl_1.webp" class="pet-static" alt="Owl">
                 <video class="pet-video" muted playsinline preload="none">
                     <source src="assets/art/pets/pet_owl_animation_1.mp4" type="video/mp4">
                 </video>
             </div>
-            
-            <!-- Coming soon -->
+
             <div class="pet-option coming-soon" id="pet-fox-option">
                 <div class="coming-soon-text">COMING SOON</div>
             </div>
-            
+
             <div class="pet-option coming-soon" id="pet-raven-option">
                 <div class="coming-soon-text">COMING SOON</div>
             </div>
         </div>
-        
+
         <div class="pet-description" id="pet-description">Select a companion to learn about them</div>
 
-        <input
-            type="text"
-            class="pet-name-input"
-            id="pet-name-input"
-            placeholder="Name your companion..."
-            maxlength="24"
-            disabled
-        >
-        
         <button class="confirm-pet-button" id="confirm-pet-button" disabled>Confirm Choice</button>
+    </div>
+
+    <div id="pet-naming-screen" class="screen">
+        <div class="naming-container">
+            <div class="naming-pet-preview" id="naming-pet-preview">
+                <img class="pet-static" id="naming-pet-img" src="" alt="">
+                <video class="pet-video" id="naming-pet-video" muted playsinline preload="none"></video>
+            </div>
+            <h2 class="naming-title">Name Your Companion</h2>
+            <p class="naming-hint">Leave blank to keep them nameless</p>
+            <input
+                type="text"
+                class="pet-name-input"
+                id="pet-name-input"
+                placeholder="Enter a name..."
+                maxlength="24"
+                autocomplete="off"
+            >
+            <button class="confirm-pet-button" id="begin-button">Begin</button>
+        </div>
     </div>
 
     <div id="home-screen" class="screen">
@@ -92,15 +100,15 @@
                 <button class="back-button" id="back-button">← Back</button>
                 <div class="traveler-day" id="traveler-day">Day 1</div>
             </div>
-            
+
             <div class="traveler-art-container">
                 <img id="traveler-art" src="" alt="Traveler" class="traveler-art">
             </div>
-            
+
             <div class="traveler-dialog-container">
                 <div id="traveler-dialog" class="traveler-dialog"></div>
             </div>
-            
+
             <div class="traveler-actions" id="traveler-actions">
                 <div class="action-row">
                     <button class="action-button check-papers" id="check-papers">Check Papers</button>

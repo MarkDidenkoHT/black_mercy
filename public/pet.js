@@ -74,16 +74,15 @@ const Pet = (() => {
         return { playAnimation };
     }
 
-    function setupSelection({ onConfirm, fetchDescription }) {
+    function setupSelection({ onPetChosen, fetchDescription }) {
         const catOption   = document.getElementById('pet-cat-option');
         const owlOption   = document.getElementById('pet-owl-option');
         const foxOption   = document.getElementById('pet-fox-option');
         const ravenOption = document.getElementById('pet-raven-option');
         const confirmBtn  = document.getElementById('confirm-pet-button');
         const descEl      = document.getElementById('pet-description');
-        const nameInput   = document.getElementById('pet-name-input');
 
-        if (!catOption || !owlOption || !confirmBtn || !descEl || !nameInput) {
+        if (!catOption || !owlOption || !confirmBtn || !descEl) {
             console.error('Pet: selection screen elements not found.');
             return;
         }
@@ -107,17 +106,11 @@ const Pet = (() => {
 
         function selectPet(pet, el) {
             allOptions.forEach(o => o.classList.remove('selected'));
-
             if (pet !== 'fox' && pet !== 'raven') {
                 el.classList.add('selected');
-                selectedPet          = pet;
-                confirmBtn.disabled  = false;
-                nameInput.disabled   = false;
-                nameInput.focus();
-            } else {
-                nameInput.disabled = true;
+                selectedPet         = pet;
+                confirmBtn.disabled = false;
             }
-
             showDescription(pet);
         }
 
@@ -134,19 +127,59 @@ const Pet = (() => {
         foxOption.addEventListener('click',   () => selectPet('fox',   foxOption));
         ravenOption.addEventListener('click', () => selectPet('raven', ravenOption));
 
-        confirmBtn.addEventListener('click', async () => {
+        confirmBtn.addEventListener('click', () => {
             if (!selectedPet) return;
+            onPetChosen(selectedPet);
+        });
+    }
 
-            confirmBtn.disabled    = true;
-            confirmBtn.textContent = 'Choosing…';
+    function setupNaming({ petType, onConfirm }) {
+        const img       = document.getElementById('naming-pet-img');
+        const video     = document.getElementById('naming-pet-video');
+        const nameInput = document.getElementById('pet-name-input');
+        const beginBtn  = document.getElementById('begin-button');
+        const preview   = document.getElementById('naming-pet-preview');
+
+        if (!img || !video || !nameInput || !beginBtn || !preview) {
+            console.error('Pet: naming screen elements not found.');
+            return;
+        }
+
+        img.src = `assets/art/pets/pet_${petType}_1.webp`;
+        img.alt = petType;
+        video.innerHTML = '';
+
+        (ANIMATIONS[petType] || []).forEach(f => {
+            const source = document.createElement('source');
+            source.src   = `assets/art/pets/${f}`;
+            source.type  = 'video/mp4';
+            video.appendChild(source);
+        });
+
+        nameInput.value = '';
+        nameInput.focus();
+
+        const ctrl = createAnimationController(preview, petType);
+        preview.addEventListener('click', () => ctrl.playAnimation());
+
+        beginBtn.addEventListener('click', async () => {
+            beginBtn.disabled    = true;
+            beginBtn.textContent = 'Beginning…';
 
             try {
-                await onConfirm({ type: selectedPet, name: nameInput.value.trim() });
+                await onConfirm({ type: petType, name: nameInput.value.trim() });
             } catch (err) {
                 console.error('Pet: confirm failed', err);
-                alert('Failed to select pet. Please try again.');
-                confirmBtn.disabled    = false;
-                confirmBtn.textContent = 'Confirm Choice';
+                alert('Failed to start. Please try again.');
+                beginBtn.disabled    = false;
+                beginBtn.textContent = 'Begin';
+            }
+        });
+
+        nameInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                beginBtn.click();
             }
         });
     }
@@ -196,7 +229,7 @@ const Pet = (() => {
         let message   = pool[Math.floor(Math.random() * pool.length)];
 
         if (name) {
-            message = message.replace(/^Your (cat|owl)/, `${name}`);
+            message = message.replace(/^Your (cat|owl)/, name);
         }
 
         const list = document.getElementById('events-list');
@@ -209,6 +242,6 @@ const Pet = (() => {
         setTimeout(() => { if (el.parentNode) el.remove(); }, 5000);
     }
 
-    return { setupSelection, setupHomeWidget };
+    return { setupSelection, setupNaming, setupHomeWidget };
 
 })();
