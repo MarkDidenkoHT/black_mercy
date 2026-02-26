@@ -27,56 +27,42 @@ const Pet = (() => {
             return { playAnimation: () => {} };
         }
 
-        const srcs = (ANIMATIONS[petType] || []).map(
-            f => `assets/art/pets/${f}`
-        );
-
+        const srcs = (ANIMATIONS[petType] || []).map(f => `assets/art/pets/${f}`);
         let isPlaying = false;
 
         function playAnimation() {
             if (isPlaying || srcs.length === 0) return;
             isPlaying = true;
 
-            const src = srcs[Math.floor(Math.random() * srcs.length)];
-            video.src = src;
+            video.src = srcs[Math.floor(Math.random() * srcs.length)];
             video.load();
 
             video.oncanplay = () => {
                 video.oncanplay = null;
-
-                video.style.display  = 'block';
-                video.style.opacity  = '0';
+                video.style.display = 'block';
+                video.style.opacity = '0';
 
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         video.style.opacity = '1';
                         img.style.opacity   = '0';
-
-                        video.play().catch(() => _resetToStatic());
+                        video.play().catch(() => resetToStatic());
                     });
                 });
             };
 
-            video.onended = () => {
-                _cleanup();
-                _resetToStatic();
-            };
-
-            video.onerror = () => {
-                _cleanup();
-                _resetToStatic();
-            };
+            video.onended = () => { cleanup(); resetToStatic(); };
+            video.onerror = () => { cleanup(); resetToStatic(); };
         }
 
-        function _cleanup() {
-            video.onended = null;
-            video.onerror = null;
+        function cleanup() {
+            video.onended  = null;
+            video.onerror  = null;
             video.oncanplay = null;
         }
 
-        function _resetToStatic() {
+        function resetToStatic() {
             img.style.opacity = '1';
-
             setTimeout(() => {
                 video.style.opacity = '0';
                 video.style.display = 'none';
@@ -87,7 +73,6 @@ const Pet = (() => {
 
         return { playAnimation };
     }
-
 
     function setupSelection({ onConfirm, fetchDescription }) {
         const catOption   = document.getElementById('pet-cat-option');
@@ -104,7 +89,7 @@ const Pet = (() => {
 
         const catCtrl = createAnimationController(catOption, 'cat');
         const owlCtrl = createAnimationController(owlOption, 'owl');
-
+        const allOptions = [catOption, owlOption, foxOption, ravenOption];
         let selectedPet = null;
 
         async function showDescription(pet) {
@@ -113,24 +98,19 @@ const Pet = (() => {
                 return;
             }
             try {
-                const text = await fetchDescription(pet);
-                descEl.textContent = text;
+                descEl.textContent = await fetchDescription(pet);
             } catch (e) {
                 console.error('Pet: failed to load description', e);
             }
         }
 
-        const allOptions = [catOption, owlOption, foxOption, ravenOption];
-
         function selectPet(pet, el) {
             allOptions.forEach(o => o.classList.remove('selected'));
-
             if (pet !== 'fox' && pet !== 'raven') {
                 el.classList.add('selected');
                 selectedPet = pet;
                 confirmBtn.disabled = false;
             }
-
             showDescription(pet);
         }
 
@@ -149,21 +129,18 @@ const Pet = (() => {
 
         confirmBtn.addEventListener('click', async () => {
             if (!selectedPet) return;
-
-            confirmBtn.disabled  = true;
+            confirmBtn.disabled    = true;
             confirmBtn.textContent = 'Choosing…';
-
             try {
                 await onConfirm(selectedPet);
             } catch (err) {
                 console.error('Pet: confirm failed', err);
                 alert('Failed to select pet. Please try again.');
-                confirmBtn.disabled  = false;
+                confirmBtn.disabled    = false;
                 confirmBtn.textContent = 'Confirm Choice';
             }
         });
     }
-
 
     function setupHomeWidget(petType) {
         const container = document.getElementById('pet-display');
@@ -178,16 +155,16 @@ const Pet = (() => {
         img.className = 'pet-display-media pet-static';
 
         const video = document.createElement('video');
-        video.className   = 'pet-display-media pet-video';
-        video.muted       = true;
-        video.playsInline = true;
-        video.loop        = false;
+        video.className    = 'pet-display-media pet-video';
+        video.muted        = true;
+        video.playsInline  = true;
+        video.loop         = false;
 
         (ANIMATIONS[petType] || []).forEach(f => {
-            const src = document.createElement('source');
-            src.src  = `assets/art/pets/${f}`;
-            src.type = 'video/mp4';
-            video.appendChild(src);
+            const source = document.createElement('source');
+            source.src  = `assets/art/pets/${f}`;
+            source.type = 'video/mp4';
+            video.appendChild(source);
         });
 
         container.appendChild(img);
@@ -197,28 +174,23 @@ const Pet = (() => {
 
         container.addEventListener('click', () => {
             ctrl.playAnimation();
-            _showFlavourMessage(petType);
+            showFlavourMessage(petType);
         });
     }
 
-    function _showFlavourMessage(petType) {
+    function showFlavourMessage(petType) {
         const pool    = FLAVOUR[petType] || ["Your pet looks at you curiously."];
         const message = pool[Math.floor(Math.random() * pool.length)];
-
-        const eventsList = document.getElementById('events-list');
-        if (!eventsList) return;
+        const list    = document.getElementById('events-list');
+        if (!list) return;
 
         const el = document.createElement('div');
-        el.className  = 'event-item';
+        el.className   = 'event-item';
         el.textContent = message;
-
-        eventsList.insertBefore(el, eventsList.firstChild);
+        list.insertBefore(el, list.firstChild);
         setTimeout(() => { if (el.parentNode) el.remove(); }, 5000);
     }
 
-    return {
-        setupSelection,
-        setupHomeWidget,
-    };
+    return { setupSelection, setupHomeWidget };
 
 })();

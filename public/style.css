@@ -61,7 +61,7 @@ button {
 
 .loading-bar-track {
     position: absolute;
-    bottom:28.7%;
+    bottom: 28.7%;
     left: 50%;
     transform: translateX(-50%);
     width: 90%;
@@ -131,30 +131,28 @@ button {
     border: 2px solid #ddbd13;
     border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     overflow: hidden;
     position: relative;
+    isolation: isolate;
 }
 
-.pet-option:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+.pet-option:active {
+    transform: scale(0.97);
 }
 
 .pet-option.selected {
     border: 3px solid #ffd700;
-    box-shadow: 0 0 20px #ffd700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
 }
 
 .pet-option.coming-soon {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
-    position: relative;
 }
 
-.pet-option.coming-soon:hover {
+.pet-option.coming-soon:active {
     transform: none;
-    box-shadow: none;
 }
 
 .coming-soon-text {
@@ -167,12 +165,58 @@ button {
     font-weight: bold;
     text-shadow: 1px 1px 2px black;
     z-index: 2;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.pet-media {
+.pet-static {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: opacity 0.3s ease;
+    opacity: 1;
+    z-index: 1;
+}
+
+.pet-video {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    display: none;
+    z-index: 2;
+    background: transparent;
+}
+
+.pet-tap-hint {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 5px 0;
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 215, 0, 0.85);
+    font-size: 11px;
+    text-align: center;
+    letter-spacing: 0.04em;
+    z-index: 3;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.pet-option.selected .pet-tap-hint {
+    opacity: 0;
 }
 
 .pet-description {
@@ -183,6 +227,7 @@ button {
     min-height: 50px;
     max-width: 400px;
     margin-bottom: 15px;
+    line-height: 1.5;
 }
 
 .confirm-pet-button {
@@ -196,7 +241,7 @@ button {
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
 .confirm-pet-button:hover:not(:disabled) {
@@ -204,8 +249,12 @@ button {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
+.confirm-pet-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
 .confirm-pet-button:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
 }
 
@@ -383,12 +432,8 @@ button {
 }
 
 @keyframes glow {
-    from {
-        box-shadow: 0 0 10px #ffd700;
-    }
-    to {
-        box-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700;
-    }
+    from { box-shadow: 0 0 10px #ffd700; }
+    to   { box-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700; }
 }
 
 .pet-display {
@@ -399,20 +444,39 @@ button {
     height: 80px;
     z-index: 15;
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform 0.2s ease;
+    overflow: hidden;
+    isolation: isolate;
 }
 
 .pet-display:hover {
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 .pet-display-media {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     border-radius: 10px;
     border: 2px solid #ffd700;
     background: rgba(0, 0, 0, 0.5);
     object-fit: cover;
+    transition: opacity 0.3s ease;
+}
+
+.pet-display-media.pet-static {
+    z-index: 1;
+    opacity: 1;
+}
+
+.pet-display-media.pet-video {
+    z-index: 2;
+    opacity: 0;
+    background: transparent;
 }
 
 #travelers-screen {
@@ -528,40 +592,13 @@ button {
     transition: all 0.3s ease;
 }
 
-.action-button.continue {
-    background: linear-gradient(135deg, #4a4a4a 0%, #2d2d2d 100%);
-    color: #ffffff;
-}
-
-.action-button.check-papers {
-    background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
-    color: #ffffff;
-}
-
-.action-button.holy-water {
-    background: linear-gradient(135deg, #1E90FF 0%, #00BFFF 100%);
-    color: #ffffff;
-}
-
-.action-button.medicinal-herbs {
-    background: linear-gradient(135deg, #228B22 0%, #32CD32 100%);
-    color: #ffffff;
-}
-
-.action-button.allow {
-    background: linear-gradient(135deg, #006400 0%, #008000 100%);
-    color: #ffffff;
-}
-
-.action-button.deny {
-    background: linear-gradient(135deg, #8B0000 0%, #B22222 100%);
-    color: #ffffff;
-}
-
-.action-button.execute {
-    background: linear-gradient(135deg, #4B0082 0%, #8A2BE2 100%);
-    color: #ffffff;
-}
+.action-button.continue        { background: linear-gradient(135deg, #4a4a4a 0%, #2d2d2d 100%); color: #ffffff; }
+.action-button.check-papers    { background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%); color: #ffffff; }
+.action-button.holy-water      { background: linear-gradient(135deg, #1E90FF 0%, #00BFFF 100%); color: #ffffff; }
+.action-button.medicinal-herbs { background: linear-gradient(135deg, #228B22 0%, #32CD32 100%); color: #ffffff; }
+.action-button.allow           { background: linear-gradient(135deg, #006400 0%, #008000 100%); color: #ffffff; }
+.action-button.deny            { background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); color: #ffffff; }
+.action-button.execute         { background: linear-gradient(135deg, #4B0082 0%, #8A2BE2 100%); color: #ffffff; }
 
 .action-button:disabled {
     opacity: 0.5;
