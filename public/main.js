@@ -55,8 +55,16 @@ async function initializeApp() {
         await new Promise(resolve => setTimeout(resolve, 600));
 
         if (data.needsPetSelection) {
-            switchScreen('loading-screen', 'pet-selection-screen');
-            _initPetSelection();
+            if (!data.player.tutorial) {
+                switchScreen('loading-screen', 'tutorial-screen');
+                _initTutorial(() => {
+                    switchScreen('tutorial-screen', 'pet-selection-screen');
+                    _initPetSelection();
+                });
+            } else {
+                switchScreen('loading-screen', 'pet-selection-screen');
+                _initPetSelection();
+            }
         } else {
             _applySessionData(data);
             setupModalEvents();
@@ -75,6 +83,51 @@ async function initializeApp() {
             loadingText.textContent   = 'Error loading. Please try again.';
         }
     }
+}
+
+function _initTutorial(onComplete) {
+    const slides    = Array.from(document.querySelectorAll('.tutorial-slide'));
+    const dotsEl    = document.getElementById('tutorial-dots');
+    const nextBtn   = document.getElementById('tutorial-next');
+    let current     = 0;
+
+    slides.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'tutorial-dot' + (i === 0 ? ' active' : '');
+        dotsEl.appendChild(dot);
+    });
+
+    const dots = Array.from(dotsEl.querySelectorAll('.tutorial-dot'));
+
+    function goTo(index) {
+        const prev = current;
+        slides[prev].classList.remove('active');
+        slides[prev].classList.add('exit');
+        setTimeout(() => slides[prev].classList.remove('exit'), 400);
+
+        current = index;
+        slides[current].classList.add('active');
+        dots.forEach((d, i) => d.classList.toggle('active', i === current));
+        nextBtn.textContent = current === slides.length - 1 ? 'Choose Your Companion' : 'Continue';
+    }
+
+    nextBtn.addEventListener('click', async () => {
+        if (current < slides.length - 1) {
+            goTo(current + 1);
+        } else {
+            nextBtn.disabled = true;
+            try {
+                await fetch('/api/tutorial/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chatId: currentPlayer.chat_id })
+                });
+            } catch (e) {
+                console.error('Tutorial complete error:', e);
+            }
+            onComplete();
+        }
+    });
 }
 
 function _initPetSelection() {

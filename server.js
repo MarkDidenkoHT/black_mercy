@@ -710,6 +710,33 @@ app.post('/api/pets/description', async (req, res) => {
   }
 });
 
+app.post('/api/tutorial/complete', async (req, res) => {
+  try {
+    const { chatId } = req.body;
+
+    if (!chatId) return res.status(400).json({ error: 'chatId is required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('id')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    await supabase
+      .from('players')
+      .update({ tutorial: true })
+      .eq('id', player.id);
+
+    return res.json({ success: true });
+
+  } catch (error) {
+    console.error('Tutorial complete error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
