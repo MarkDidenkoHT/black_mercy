@@ -56,8 +56,8 @@ const Pet = (() => {
         }
 
         function cleanup() {
-            video.onended        = null;
-            video.onerror        = null;
+            video.onended          = null;
+            video.onerror          = null;
             video.oncanplaythrough = null;
         }
 
@@ -81,16 +81,17 @@ const Pet = (() => {
         const ravenOption = document.getElementById('pet-raven-option');
         const confirmBtn  = document.getElementById('confirm-pet-button');
         const descEl      = document.getElementById('pet-description');
+        const nameInput   = document.getElementById('pet-name-input');
 
-        if (!catOption || !owlOption || !confirmBtn || !descEl) {
+        if (!catOption || !owlOption || !confirmBtn || !descEl || !nameInput) {
             console.error('Pet: selection screen elements not found.');
             return;
         }
 
-        const catCtrl = createAnimationController(catOption, 'cat');
-        const owlCtrl = createAnimationController(owlOption, 'owl');
+        const catCtrl    = createAnimationController(catOption, 'cat');
+        const owlCtrl    = createAnimationController(owlOption, 'owl');
         const allOptions = [catOption, owlOption, foxOption, ravenOption];
-        let selectedPet = null;
+        let selectedPet  = null;
 
         async function showDescription(pet) {
             if (pet === 'fox' || pet === 'raven') {
@@ -106,11 +107,17 @@ const Pet = (() => {
 
         function selectPet(pet, el) {
             allOptions.forEach(o => o.classList.remove('selected'));
+
             if (pet !== 'fox' && pet !== 'raven') {
                 el.classList.add('selected');
-                selectedPet = pet;
-                confirmBtn.disabled = false;
+                selectedPet          = pet;
+                confirmBtn.disabled  = false;
+                nameInput.disabled   = false;
+                nameInput.focus();
+            } else {
+                nameInput.disabled = true;
             }
+
             showDescription(pet);
         }
 
@@ -129,10 +136,12 @@ const Pet = (() => {
 
         confirmBtn.addEventListener('click', async () => {
             if (!selectedPet) return;
+
             confirmBtn.disabled    = true;
             confirmBtn.textContent = 'Choosing…';
+
             try {
-                await onConfirm(selectedPet);
+                await onConfirm({ type: selectedPet, name: nameInput.value.trim() });
             } catch (err) {
                 console.error('Pet: confirm failed', err);
                 alert('Failed to select pet. Please try again.');
@@ -142,28 +151,30 @@ const Pet = (() => {
         });
     }
 
-    function setupHomeWidget(petType) {
+    function setupHomeWidget(pet) {
         const container = document.getElementById('pet-display');
         if (!container) return;
 
+        const petType = pet.type || pet;
+
         container.style.display = 'block';
-        container.innerHTML = '';
+        container.innerHTML     = '';
 
         const img = document.createElement('img');
         img.src       = `assets/art/pets/pet_${petType}_1.webp`;
-        img.alt       = petType;
+        img.alt       = pet.name || petType;
         img.className = 'pet-display-media pet-static';
 
         const video = document.createElement('video');
-        video.className    = 'pet-display-media pet-video';
-        video.muted        = true;
-        video.playsInline  = true;
-        video.loop         = false;
+        video.className   = 'pet-display-media pet-video';
+        video.muted       = true;
+        video.playsInline = true;
+        video.loop        = false;
 
         (ANIMATIONS[petType] || []).forEach(f => {
             const source = document.createElement('source');
-            source.src  = `assets/art/pets/${f}`;
-            source.type = 'video/mp4';
+            source.src   = `assets/art/pets/${f}`;
+            source.type  = 'video/mp4';
             video.appendChild(source);
         });
 
@@ -174,14 +185,21 @@ const Pet = (() => {
 
         container.addEventListener('click', () => {
             ctrl.playAnimation();
-            showFlavourMessage(petType);
+            showFlavourMessage(pet);
         });
     }
 
-    function showFlavourMessage(petType) {
+    function showFlavourMessage(pet) {
+        const petType = pet.type || pet;
+        const name    = pet.name || null;
         const pool    = FLAVOUR[petType] || ["Your pet looks at you curiously."];
-        const message = pool[Math.floor(Math.random() * pool.length)];
-        const list    = document.getElementById('events-list');
+        let message   = pool[Math.floor(Math.random() * pool.length)];
+
+        if (name) {
+            message = message.replace(/^Your (cat|owl)/, `${name}`);
+        }
+
+        const list = document.getElementById('events-list');
         if (!list) return;
 
         const el = document.createElement('div');

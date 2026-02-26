@@ -118,16 +118,15 @@ button {
 .pet-options {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    width: 100%;
-    max-width: 400px;
+    gap: 3vw;
+    width: 92%;
+    max-width: 480px;
     margin-bottom: 15px;
-    justify-items: center;
 }
 
 .pet-option {
-    width: 180px;
-    height: 180px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     border: 2px solid #ddbd13;
     border-radius: 10px;
     cursor: pointer;
@@ -211,9 +210,39 @@ button {
     line-height: 1.5;
 }
 
+.pet-name-input {
+    width: calc(100% - 20px);
+    max-width: 480px;
+    padding: 12px 15px;
+    margin-bottom: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #ddbd13;
+    border-radius: 10px;
+    color: #ffffff;
+    font-family: 'Trajan Pro', 'Arial', sans-serif;
+    font-size: 16px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.pet-name-input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.pet-name-input:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.pet-name-input:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 .confirm-pet-button {
     width: calc(100% - 20px);
-    max-width: 400px;
+    max-width: 480px;
     padding: 15px;
     background: linear-gradient(135deg, #006400 0%, #008000 100%);
     border: 2px solid #ffd700;

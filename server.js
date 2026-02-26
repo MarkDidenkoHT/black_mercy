@@ -76,8 +76,8 @@ async function calculateStructureTotals(playerId, sessionId) {
   if (structures && structures.length > 0) {
     structures.forEach(structure => {
       if (structure.status) {
-        totals.human += parseInt(structure.status.human || 0);
-        totals.infected += parseInt(structure.status.infected || 0);
+        totals.human     += parseInt(structure.status.human     || 0);
+        totals.infected  += parseInt(structure.status.infected  || 0);
         totals.possessed += parseInt(structure.status.possessed || 0);
       }
     });
@@ -201,7 +201,10 @@ app.post('/api/pet/select', async (req, res) => {
       return res.status(400).json({ error: 'chatId and pet are required' });
     }
 
-    if (!['cat', 'owl'].includes(pet)) {
+    const petType = pet.type || pet;
+    const petName = pet.name || null;
+
+    if (!['cat', 'owl'].includes(petType)) {
       return res.status(400).json({ error: 'Invalid pet selection' });
     }
 
@@ -213,13 +216,15 @@ app.post('/api/pet/select', async (req, res) => {
 
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
+    const petData = { type: petType, name: petName };
+
     const { data: newSession, error: sessionError } = await supabase
       .from('sessions')
       .insert([{
         player: player.id,
         active: true,
         day: 1,
-        pet: pet
+        pet: petData
       }])
       .select()
       .single();
@@ -240,10 +245,11 @@ app.post('/api/pet/select', async (req, res) => {
       items: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 }
     }]);
 
+    const companionLabel = petName ? `${petName} the ${petType}` : `faithful ${petType}`;
     await supabase.from('events').insert([{
       player: player.id,
       session: newSession.id,
-      event: `Your adventure begins with your faithful ${pet} by your side.`
+      event: `Your adventure begins with your ${companionLabel} by your side.`
     }]);
 
     const { data: day1Travelers } = await supabase
@@ -263,9 +269,9 @@ app.post('/api/pet/select', async (req, res) => {
       hidden_reputation: { cult: 0, inquisition: 0, undead: 0 },
       inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
       available_interactions: ['check-papers', 'let-in', 'push-out'],
-      events: [{ event: `Your adventure begins with your faithful ${pet} by your side.` }],
+      events: [{ event: `Your adventure begins with your ${companionLabel} by your side.` }],
       travelers: day1Travelers || [],
-      pet: pet
+      pet: petData
     });
 
   } catch (error) {
@@ -361,9 +367,8 @@ app.post('/api/travelers/decision', async (req, res) => {
       .single();
 
     const travelerData = traveler.traveler;
-    
-    const structureId = travelerData.structure;
-    
+    const structureId  = travelerData.structure;
+
     const { data: structure } = await supabase
       .from('structures')
       .select('*')
@@ -376,7 +381,7 @@ app.post('/api/travelers/decision', async (req, res) => {
       return res.status(404).json({ error: 'Structure not found' });
     }
 
-    let currentStatus = { ...structure.status };
+    let currentStatus    = { ...structure.status };
     let currentHiddenRep = { ...(reputation.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 }) };
 
     const applyEffect = (effect, target) => {
@@ -422,10 +427,7 @@ app.post('/api/travelers/decision', async (req, res) => {
 
     await supabase
       .from('travelers')
-      .update({
-        complete: true,
-        decision: decision
-      })
+      .update({ complete: true, decision: decision })
       .eq('id', travelerId);
 
     if (decision !== 'complete_fixed') {
@@ -579,10 +581,7 @@ app.post('/api/inventory/update', async (req, res) => {
       .update({ items: currentItems })
       .eq('id', inventory.id);
 
-    return res.json({
-      success: true,
-      items: currentItems
-    });
+    return res.json({ success: true, items: currentItems });
 
   } catch (error) {
     console.error('Inventory update error:', error);
@@ -690,9 +689,7 @@ app.post('/api/pets/description', async (req, res) => {
   try {
     const { pet } = req.body;
 
-    if (!pet) {
-      return res.status(400).json({ error: 'pet is required' });
-    }
+    if (!pet) return res.status(400).json({ error: 'pet is required' });
 
     const { data, error } = await supabase
       .from('pets')
