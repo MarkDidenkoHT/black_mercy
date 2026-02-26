@@ -464,7 +464,7 @@ button {
 }
 
 #home-screen {
-    background-image: url('assets/art/town_day.png');
+    background-image: url('assets/art/guard_room.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -682,6 +682,127 @@ button {
     z-index: 2;
     opacity: 0;
     background: transparent;
+}
+
+#city-screen {
+    flex-direction: column;
+}
+
+.city-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.city-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 0.4s ease;
+    z-index: 0;
+}
+
+.city-header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.city-buildings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+}
+
+.building-marker {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease;
+}
+
+.building-marker:active {
+    transform: translate(-50%, -50%) scale(0.92);
+}
+
+.building-marker.inactive {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.building-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #ffd700;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.building-marker.inactive .building-badge {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.building-label {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 11px;
+    color: #ffd700;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+}
+
+.building-marker.inactive .building-label {
+    color: rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.building-icon-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.building-pop {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    border: 2px solid #ffd700;
+    color: #ffd700;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
 #travelers-screen {

@@ -13,6 +13,7 @@ let currentTravelerIndex = 0;
 let currentDayTravelers = [];
 let currentTraveler = null;
 let currentPet = null;
+let currentStructures = [];
 
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
@@ -186,6 +187,7 @@ function _applySessionData(data) {
     currentEvents                = data.events    || [];
     currentTravelers             = data.travelers || [];
     currentPet                   = data.pet       || null;
+    currentStructures            = data.structures || [];
 
     updateDayDisplay();
     renderPopulation();
@@ -329,6 +331,7 @@ function setupBottomButtons() {
     buttons.preparation.addEventListener('click', () => {
         eventsContainer.style.display = 'none';
         setActiveButton('preparation', buttons);
+        openCityScreen();
     });
     buttons.settings.addEventListener('click', () => {
         eventsContainer.style.display = 'none';
@@ -340,6 +343,72 @@ function setActiveButton(active, buttons) {
     Object.entries(buttons).forEach(([key, btn]) => {
         if (btn) btn.classList.toggle('active', key === active);
     });
+}
+
+const BUILDING_TEMPLATES = [
+    { id: 1, name: 'Church',      emoji: '⛪', x: 20, y: 30 },
+    { id: 2, name: 'Apothecary', emoji: '⚗️',  x: 75, y: 25 },
+    { id: 3, name: 'Barracks',   emoji: '⚔️',  x: 50, y: 20 },
+    { id: 4, name: 'Market',     emoji: '🏪',  x: 25, y: 60 },
+    { id: 5, name: 'Inn',        emoji: '🏠',  x: 70, y: 60 },
+    { id: 6, name: 'Well',       emoji: '🪣',  x: 50, y: 70 },
+];
+
+const PHASE_BACKGROUNDS = {
+    Dawn:      'assets/art/town_dawn.jpg',
+    Morning:   'assets/art/town_morning.jpg',
+    Noon:      'assets/art/town_noon.jpg',
+    Afternoon: 'assets/art/town_afternoon.jpg',
+    Dusk:      'assets/art/town_dusk.jpg',
+    Night:     'assets/art/town_night.jpg',
+};
+
+function openCityScreen() {
+    const phase      = getCurrentPhase();
+    const bg         = document.getElementById('city-bg');
+    const label      = document.getElementById('city-phase-label');
+    const buildingsEl = document.getElementById('city-buildings');
+    const backBtn    = document.getElementById('city-back-button');
+
+    bg.style.backgroundImage = `url('${PHASE_BACKGROUNDS[phase] || PHASE_BACKGROUNDS.Noon}')`;
+    label.textContent = `Day ${currentSession.day} — ${phase}`;
+
+    buildingsEl.innerHTML = '';
+
+    BUILDING_TEMPLATES.forEach(template => {
+        const structure = currentStructures.find(s => Number(s.structure) === template.id);
+        const isActive  = structure?.is_active || false;
+        const pop       = structure
+            ? (parseInt(structure.status?.human     || 0)
+             + parseInt(structure.status?.infected  || 0)
+             + parseInt(structure.status?.possessed || 0))
+            : 0;
+
+        const marker = document.createElement('div');
+        marker.className = 'building-marker' + (isActive ? '' : ' inactive');
+        marker.style.left = `${template.x}%`;
+        marker.style.top  = `${template.y}%`;
+
+        marker.innerHTML = `
+            <div class="building-icon-wrap">
+                <div class="building-badge">${template.emoji}</div>
+                ${isActive ? `<div class="building-pop">${pop}</div>` : ''}
+            </div>
+            <div class="building-label">${template.name}</div>
+        `;
+
+        if (isActive) {
+            marker.addEventListener('click', () => {
+                console.log(`[Building] Clicked: ${template.name} (id=${template.id})`, { structure, pop });
+            });
+        }
+
+        buildingsEl.appendChild(marker);
+    });
+
+    backBtn.onclick = () => switchScreen('city-screen', 'home-screen');
+
+    switchScreen('home-screen', 'city-screen');
 }
 
 function setupTravelersScreen() {

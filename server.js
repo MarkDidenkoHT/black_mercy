@@ -154,6 +154,12 @@ app.post('/api/auth/check', async (req, res) => {
         .eq('day', activeSession.day || 1)
         .order('order->position');
 
+      const { data: structuresData } = await supabase
+        .from('structures')
+        .select('*')
+        .eq('player', existingPlayer.id)
+        .eq('session', activeSession.id);
+
       return res.json({ 
         exists: true, 
         player: existingPlayer,
@@ -164,6 +170,7 @@ app.post('/api/auth/check', async (req, res) => {
         available_interactions: activeSession.available_interactions || ['check-papers', 'let-in', 'push-out'],
         events: eventsData || [],
         travelers: currentTravelers || [],
+        structures: structuresData || [],
         pet: activeSession.pet || null
       });
     }
@@ -262,6 +269,12 @@ app.post('/api/pet/select', async (req, res) => {
 
     const structureTotals = await calculateStructureTotals(player.id, newSession.id);
 
+    const { data: newStructuresData } = await supabase
+      .from('structures')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', newSession.id);
+
     return res.json({ 
       success: true,
       session: newSession,
@@ -271,6 +284,7 @@ app.post('/api/pet/select', async (req, res) => {
       available_interactions: ['check-papers', 'let-in', 'push-out'],
       events: [{ event: `Your adventure begins with your ${companionLabel} by your side.` }],
       travelers: day1Travelers || [],
+      structures: newStructuresData || [],
       pet: petData
     });
 
