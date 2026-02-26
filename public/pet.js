@@ -37,8 +37,8 @@ const Pet = (() => {
             video.src = srcs[Math.floor(Math.random() * srcs.length)];
             video.load();
 
-            video.oncanplay = () => {
-                video.oncanplay = null;
+            video.oncanplaythrough = () => {
+                video.oncanplaythrough = null;
                 video.style.display = 'block';
                 video.style.opacity = '0';
 
@@ -56,9 +56,9 @@ const Pet = (() => {
         }
 
         function cleanup() {
-            video.onended  = null;
-            video.onerror  = null;
-            video.oncanplay = null;
+            video.onended        = null;
+            video.onerror        = null;
+            video.oncanplaythrough = null;
         }
 
         function resetToStatic() {
