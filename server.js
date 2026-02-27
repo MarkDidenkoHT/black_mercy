@@ -788,6 +788,48 @@ app.post('/api/events/add', async (req, res) => {
   }
 });
 
+app.post('/api/session/add-interaction', async (req, res) => {
+  try {
+    const { chatId, interaction } = req.body;
+
+    if (!chatId || !interaction) return res.status(400).json({ error: 'chatId and interaction are required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Active session not found' });
+
+    const current = session.available_interactions || [];
+    if (!current.includes(interaction)) {
+      const updated = [...current, interaction];
+      await supabase
+        .from('sessions')
+        .update({ available_interactions: updated })
+        .eq('id', session.id);
+      
+      return res.json({ success: true, available_interactions: updated });
+    }
+
+    return res.json({ success: true, available_interactions: current });
+
+  } catch (error) {
+    console.error('Add interaction error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

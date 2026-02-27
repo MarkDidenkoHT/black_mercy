@@ -5,40 +5,51 @@ const TRIGGER_HANDLERS = {
     },
 
     Explanation_H: async (traveler, session) => {
-        console.log('[TRIGGER] Explanation_H fired by:', traveler.name);
+    console.log('[TRIGGER] Explanation_H fired by:', traveler.name);
 
-        try {
-            const [itemsRes, structureRes] = await Promise.all([
-                fetch('/api/inventory/give', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId: currentPlayer.chat_id, items: { 'holy water': 2 } })
-                }),
-                fetch('/api/structures/set-active', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId: currentPlayer.chat_id, structureTemplateId: 1 })
-                })
-            ]);
-
-            if (!itemsRes.ok || !structureRes.ok) throw new Error('Explanation_H trigger request failed');
-
-            const itemsData = await itemsRes.json();
-
-            if (itemsData.success) {
-                currentInventory = itemsData.inventory;
-                renderInventory();
-            }
-
-            await fetch('/api/events/add', {
+    try {
+        const [itemsRes, structureRes, interactionRes] = await Promise.all([
+            fetch('/api/inventory/give', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chatId: currentPlayer.chat_id, items: { 'holy water': 2 } })
+            }),
+            fetch('/api/structures/set-active', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chatId: currentPlayer.chat_id, structureTemplateId: 1 })
+            }),
+            fetch('/api/session/add-interaction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chatId: currentPlayer.chat_id, interaction: 'holy-water' })
+            })
+        ]);
+
+        if (!itemsRes.ok || !structureRes.ok || !interactionRes.ok) throw new Error('Explanation_H trigger request failed');
+
+        const itemsData = await itemsRes.json();
+        const interactionData = await interactionRes.json();
+
+        if (itemsData.success) {
+            currentInventory = itemsData.inventory;
+            renderInventory();
+        }
+
+        if (interactionData.success) {
+            currentAvailableInteractions = interactionData.available_interactions;
+        }
+
+        await fetch('/api/events/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     chatId: currentPlayer.chat_id,
                     event: 'Mithrail of the Inquisition blessed your supplies. You received 2 Holy Water. The Church is now active.'
                 })
             });
 
+            currentEvents.push({ event: 'Mithrail of the Inquisition blessed your supplies. You received 2 Holy Water. The Church is now active.' });
             renderEvents();
 
         } catch (error) {
