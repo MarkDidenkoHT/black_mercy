@@ -1004,3 +1004,67 @@ button {
 .modal-close:hover {
     background: linear-gradient(135deg, #5a5a5a 0%, #3d3d3d 100%);
 }
+
+
+.city-info-panel {
+    position: absolute;
+    bottom: 50px;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.city-info-text {
+    background: rgb(123 122 122 / 71%);
+    border: 1px solid #ffd700;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #ffffff;
+    line-height: 1.5;
+    backdrop-filter: blur(4px);
+}
+
+.city-info-text .building-status-active {
+    color: #7CFC00;
+    font-weight: bold;
+}
+
+.city-info-text .building-status-inactive {
+    color: #aaaaaa;
+    font-style: italic;
+}
+
+.city-action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.city-action-btn {
+    flex: 1;
+    padding: 11px;
+    border: 2px solid #ddbd13;
+    border-radius: 10px;
+    font-family: 'Trajan Pro', 'Arial', sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    color: #ffffff;
+}
+
+.city-action-btn:active {
+    transform: scale(0.97);
+}
+
+.city-action-btn.send-squire {
+    background: linear-gradient(135deg, #5a2e05 0%, #a05010 100%);
+}
+
+.city-action-btn.send-squire:hover {
+    box-shadow: 0 0 12px rgba(200, 146, 42, 0.5);
+}

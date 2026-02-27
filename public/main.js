@@ -378,11 +378,13 @@ function openCityScreen() {
     const label       = document.getElementById('city-phase-label');
     const buildingsEl = document.getElementById('city-buildings');
     const backBtn     = document.getElementById('city-back-button');
+    const infoPanel   = document.getElementById('city-info-panel');
 
     bg.style.backgroundImage = `url('${PHASE_BACKGROUNDS[phase] || PHASE_BACKGROUNDS.Noon}')`;
     label.textContent = `Day ${currentSession.day} — ${phase}`;
 
     buildingsEl.innerHTML = '';
+    if (infoPanel) infoPanel.style.display = 'none';
 
     currentStructures.forEach(structure => {
         const template   = structure.structures_templates;
@@ -408,18 +410,69 @@ function openCityScreen() {
             <div class="building-label">${name}</div>
         `;
 
-        if (isActive) {
-            marker.addEventListener('click', () => {
-                console.log(`[Building] Clicked: ${name} (template_id=${templateId})`, { structure, pop });
-            });
-        }
+        marker.addEventListener('click', () => {
+            showCityBuildingInfo({ name, isActive, templateId, structure });
+        });
 
         buildingsEl.appendChild(marker);
     });
 
-    backBtn.onclick = () => switchScreen('city-screen', 'home-screen');
+    backBtn.onclick = () => {
+        if (infoPanel) infoPanel.style.display = 'none';
+        switchScreen('city-screen', 'home-screen');
+    };
 
     switchScreen('home-screen', 'city-screen');
+}
+
+function showCityBuildingInfo({ name, isActive, templateId, structure }) {
+    const infoPanel   = document.getElementById('city-info-panel');
+    const infoText    = document.getElementById('city-info-text');
+    const actionBtns  = document.getElementById('city-action-buttons');
+    if (!infoPanel || !infoText || !actionBtns) return;
+
+    const statusLabel = isActive
+        ? `<span class="building-status-active">active</span>`
+        : `<span class="building-status-inactive">not active</span>`;
+
+    infoText.innerHTML = `The <strong>${name}</strong> appears to be ${statusLabel}.`;
+
+    actionBtns.innerHTML = '';
+
+    if (isActive) {
+        const squireBtn = document.createElement('button');
+        squireBtn.className   = 'city-action-btn send-squire';
+        squireBtn.textContent = 'Send Squire';
+        squireBtn.addEventListener('click', () => handleSendSquire({ name, templateId, structure }));
+        actionBtns.appendChild(squireBtn);
+    }
+
+    infoPanel.style.display = 'flex';
+}
+
+async function handleSendSquire({ name, templateId, structure }) {
+    console.log(`[Squire] Sent to ${name} (template_id=${templateId})`, structure);
+
+    const eventText = `Your squire was sent to the ${name}.`;
+
+    try {
+        await fetch('/api/events/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId: currentPlayer.chat_id, event: eventText })
+        });
+    } catch (e) {
+        console.warn('[Squire] Event log failed (endpoint may not exist yet):', e);
+    }
+
+    currentEvents.push({ event: eventText });
+    renderEvents();
+
+    const infoText = document.getElementById('city-info-text');
+    if (infoText) {
+        const existing = infoText.innerHTML;
+        infoText.innerHTML = existing + `<br><em style="color:#c8922a;">Squire dispatched.</em>`;
+    }
 }
 
 function setupTravelersScreen() {
