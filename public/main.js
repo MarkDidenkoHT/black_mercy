@@ -403,7 +403,7 @@ function openCityScreen() {
         marker.innerHTML = `
             <div class="building-icon-wrap">
                 <div class="building-badge">${emoji}</div>
-                ${isActive ? `<div class="building-pop">${pop}</div>` : ''}
+                <div class="building-pop">${pop}</div>
             </div>
             <div class="building-label">${name}</div>
         `;
