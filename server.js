@@ -751,6 +751,43 @@ app.post('/api/tutorial/complete', async (req, res) => {
   }
 });
 
+app.post('/api/events/add', async (req, res) => {
+  try {
+    const { chatId, event } = req.body;
+
+    if (!chatId || !event) return res.status(400).json({ error: 'chatId and event are required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Active session not found' });
+
+    await supabase.from('events').insert([{
+      player: player.id,
+      session: session.id,
+      event
+    }]);
+
+    return res.json({ success: true });
+
+  } catch (error) {
+    console.error('Add event error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
