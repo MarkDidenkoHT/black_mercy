@@ -14,6 +14,7 @@ let currentDayTravelers = [];
 let currentTraveler = null;
 let currentPet = null;
 let currentStructures = [];
+let currentDialogTree = null;
 
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
@@ -610,28 +611,142 @@ function showTravelerGreeting() {
     const travelerDialog = document.getElementById('traveler-dialog');
     if (!continueButton || !travelerDialog) return;
 
-    let greetingText;
     if (td.is_fixed) {
-        greetingText = td.dialog?.greeting || "A special visitor arrives.";
-        executeTrigger(td.dialog?.trigger, td, currentSession);
+        // Check if this traveler has a dialog tree
+        const dialogTreeId = td.dialog?.trigger;  // The trigger field holds the tree ID
+        
+        if (dialogTreeId && DIALOG_TREES[dialogTreeId]) {
+            // Use new dialog system
+            currentDialogTree = getDialogTree(dialogTreeId);
+            showDialogNode();
+        } else {
+            // Fallback to old system
+            const greetingText = td.dialog?.greeting || "A special visitor arrives.";
+            travelerDialog.textContent = greetingText;
+            executeTrigger(dialogTreeId, td, currentSession);
+            
+            const newBtn = continueButton.cloneNode(true);
+            continueButton.parentNode.replaceChild(newBtn, continueButton);
+            newBtn.style.display = 'block';
+            newBtn.textContent   = 'Complete';
+            newBtn.onclick       = () => completeCurrentTraveler('complete_fixed');
+            document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
+        }
     } else {
-        greetingText = td.dialog?.greeting || "Greetings. I seek entry to your town.";
-    }
-
-    travelerDialog.textContent = greetingText;
-
-    if (td.is_fixed) {
-        const newBtn = continueButton.cloneNode(true);
-        continueButton.parentNode.replaceChild(newBtn, continueButton);
-        newBtn.style.display = 'block';
-        newBtn.textContent   = 'Complete';
-        newBtn.onclick       = () => completeCurrentTraveler('complete_fixed');
-        document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
-    } else {
+        // Regular traveler (not fixed)
+        const greetingText = td.dialog?.greeting || "Greetings. I seek entry to your town.";
+        travelerDialog.textContent = greetingText;
+        
         continueButton.style.display = 'none';
         setupDynamicActionButtons();
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'flex');
     }
+}
+
+/**
+ * Show current dialog node with options
+ */
+function showDialogNode() {
+    if (!currentDialogTree) return;
+
+    const travelerDialog = document.getElementById('traveler-dialog');
+    const continueButton = document.getElementById('continue-button');
+    const row1 = document.querySelectorAll('.action-row')[0];
+    const row2 = document.querySelectorAll('.action-row')[1];
+
+    if (!travelerDialog || !row1 || !row2) return;
+
+    // Show dialog text
+    travelerDialog.textContent = currentDialogTree.getText();
+
+    // Hide action row divs
+    row1.innerHTML = '';
+    row2.innerHTML = '';
+
+    // Get current options
+    const options = currentDialogTree.getOptions();
+    
+    if (options.length === 0) {
+        // No options, show complete button
+        continueButton.style.display = 'block';
+        continueButton.textContent = 'Complete';
+        continueButton.onclick = () => completeCurrentTraveler('complete_fixed');
+        return;
+    }
+
+    // Show options as buttons
+    const buttonContainer = row1;
+    buttonContainer.style.display = 'flex';
+    buttonContainer.innerHTML = '';
+
+    options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'action-button';
+        btn.textContent = option.text;
+        btn.style.flex = `1`;
+        btn.onclick = () => handleDialogChoice(index);
+        buttonContainer.appendChild(btn);
+    });
+
+    continueButton.style.display = 'none';
+    row2.style.display = 'none';
+}
+
+/**
+ * Handle a dialog choice
+ */
+async function handleDialogChoice(optionIndex) {
+    if (!currentDialogTree) return;
+
+    const result = currentDialogTree.selectOption(optionIndex);
+    if (!result) return;
+
+    // Execute any actions from this option
+    if (result.actions && result.actions.length > 0) {
+        const actionResults = await executeDialogActions(result.actions);
+        console.log('[DIALOG] Action results:', actionResults);
+
+        // Check for game-over conditions
+        for (const { actionId, result: actionResult } of actionResults) {
+            if (actionResult?.gameOverRequired) {
+                handleDialogGameOver(actionResult);
+                return;
+            }
+        }
+    }
+
+    // Check if dialog ended
+    if (result.end) {
+        // Dialog complete, complete the traveler
+        setTimeout(() => completeCurrentTraveler('complete_fixed'), 500);
+        return;
+    }
+
+    // Show next node
+    showDialogNode();
+}
+
+/**
+ * Handle game over from dialog
+ */
+function handleDialogGameOver(result) {
+    const travelerDialog = document.getElementById('traveler-dialog');
+    const row1 = document.querySelectorAll('.action-row')[0];
+    const continueButton = document.getElementById('continue-button');
+
+    if (travelerDialog) {
+        travelerDialog.textContent = result.message || 'Your town has fallen.';
+    }
+
+    if (row1) row1.innerHTML = '';
+    
+    if (continueButton) {
+        continueButton.style.display = 'block';
+        continueButton.textContent = 'Game Over';
+        continueButton.disabled = true;
+    }
+
+    console.log('[DIALOG] GAME OVER:', result);
 }
 
 async function handleTravelerAction(action) {
