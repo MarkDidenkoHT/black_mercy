@@ -307,19 +307,23 @@ function setupModalEvents() {
 
 function setupBottomButtons() {
     const buttons = {
-        travelers: document.getElementById('travelers-button'),
+        travelers:   document.getElementById('travelers-button'),
         preparation: document.getElementById('preparation-button'),
-        keep: document.getElementById('keep-button'),
-        heroes: document.getElementById('heroes-button')
+        keep:        document.getElementById('keep-button'),
+        heroes:      document.getElementById('heroes-button')
     };
     if (!buttons.travelers) return;
 
     buttons.travelers.addEventListener('click', () => {
         setActiveButton('travelers', buttons);
+        switchScreen('city-screen', 'home-screen');
+        switchScreen('travelers-screen', 'home-screen');
         loadTravelersForCurrentDay();
     });
     buttons.preparation.addEventListener('click', () => {
         setActiveButton('preparation', buttons);
+        switchScreen('home-screen', 'city-screen');
+        switchScreen('travelers-screen', 'city-screen');
         openCityScreen();
     });
     buttons.keep.addEventListener('click', () => {
@@ -330,6 +334,8 @@ function setupBottomButtons() {
     if (buttons.heroes) {
         buttons.heroes.addEventListener('click', () => {
             setActiveButton('heroes', buttons);
+            switchScreen('city-screen', 'home-screen');
+            switchScreen('travelers-screen', 'home-screen');
             alert('Heroes functionality coming soon!');
         });
     }
