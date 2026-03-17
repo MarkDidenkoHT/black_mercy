@@ -36,9 +36,9 @@
     --brown-dark:  #4a2a10;
     --brown:       #8a4a20;
 
-    --header-h:   60px;
-    --nav-h:      58px;
-    --controls-h: 140px;
+    --content-h:  70vh;
+    --nav-h:      10vh;
+    --controls-h: 20vh;
     --transition:  0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -168,6 +168,12 @@ input {
     transform: translateX(32px);
     transition: opacity 0.38s ease, transform 0.38s ease;
     pointer-events: none;
+}
+
+#header-left,
+#header-right,
+#header-center {
+    pointer-events: auto;
 }
 
 .tutorial-slide.active {
@@ -501,17 +507,17 @@ input {
 
 
 #shell-header {
-    flex-shrink: 0;
-    height: var(--header-h);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 10px;
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(8px);
+    padding: 6px 10px;
     z-index: 20;
     gap: 8px;
+    pointer-events: none;
 }
 
 #header-left,
@@ -592,10 +598,10 @@ input {
 
 
 #shell-content {
-    flex: 1;
+    height: var(--content-h);
+    flex-shrink: 0;
     position: relative;
     overflow: hidden;
-    min-height: 0;
 }
 
 .tab-panel {
@@ -888,14 +894,13 @@ input {
 
 
 #shell-controls {
+    height: var(--controls-h);
     flex-shrink: 0;
-    min-height: 0;
     background: var(--bg-panel);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(8px);
     z-index: 20;
-    overflow: hidden;
-    transition: height var(--transition);
+    overflow-y: auto;
 }
 
 .controls-panel {
