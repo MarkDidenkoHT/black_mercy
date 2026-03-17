@@ -15,28 +15,96 @@ let currentTraveler = null;
 let currentPet = null;
 let currentStructures = [];
 let currentDialogTree = null;
+let activeTab = 'keep';
 
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
 };
 
 const itemDescriptions = {
-    'holy water':       "A vial of blessed water. Causes possessed to shriek in pain.",
-    'lantern fuel':     "Fuel for your lantern. Essential for inspecting travel papers.",
-    'medicinal herbs':  "Medicinal herbs. Burning these causes the infected to cough."
+    'holy water':      "A vial of blessed water. Causes possessed to shriek in pain.",
+    'lantern fuel':    "Fuel for your lantern. Essential for inspecting travel papers.",
+    'medicinal herbs': "Medicinal herbs. Burning these causes the infected to cough."
 };
 
 const dayPhases = ['Dawn', 'Morning', 'Noon', 'Afternoon', 'Dusk', 'Night'];
+
+const BUILDING_POSITIONS = {
+    1: { x: 20, y: 30 },
+    2: { x: 75, y: 25 },
+    3: { x: 55, y: 55 },
+    4: { x: 25, y: 60 },
+    5: { x: 70, y: 60 },
+    6: { x: 50, y: 70 },
+};
+
+const BUILDING_EMOJIS = {
+    church:          '⛪',
+    apothecary:      '⚗️',
+    inn:             '🏠',
+    'post office':   '✉️',
+    'fortune teller':'🔮',
+    blacksmith:      '⚒️',
+};
+
+const PHASE_BACKGROUNDS = {
+    Dawn:      'assets/art/town_dawn.jpg',
+    Morning:   'assets/art/town_morning.jpg',
+    Noon:      'assets/art/town_noon.jpg',
+    Afternoon: 'assets/art/town_afternoon.jpg',
+    Dusk:      'assets/art/town_dusk.jpg',
+    Night:     'assets/art/town_night.jpg',
+};
+
+function showFlowScreen(id) {
+    document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+}
+
+function showTab(tab) {
+    activeTab = tab;
+
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('tab-' + tab);
+    if (panel) panel.classList.add('active');
+
+    document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+        b.classList.remove('glow');
+    });
+
+    document.querySelectorAll('.controls-panel').forEach(p => { p.style.display = 'none'; });
+
+    const controlsMap = {
+        gate:   'gate-actions',
+        city:   'city-controls',
+        keep:   'keep-controls',
+        heroes: 'heroes-controls',
+    };
+
+    const controlId = controlsMap[tab];
+    if (controlId) {
+        const ctrl = document.getElementById(controlId);
+        if (ctrl) ctrl.style.display = 'flex';
+    }
+
+    if (tab === 'gate') {
+        refreshGateTab();
+    } else if (tab === 'city') {
+        refreshCityTab();
+    }
+}
 
 async function initializeApp() {
     try {
         animateLoadingBar();
 
         const initData = tg.initDataUnsafe;
-        const chatId = initData?.user?.id?.toString() || 'test_user';
-        const playerName = initData?.user?.first_name || 'Player';
+        const chatId        = initData?.user?.id?.toString() || 'test_user';
+        const playerName    = initData?.user?.first_name || 'Player';
         const playerLanguage = initData?.user?.language_code?.toUpperCase() || 'EN';
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+        const timezone      = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
         const response = await fetch('/api/auth/check', {
             method: 'POST',
@@ -44,41 +112,34 @@ async function initializeApp() {
             body: JSON.stringify({ chatId, playerName, playerLanguage, timezone })
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Auth failed:', response.status, errorText);
-            throw new Error('Failed to authenticate');
-        }
+        if (!response.ok) throw new Error('Failed to authenticate');
 
         const data = await response.json();
         currentPlayer = data.player;
 
         finishLoadingBar();
-        await new Promise(resolve => setTimeout(resolve, 600));
+        await new Promise(r => setTimeout(r, 600));
 
         if (data.needsPetSelection) {
             if (!data.player.tutorial) {
-                switchScreen('loading-screen', 'tutorial-screen');
-                _initTutorial(() => {
-                    switchScreen('tutorial-screen', 'pet-selection-screen');
-                    _initPetSelection();
+                showFlowScreen('flow-tutorial');
+                initTutorial(() => {
+                    showFlowScreen('flow-pet-selection');
+                    initPetSelection();
                 });
             } else {
-                switchScreen('loading-screen', 'pet-selection-screen');
-                _initPetSelection();
+                showFlowScreen('flow-pet-selection');
+                initPetSelection();
             }
         } else {
-            _applySessionData(data);
-            setupModalEvents();
-            setupBottomButtons();
-            setupTravelersScreen();
-            checkForPendingTravelers();
-            if (currentPet) Pet.setupHomeWidget(currentPet);
-            switchScreen('loading-screen', 'home-screen');
+            applySessionData(data);
+            setupShell();
+            showFlowScreen('app-shell');
+            showTab('keep');
         }
 
     } catch (error) {
-        console.error('Init failed:', error.message, error.stack);
+        console.error('Init failed:', error);
         const loadingText = document.querySelector('.loading-text');
         if (loadingText) {
             loadingText.style.display = 'block';
@@ -87,9 +148,9 @@ async function initializeApp() {
     }
 }
 
-function _initTutorial(onComplete) {
-    const slides = Array.from(document.querySelectorAll('.tutorial-slide'));
-    const dotsEl = document.getElementById('tutorial-dots');
+function initTutorial(onComplete) {
+    const slides  = Array.from(document.querySelectorAll('.tutorial-slide'));
+    const dotsEl  = document.getElementById('tutorial-dots');
     const nextBtn = document.getElementById('tutorial-next');
     let current = 0;
 
@@ -106,7 +167,6 @@ function _initTutorial(onComplete) {
         slides[prev].classList.remove('active');
         slides[prev].classList.add('exit');
         setTimeout(() => slides[prev].classList.remove('exit'), 400);
-
         current = index;
         slides[current].classList.add('active');
         dots.forEach((d, i) => d.classList.toggle('active', i === current));
@@ -132,9 +192,8 @@ function _initTutorial(onComplete) {
     });
 }
 
-function _initPetSelection() {
+function initPetSelection() {
     Pet.setupSelection({
-
         fetchDescription: async (pet) => {
             const res = await fetch('/api/pets/description', {
                 method: 'POST',
@@ -145,50 +204,39 @@ function _initPetSelection() {
             const data = await res.json();
             return data.description;
         },
-
         onPetChosen: (petType) => {
-            switchScreen('pet-selection-screen', 'pet-naming-screen');
-
+            showFlowScreen('flow-pet-naming');
             Pet.setupNaming({
                 petType,
                 onConfirm: async (pet) => {
-                    const initData = tg.initDataUnsafe;
-                    const chatId = initData?.user?.id?.toString() || 'test_user';
-
+                    const chatId = tg.initDataUnsafe?.user?.id?.toString() || 'test_user';
                     const res = await fetch('/api/pet/select', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ chatId, pet })
                     });
-
                     if (!res.ok) throw new Error('Failed to select pet');
-
                     const data = await res.json();
-                    _applySessionData(data);
-
-                    setupModalEvents();
-                    setupBottomButtons();
-                    setupTravelersScreen();
-                    checkForPendingTravelers();
-                    Pet.setupHomeWidget(currentPet);
-
-                    switchScreen('pet-naming-screen', 'home-screen');
+                    applySessionData(data);
+                    setupShell();
+                    showFlowScreen('app-shell');
+                    showTab('keep');
                 }
             });
         }
     });
 }
 
-function _applySessionData(data) {
-    currentSession = data.session;
-    currentPopulation = data.population;
-    currentHiddenReputation = data.hidden_reputation;
-    currentInventory = data.inventory;
+function applySessionData(data) {
+    currentSession              = data.session;
+    currentPopulation           = data.population;
+    currentHiddenReputation     = data.hidden_reputation;
+    currentInventory            = data.inventory;
     currentAvailableInteractions = data.available_interactions || ['check-papers', 'let-in', 'push-out'];
-    currentEvents = data.events || [];
-    currentTravelers = data.travelers || [];
-    currentPet = data.pet || null;
-    currentStructures = data.structures || [];
+    currentEvents               = data.events || [];
+    currentTravelers            = data.travelers || [];
+    currentPet                  = data.pet || null;
+    currentStructures           = data.structures || [];
 
     updateDayDisplay();
     renderPopulation();
@@ -196,102 +244,25 @@ function _applySessionData(data) {
     renderEvents();
 }
 
-function animateLoadingBar() {
-    const bar = document.getElementById('loading-bar-fill');
-    if (!bar) return;
-    [
-        { target: 15, delay: 0 },
-        { target: 35, delay: 300 },
-        { target: 55, delay: 700 },
-        { target: 72, delay: 1200 },
-        { target: 85, delay: 1900 },
-        { target: 90, delay: 2600 },
-    ].forEach(({ target, delay }) => {
-        setTimeout(() => { bar.style.width = target + '%'; }, delay);
-    });
+function setupShell() {
+    setupNavButtons();
+    setupModalEvents();
+    setupGateActionButtons();
+    updateGateNavGlow();
+    if (currentPet) Pet.setupHomeWidget(currentPet);
 }
 
-function finishLoadingBar() {
-    const bar = document.getElementById('loading-bar-fill');
-    if (bar) setTimeout(() => { bar.style.width = '100%'; }, 400);
-}
-
-function updateDayDisplay() {
-    const el = document.getElementById('current-day');
-    if (el) el.textContent = `Day ${currentSession.day || 1} - ${getCurrentPhase()}`;
-}
-
-function getCurrentPhase() {
-    const completed = currentTravelers.filter(t => t.complete).length;
-    return dayPhases[Math.min(completed, 5)];
-}
-
-function renderPopulation() {
-    const container = document.getElementById('reputation-container');
-    if (!container) return;
-    container.innerHTML = '';
-
-    const total = (currentPopulation.human || 0)
-        + (currentPopulation.infected || 0)
-        + (currentPopulation.possessed || 0);
-
-    const item = document.createElement('div');
-    item.className = 'reputation-item';
-    Object.assign(item.dataset, { type: 'population', key: 'total', name: 'Population', icon: 'town', count: total });
-    item.innerHTML = `
-        <img src="assets/art/icons/town.png" alt="Population" class="reputation-icon">
-        <span class="reputation-level">${total}</span>
-    `;
-    container.appendChild(item);
-}
-
-function renderInventory() {
-    const container = document.getElementById('inventory-container');
-    if (!container) return;
-    container.innerHTML = '';
-
-    [
-        { key: 'holy water', name: 'Holy Water', icon: 'holy_water' },
-        { key: 'lantern fuel', name: 'Lantern Fuel', icon: 'lantern_fuel' },
-        { key: 'medicinal herbs', name: 'Medicinal Herbs', icon: 'medicinal_herbs' }
-    ].forEach(item => {
-        const count = currentInventory[item.key] || 0;
-        if (count <= 0) return;
-
-        const el = document.createElement('div');
-        el.className = 'inventory-item';
-        Object.assign(el.dataset, { type: 'item', key: item.key, name: item.name, icon: item.icon, count });
-        el.innerHTML = `
-            <img src="assets/art/icons/${item.icon}.png" alt="${item.name}" class="inventory-icon">
-            <span class="inventory-count">${count}</span>
-        `;
-        container.appendChild(el);
-    });
-}
-
-function renderEvents() {
-    const list = document.getElementById('events-list');
-    if (!list) return;
-    list.innerHTML = '';
-
-    if (currentEvents.length === 0) {
-        const el = document.createElement('div');
-        el.className = 'event-item';
-        el.textContent = 'No events yet. Your adventure begins now!';
-        list.appendChild(el);
-        return;
-    }
-
-    currentEvents.slice(-10).reverse().forEach(event => {
-        const el = document.createElement('div');
-        el.className = 'event-item';
-        el.textContent = event.event;
-        list.appendChild(el);
+function setupNavButtons() {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            if (tab) showTab(tab);
+        });
     });
 }
 
 function setupModalEvents() {
-    const modalClose = document.getElementById('modal-close');
+    const modalClose   = document.getElementById('modal-close');
     const modalOverlay = document.getElementById('modal-overlay');
     if (!modalClose || !modalOverlay) return;
 
@@ -305,100 +276,460 @@ function setupModalEvents() {
     });
 }
 
-function setupBottomButtons() {
-    const travelersBtn = document.getElementById('travelers-button');
-    const cityBtn = document.getElementById('preparation-button');
-    const keepBtn = document.getElementById('keep-button');
-    const heroesBtn = document.getElementById('heroes-button');
-
-    const buttons = {
-        travelers: travelersBtn,
-        preparation: cityBtn,
-        keep: keepBtn,
-        heroes: heroesBtn
-    };
-
-    if (travelersBtn) {
-        travelersBtn.onclick = () => {
-            setActiveButton('travelers', buttons);
-            switchScreen('city-screen', 'home-screen');
-            switchScreen('travelers-screen', 'home-screen');
-            switchScreen('home-screen', 'travelers-screen');
-            loadTravelersForCurrentDay();
-        };
-    }
-    if (cityBtn) {
-        cityBtn.onclick = () => {
-            setActiveButton('preparation', buttons);
-            switchScreen('home-screen', 'city-screen');
-            switchScreen('travelers-screen', 'city-screen');
-            openCityScreen();
-        };
-    }
-    if (keepBtn) {
-        keepBtn.onclick = () => {
-            setActiveButton('keep', buttons);
-            switchScreen('city-screen', 'home-screen');
-            switchScreen('travelers-screen', 'home-screen');
-        };
-    }
-    if (heroesBtn) {
-        heroesBtn.onclick = () => {
-            setActiveButton('heroes', buttons);
-            switchScreen('city-screen', 'home-screen');
-            switchScreen('travelers-screen', 'home-screen');
-            alert('Heroes functionality coming soon!');
-        };
-    }
-}
-
-function setActiveButton(active, buttons) {
-    Object.entries(buttons).forEach(([key, btn]) => {
-        if (btn) btn.classList.toggle('active', key === active);
+function animateLoadingBar() {
+    const bar = document.getElementById('loading-bar-fill');
+    if (!bar) return;
+    [
+        { target: 15,  delay: 0    },
+        { target: 35,  delay: 300  },
+        { target: 55,  delay: 700  },
+        { target: 72,  delay: 1200 },
+        { target: 85,  delay: 1900 },
+        { target: 90,  delay: 2600 },
+    ].forEach(({ target, delay }) => {
+        setTimeout(() => { bar.style.width = target + '%'; }, delay);
     });
 }
 
-const BUILDING_POSITIONS = {
-    1: { x: 20, y: 30 },
-    2: { x: 75, y: 25 },
-    3: { x: 55, y: 55 },
-    4: { x: 25, y: 60 },
-    5: { x: 70, y: 60 },
-    6: { x: 50, y: 70 },
-};
+function finishLoadingBar() {
+    const bar = document.getElementById('loading-bar-fill');
+    if (bar) setTimeout(() => { bar.style.width = '100%'; }, 400);
+}
 
-const BUILDING_EMOJIS = {
-    church: '⛪',
-    apothecary: '⚗️',
-    inn: '🏠',
-    'post office': '✉️',
-    'fortune teller': '🔮',
-    blacksmith: '⚒️',
-};
+function updateDayDisplay() {
+    const el = document.getElementById('current-day');
+    if (el) el.textContent = `Day ${currentSession?.day || 1} — ${getCurrentPhase()}`;
+}
 
-const PHASE_BACKGROUNDS = {
-    Dawn: 'assets/art/town_dawn.jpg',
-    Morning: 'assets/art/town_morning.jpg',
-    Noon: 'assets/art/town_noon.jpg',
-    Afternoon: 'assets/art/town_afternoon.jpg',
-    Dusk: 'assets/art/town_dusk.jpg',
-    Night: 'assets/art/town_night.jpg',
-};
+function getCurrentPhase() {
+    const completed = currentTravelers.filter(t => t.complete).length;
+    return dayPhases[Math.min(completed, 5)];
+}
 
-function openCityScreen() {
+function renderPopulation() {
+    const container = document.getElementById('reputation-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const total = (currentPopulation?.human     || 0)
+                + (currentPopulation?.infected   || 0)
+                + (currentPopulation?.possessed  || 0);
+
+    const item = document.createElement('div');
+    item.className = 'reputation-item';
+    Object.assign(item.dataset, { type: 'population', key: 'total', name: 'Population', icon: 'town', count: total });
+    item.innerHTML = `
+        <img src="assets/art/icons/town.png" alt="Population" class="reputation-icon">
+        <span class="reputation-level">${total}</span>
+    `;
+    item.addEventListener('click', handleIconClick);
+    container.appendChild(item);
+}
+
+function renderInventory() {
+    const container = document.getElementById('inventory-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    [
+        { key: 'holy water',      name: 'Holy Water',      icon: 'holy_water'      },
+        { key: 'lantern fuel',    name: 'Lantern Fuel',    icon: 'lantern_fuel'    },
+        { key: 'medicinal herbs', name: 'Medicinal Herbs', icon: 'medicinal_herbs' }
+    ].forEach(def => {
+        const count = currentInventory?.[def.key] || 0;
+        if (count <= 0) return;
+
+        const el = document.createElement('div');
+        el.className = 'inventory-item';
+        Object.assign(el.dataset, { type: 'item', key: def.key, name: def.name, icon: def.icon, count });
+        el.innerHTML = `
+            <img src="assets/art/icons/${def.icon}.png" alt="${def.name}" class="inventory-icon">
+            <span class="inventory-count">${count}</span>
+        `;
+        el.addEventListener('click', handleIconClick);
+        container.appendChild(el);
+    });
+}
+
+function renderEvents() {
+    const list = document.getElementById('events-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (!currentEvents || currentEvents.length === 0) {
+        const el = document.createElement('div');
+        el.className = 'event-item';
+        el.textContent = 'No events yet. Your adventure begins now.';
+        list.appendChild(el);
+        return;
+    }
+
+    currentEvents.slice(-10).reverse().forEach(event => {
+        const el = document.createElement('div');
+        el.className = 'event-item';
+        el.textContent = event.event;
+        list.appendChild(el);
+    });
+}
+
+function updateGateNavGlow() {
+    const gateBtn = document.getElementById('nav-gate');
+    if (!gateBtn) return;
+    const pending = (currentTravelers || []).filter(t => !t.complete);
+    if (pending.length > 0 && activeTab !== 'gate') {
+        gateBtn.classList.add('glow');
+    } else {
+        gateBtn.classList.remove('glow');
+    }
+}
+
+
+function refreshGateTab() {
+    updateGateNavGlow();
+    loadTravelersForCurrentDay();
+}
+
+async function loadTravelersForCurrentDay() {
+    if (!currentPlayer) return;
+
+    const gateActions = document.getElementById('gate-actions');
+    const travelerArt = document.getElementById('traveler-art');
+    const travelerDialog = document.getElementById('traveler-dialog');
+
+    try {
+        const response = await fetch('/api/travelers/get-day', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId: currentPlayer.chat_id, day: currentSession.day })
+        });
+
+        if (!response.ok) throw new Error('Failed to load travelers');
+
+        const data = await response.json();
+        currentDayTravelers = data.travelers.filter(t => !t.complete);
+        if (data.available_interactions) currentAvailableInteractions = data.available_interactions;
+
+        if (currentDayTravelers.length > 0) {
+            currentTravelerIndex = 0;
+            loadCurrentTraveler();
+        } else {
+            if (travelerArt)    travelerArt.src = '';
+            if (travelerDialog) travelerDialog.textContent = 'All travelers have been processed for today.';
+            if (gateActions)    gateActions.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Load travelers error:', error);
+        if (travelerDialog) travelerDialog.textContent = 'Could not load travelers.';
+    }
+}
+
+function loadCurrentTraveler() {
+    if (currentTravelerIndex >= currentDayTravelers.length) {
+        const travelerDialog = document.getElementById('traveler-dialog');
+        const gateActions    = document.getElementById('gate-actions');
+        if (travelerDialog) travelerDialog.textContent = 'No more travelers today.';
+        if (gateActions)    gateActions.style.display = 'none';
+        refreshGameData();
+        return;
+    }
+
+    currentTraveler = currentDayTravelers[currentTravelerIndex];
+    const td = currentTraveler.traveler;
+
+    const travelerArt    = document.getElementById('traveler-art');
+    const travelerDialog = document.getElementById('traveler-dialog');
+    const continueButton = document.getElementById('continue-button');
+    const gateActions    = document.getElementById('gate-actions');
+
+    if (travelerArt)    travelerArt.src = `assets/art/travelers/${td.art}.png`;
+    if (travelerDialog) travelerDialog.textContent = td.description || 'A traveler approaches…';
+
+    if (continueButton) {
+        continueButton.textContent  = 'Continue';
+        continueButton.style.display = 'block';
+        continueButton.disabled     = false;
+        continueButton.onclick      = showTravelerGreeting;
+    }
+
+    const row1 = document.getElementById('gate-row-1');
+    const row2 = document.getElementById('gate-row-2');
+    if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
+    if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
+
+    if (gateActions) gateActions.style.display = 'flex';
+}
+
+function setupGateActionButtons() {
+    const continueButton = document.getElementById('continue-button');
+    if (continueButton) {
+        continueButton.onclick = () => {
+            if (currentTraveler) showTravelerGreeting();
+        };
+    }
+}
+
+function buildDynamicActionButtons() {
+    const row1 = document.getElementById('gate-row-1');
+    const row2 = document.getElementById('gate-row-2');
+    if (!row1 || !row2) return;
+
+    row1.innerHTML = '';
+    row2.innerHTML = '';
+
+    const interactionMap = {
+        'check-papers':    { row: 1, text: 'Check Papers',    cls: 'action-check-papers',    action: 'check_papers',    item: 'lantern fuel'    },
+        'holy-water':      { row: 1, text: 'Holy Water',      cls: 'action-holy-water',       action: 'holy_water',      item: 'holy water'      },
+        'medicinal-herbs': { row: 1, text: 'Medicinal Herbs', cls: 'action-medicinal-herbs',  action: 'medicinal_herbs', item: 'medicinal herbs' },
+        'let-in':          { row: 2, text: 'Let In',          cls: 'action-allow',   decision: 'allow'   },
+        'push-out':        { row: 2, text: 'Push Out',        cls: 'action-deny',    decision: 'deny'    },
+        'execute':         { row: 2, text: 'Execute',         cls: 'action-execute', decision: 'execute' },
+    };
+
+    currentAvailableInteractions.forEach(id => {
+        const bd = interactionMap[id];
+        if (!bd) return;
+
+        const btn = document.createElement('button');
+        btn.className = `action-button ${bd.cls}`;
+        btn.textContent = bd.text;
+
+        if (bd.row === 1) {
+            if (!currentInventory?.[bd.item] || currentInventory[bd.item] <= 0) return;
+            btn.addEventListener('click', () => handleTravelerAction(bd.action));
+            row1.appendChild(btn);
+        } else {
+            btn.addEventListener('click', () => handleTravelerDecision(bd.decision));
+            row2.appendChild(btn);
+        }
+    });
+
+    row1.style.display = row1.children.length > 0 ? 'flex' : 'none';
+    row2.style.display = row2.children.length > 0 ? 'flex' : 'none';
+}
+
+function showTravelerGreeting() {
+    if (!currentTraveler) return;
+
+    const td             = currentTraveler.traveler;
+    const continueButton = document.getElementById('continue-button');
+    const travelerDialog = document.getElementById('traveler-dialog');
+
+    if (!continueButton || !travelerDialog) return;
+
+    if (td.is_fixed) {
+        const dialogTreeId = td.dialog?.trigger;
+
+        if (dialogTreeId && typeof DIALOG_TREES !== 'undefined' && DIALOG_TREES[dialogTreeId]) {
+            currentDialogTree = getDialogTree(dialogTreeId);
+            showDialogNode();
+        } else {
+            const greetingText = td.dialog?.greeting || 'A special visitor arrives.';
+            travelerDialog.textContent = greetingText;
+            if (dialogTreeId) executeTrigger(dialogTreeId, td, currentSession);
+
+            continueButton.textContent  = 'Complete';
+            continueButton.style.display = 'block';
+            continueButton.disabled     = false;
+            continueButton.onclick      = () => completeCurrentTraveler('complete_fixed');
+
+            const row1 = document.getElementById('gate-row-1');
+            const row2 = document.getElementById('gate-row-2');
+            if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
+            if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
+        }
+    } else {
+        travelerDialog.textContent = td.dialog?.greeting || 'Greetings. I seek entry to your town.';
+        continueButton.style.display = 'none';
+        buildDynamicActionButtons();
+    }
+}
+
+function showDialogNode() {
+    if (!currentDialogTree) return;
+
+    const travelerDialog = document.getElementById('traveler-dialog');
+    const continueButton = document.getElementById('continue-button');
+    const row1           = document.getElementById('gate-row-1');
+    const row2           = document.getElementById('gate-row-2');
+
+    if (!travelerDialog || !row1 || !row2) return;
+
+    travelerDialog.textContent = currentDialogTree.getText();
+
+    row1.innerHTML = '';
+    row2.innerHTML = '';
+
+    const options = currentDialogTree.getOptions();
+
+    if (options.length === 0) {
+        continueButton.style.display = 'block';
+        continueButton.textContent  = 'Complete';
+        continueButton.disabled     = false;
+        continueButton.onclick      = () => completeCurrentTraveler('complete_fixed');
+        return;
+    }
+
+    options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className   = 'action-button action-continue';
+        btn.textContent = option.text;
+        btn.style.flex  = '1';
+        btn.onclick     = () => handleDialogChoice(index);
+        row1.appendChild(btn);
+    });
+
+    row1.style.display  = 'flex';
+    row2.style.display  = 'none';
+    continueButton.style.display = 'none';
+}
+
+async function handleDialogChoice(optionIndex) {
+    if (!currentDialogTree) return;
+
+    const result = currentDialogTree.selectOption(optionIndex);
+    if (!result) return;
+
+    if (result.actions && result.actions.length > 0) {
+        const actionResults = await executeDialogActions(result.actions);
+        for (const { result: actionResult } of actionResults) {
+            if (actionResult?.gameOverRequired) {
+                handleDialogGameOver(actionResult);
+                return;
+            }
+        }
+    }
+
+    if (result.end) {
+        setTimeout(() => completeCurrentTraveler('complete_fixed'), 500);
+        return;
+    }
+
+    showDialogNode();
+}
+
+function handleDialogGameOver(result) {
+    const travelerDialog = document.getElementById('traveler-dialog');
+    const row1           = document.getElementById('gate-row-1');
+    const continueButton = document.getElementById('continue-button');
+
+    if (travelerDialog) travelerDialog.textContent = result.message || 'Your town has fallen.';
+    if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
+
+    if (continueButton) {
+        continueButton.style.display = 'block';
+        continueButton.textContent   = 'Game Over';
+        continueButton.disabled      = true;
+    }
+}
+
+async function handleTravelerAction(action) {
+    if (!currentTraveler) return;
+
+    const td             = currentTraveler.traveler;
+    const travelerDialog = document.getElementById('traveler-dialog');
+    if (!travelerDialog) return;
+
+    const itemMap = {
+        check_papers:     'lantern fuel',
+        holy_water:       'holy water',
+        medicinal_herbs:  'medicinal herbs'
+    };
+    const item = itemMap[action];
+
+    if ((currentInventory?.[item] || 0) <= 0) {
+        travelerDialog.textContent = `Not enough ${item}.`;
+        return;
+    }
+
+    const responses = {
+        check_papers:    td.dialog?.papers      || 'The papers seem to be in order.',
+        holy_water:      td.dialog?.holy_water  || (td.faction === 'possessed' ? 'The traveler shrieks in pain!' : 'The traveler reacts normally to the holy water.'),
+        medicinal_herbs: td.dialog?.medicinal_herbs || (td.faction === 'infected' ? 'The traveler coughs violently!' : 'The traveler shows no unusual reaction.')
+    };
+
+    travelerDialog.textContent = responses[action];
+    await updateInventory(item, -1);
+    renderInventory();
+    buildDynamicActionButtons();
+}
+
+async function completeCurrentTraveler(decision) {
+    if (!currentTraveler) return;
+
+    const td             = currentTraveler.traveler;
+    const travelerDialog = document.getElementById('traveler-dialog');
+    const continueButton = document.getElementById('continue-button');
+    const row1           = document.getElementById('gate-row-1');
+    const row2           = document.getElementById('gate-row-2');
+
+    const responseDialogs = {
+        allow:          td.dialog?.in        || 'Thank you for allowing me passage.',
+        deny:           td.dialog?.out       || 'Very well. I will leave peacefully.',
+        execute:        td.dialog?.execution || 'Please, have mercy!',
+        complete_fixed: null
+    };
+
+    const responseText = responseDialogs[decision];
+    if (responseText && travelerDialog) {
+        travelerDialog.textContent = responseText;
+        if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
+        if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
+        if (continueButton) continueButton.style.display = 'none';
+    }
+
+    try {
+        const response = await fetch('/api/travelers/decision', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chatId:     currentPlayer.chat_id,
+                travelerId: currentTraveler.id,
+                decision
+            })
+        });
+
+        if (!response.ok) throw new Error('Failed to process decision');
+
+        const data = await response.json();
+        if (data.success) {
+            if (data.population)          currentPopulation        = data.population;
+            if (data.hidden_reputation)   currentHiddenReputation  = data.hidden_reputation;
+
+            await refreshGameData();
+            updateGateNavGlow();
+
+            setTimeout(() => {
+                currentTravelerIndex++;
+                loadCurrentTraveler();
+            }, 900);
+        }
+    } catch (error) {
+        console.error('Complete traveler error:', error);
+    }
+}
+
+async function handleTravelerDecision(decision) {
+    await completeCurrentTraveler(decision);
+}
+
+
+function refreshCityTab() {
     const phase       = getCurrentPhase();
     const bg          = document.getElementById('city-bg');
-    const label       = document.getElementById('city-phase-label');
     const buildingsEl = document.getElementById('city-buildings');
     const infoPanel   = document.getElementById('city-info-panel');
 
-    bg.style.backgroundImage = `url('${PHASE_BACKGROUNDS[phase] || PHASE_BACKGROUNDS.Noon}')`;
-    label.textContent = `Day ${currentSession.day} — ${phase}`;
+    if (bg) {
+        bg.style.backgroundImage = `url('${PHASE_BACKGROUNDS[phase] || PHASE_BACKGROUNDS.Noon}')`;
+    }
 
-    buildingsEl.innerHTML = '';
-    if (infoPanel) infoPanel.style.display = 'none';
+    if (buildingsEl) buildingsEl.innerHTML = '';
+    if (infoPanel)   infoPanel.style.display = 'none';
 
-    currentStructures.forEach(structure => {
+    const cityControls = document.getElementById('city-controls');
+    if (cityControls) cityControls.style.display = 'flex';
+
+    (currentStructures || []).forEach(structure => {
         const template   = structure.structures_templates;
         const templateId = Number(structure.structure);
         const pos        = BUILDING_POSITIONS[templateId] || { x: 50, y: 50 };
@@ -422,20 +753,20 @@ function openCityScreen() {
             <div class="building-label">${name}</div>
         `;
 
-        marker.addEventListener('click', () => {
-            showCityBuildingInfo({ name, isActive, templateId, structure });
-        });
+        if (isActive) {
+            marker.addEventListener('click', () => {
+                showCityBuildingInfo({ name, isActive, templateId, structure });
+            });
+        }
 
         buildingsEl.appendChild(marker);
     });
-
-    switchScreen('home-screen', 'city-screen');
 }
 
 function showCityBuildingInfo({ name, isActive, templateId, structure }) {
-    const infoPanel = document.getElementById('city-info-panel');
-    const infoText = document.getElementById('city-info-text');
-    const actionBtns = document.getElementById('city-action-buttons');
+    const infoPanel   = document.getElementById('city-info-panel');
+    const infoText    = document.getElementById('city-info-text');
+    const actionBtns  = document.getElementById('city-action-buttons');
     if (!infoPanel || !infoText || !actionBtns) return;
 
     const statusLabel = isActive
@@ -443,24 +774,20 @@ function showCityBuildingInfo({ name, isActive, templateId, structure }) {
         : `<span class="building-status-inactive">not active</span>`;
 
     infoText.innerHTML = `The <strong>${name}</strong> appears to be ${statusLabel}.`;
-
     actionBtns.innerHTML = '';
 
     if (isActive) {
         const squireBtn = document.createElement('button');
-        squireBtn.className = 'city-action-btn send-squire';
+        squireBtn.className   = 'city-action-btn send-squire';
         squireBtn.textContent = 'Send Squire';
         squireBtn.addEventListener('click', () => handleSendSquire({ name, templateId, structure }));
         actionBtns.appendChild(squireBtn);
     }
 
     infoPanel.style.display = 'flex';
-    infoPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-async function handleSendSquire({ name, templateId, structure }) {
-    console.log(`[Squire] Sent to ${name} (template_id=${templateId})`, structure);
-
+async function handleSendSquire({ name }) {
     const eventText = `Your squire was sent to the ${name}.`;
 
     try {
@@ -470,7 +797,7 @@ async function handleSendSquire({ name, templateId, structure }) {
             body: JSON.stringify({ chatId: currentPlayer.chat_id, event: eventText })
         });
     } catch (e) {
-        console.warn('[Squire] Event log failed (endpoint may not exist yet):', e);
+        console.warn('[Squire] Event log failed:', e);
     }
 
     currentEvents.push({ event: eventText });
@@ -478,416 +805,37 @@ async function handleSendSquire({ name, templateId, structure }) {
 
     const infoText = document.getElementById('city-info-text');
     if (infoText) {
-        const existing = infoText.innerHTML;
-        infoText.innerHTML = existing + `<br><em style="color:#c8922a;">Squire dispatched.</em>`;
+        infoText.innerHTML += `<br><em style="color:var(--gold-dark);">Squire dispatched.</em>`;
     }
 }
 
-function setupTravelersScreen() {
-    const backButton = document.getElementById('back-button');
-    const continueButton = document.getElementById('continue-button');
-    if (!backButton || !continueButton) return;
-
-    backButton.addEventListener('click', () => {
-        switchScreen('travelers-screen', 'home-screen');
-        refreshGameData();
-    });
-    continueButton.addEventListener('click', () => {
-        if (currentTraveler) showTravelerGreeting();
-    });
-}
-
-function checkForPendingTravelers() {
-    const travelersButton = document.getElementById('travelers-button');
-    const endDayButton = document.getElementById('end-day-button');
-    if (!travelersButton || !endDayButton) return;
-
-    const pending = currentTravelers.filter(t => !t.complete);
-    const completed = currentTravelers.filter(t => t.complete);
-
-    if (pending.length > 0) {
-        travelersButton.style.display = 'flex';
-        travelersButton.classList.add('glow');
-        endDayButton.style.display = 'none';
-    } else if (completed.length === 6) {
-        travelersButton.style.display = 'none';
-        endDayButton.style.display = 'flex';
-        endDayButton.classList.add('glow');
-    } else {
-        travelersButton.style.display = 'flex';
-        travelersButton.classList.remove('glow');
-        endDayButton.style.display = 'none';
-    }
-}
-
-async function loadTravelersForCurrentDay() {
-    try {
-        const response = await fetch('/api/travelers/get-day', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chatId: currentPlayer.chat_id, day: currentSession.day })
-        });
-
-        if (!response.ok) throw new Error('Failed to load travelers');
-
-        const data = await response.json();
-        currentDayTravelers = data.travelers.filter(t => !t.complete);
-        if (data.available_interactions) currentAvailableInteractions = data.available_interactions;
-
-        if (currentDayTravelers.length > 0) {
-            currentTravelerIndex = 0;
-            loadCurrentTraveler();
-            switchScreen('home-screen', 'travelers-screen');
-        } else {
-            alert('No travelers available for today. All travelers have been processed.');
-        }
-    } catch (error) {
-        console.error('Load travelers error:', error);
-        alert('Failed to load travelers.');
-    }
-}
-
-function loadCurrentTraveler() {
-    if (currentTravelerIndex >= currentDayTravelers.length) {
-        switchScreen('travelers-screen', 'home-screen');
-        refreshGameData();
-        return;
-    }
-
-    currentTraveler = currentDayTravelers[currentTravelerIndex];
-    const td = currentTraveler.traveler;
-
-    const travelerDay = document.getElementById('traveler-day');
-    const travelerArt = document.getElementById('traveler-art');
-    const travelerDialog = document.getElementById('traveler-dialog');
-    const continueButton = document.getElementById('continue-button');
-    if (!travelerDay || !travelerArt || !travelerDialog || !continueButton) return;
-
-    travelerDay.textContent = `Day ${currentSession.day} - ${getCurrentPhase()}`;
-    travelerArt.src = `assets/art/travelers/${td.art}.png`;
-    travelerDialog.textContent = td.description || "A traveler approaches…";
-
-    continueButton.textContent = 'Continue';
-    continueButton.style.display = 'block';
-    continueButton.onclick = showTravelerGreeting;
-
-    document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
-}
-
-function setupDynamicActionButtons() {
-    const row1 = document.querySelectorAll('.action-row')[0];
-    const row2 = document.querySelectorAll('.action-row')[1];
-    if (!row1 || !row2) return;
-
-    row1.innerHTML = '';
-    row2.innerHTML = '';
-
-    const interactionMap = {
-        'check-papers': { row: 1, text: 'Check Papers', cls: 'check-papers', action: 'check_papers', item: 'lantern fuel' },
-        'holy-water': { row: 1, text: 'Holy Water', cls: 'holy-water', action: 'holy_water', item: 'holy water' },
-        'medicinal-herbs': { row: 1, text: 'Medicinal Herbs', cls: 'medicinal-herbs', action: 'medicinal_herbs', item: 'medicinal herbs' },
-        'let-in': { row: 2, text: 'Let In', cls: 'allow', decision: 'allow' },
-        'push-out': { row: 2, text: 'Push Out', cls: 'deny', decision: 'deny' },
-        'execute': { row: 2, text: 'Execute', cls: 'execute', decision: 'execute' },
-    };
-
-    currentAvailableInteractions.forEach(id => {
-        const bd = interactionMap[id];
-        if (!bd) return;
-
-        const btn = document.createElement('button');
-        btn.className = `action-button ${bd.cls}`;
-        btn.textContent = bd.text;
-
-        if (bd.row === 1) {
-            if (!currentInventory[bd.item] || currentInventory[bd.item] <= 0) return;
-            btn.addEventListener('click', () => handleTravelerAction(bd.action));
-            row1.appendChild(btn);
-        } else {
-            btn.addEventListener('click', () => handleTravelerDecision(bd.decision));
-            row2.appendChild(btn);
-        }
-    });
-}
-
-function showTravelerGreeting() {
-    if (!currentTraveler) return;
-
-    const td = currentTraveler.traveler;
-    const continueButton = document.getElementById('continue-button');
-    const travelerDialog = document.getElementById('traveler-dialog');
-    if (!continueButton || !travelerDialog) return;
-
-    if (td.is_fixed) {
-        // Check if this traveler has a dialog tree
-        const dialogTreeId = td.dialog?.trigger;  // The trigger field holds the tree ID
-
-        if (dialogTreeId && DIALOG_TREES[dialogTreeId]) {
-            // Use new dialog system
-            currentDialogTree = getDialogTree(dialogTreeId);
-            showDialogNode();
-        } else {
-            // Fallback to old system
-            const greetingText = td.dialog?.greeting || "A special visitor arrives.";
-            travelerDialog.textContent = greetingText;
-            executeTrigger(dialogTreeId, td, currentSession);
-
-            const newBtn = continueButton.cloneNode(true);
-            continueButton.parentNode.replaceChild(newBtn, continueButton);
-            newBtn.style.display = 'block';
-            newBtn.textContent = 'Complete';
-            newBtn.onclick = () => completeCurrentTraveler('complete_fixed');
-            document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
-        }
-    } else {
-        // Regular traveler (not fixed)
-        const greetingText = td.dialog?.greeting || "Greetings. I seek entry to your town.";
-        travelerDialog.textContent = greetingText;
-
-        continueButton.style.display = 'none';
-        setupDynamicActionButtons();
-        document.querySelectorAll('.action-row').forEach(row => row.style.display = 'flex');
-    }
-}
-
-/**
- * Show current dialog node with options
- */
-function showDialogNode() {
-    if (!currentDialogTree) return;
-
-    const travelerDialog = document.getElementById('traveler-dialog');
-    const continueButton = document.getElementById('continue-button');
-    const row1 = document.querySelectorAll('.action-row')[0];
-    const row2 = document.querySelectorAll('.action-row')[1];
-
-    if (!travelerDialog || !row1 || !row2) return;
-
-    // Show dialog text
-    travelerDialog.textContent = currentDialogTree.getText();
-
-    // Hide action row divs
-    row1.innerHTML = '';
-    row2.innerHTML = '';
-
-    // Get current options
-    const options = currentDialogTree.getOptions();
-
-    if (options.length === 0) {
-        // No options, show complete button
-        continueButton.style.display = 'block';
-        continueButton.textContent = 'Complete';
-        continueButton.onclick = () => completeCurrentTraveler('complete_fixed');
-        return;
-    }
-
-    // Show options as buttons
-    const buttonContainer = row1;
-    buttonContainer.style.display = 'flex';
-    buttonContainer.innerHTML = '';
-
-    options.forEach((option, index) => {
-        const btn = document.createElement('button');
-        btn.className = 'action-button';
-        btn.textContent = option.text;
-        btn.style.flex = `1`;
-        btn.onclick = () => handleDialogChoice(index);
-        buttonContainer.appendChild(btn);
-    });
-
-    continueButton.style.display = 'none';
-    row2.style.display = 'none';
-}
-
-/**
- * Handle a dialog choice
- */
-async function handleDialogChoice(optionIndex) {
-    if (!currentDialogTree) return;
-
-    const result = currentDialogTree.selectOption(optionIndex);
-    if (!result) return;
-
-    // Execute any actions from this option
-    if (result.actions && result.actions.length > 0) {
-        const actionResults = await executeDialogActions(result.actions);
-        console.log('[DIALOG] Action results:', actionResults);
-
-        // Check for game-over conditions
-        for (const { actionId, result: actionResult } of actionResults) {
-            if (actionResult?.gameOverRequired) {
-                handleDialogGameOver(actionResult);
-                return;
-            }
-        }
-    }
-
-    // Check if dialog ended
-    if (result.end) {
-        // Dialog complete, complete the traveler
-        setTimeout(() => completeCurrentTraveler('complete_fixed'), 500);
-        return;
-    }
-
-    // Show next node
-    showDialogNode();
-}
-
-/**
- * Handle game over from dialog
- */
-function handleDialogGameOver(result) {
-    const travelerDialog = document.getElementById('traveler-dialog');
-    const row1 = document.querySelectorAll('.action-row')[0];
-    const continueButton = document.getElementById('continue-button');
-
-    if (travelerDialog) {
-        travelerDialog.textContent = result.message || 'Your town has fallen.';
-    }
-
-    if (row1) row1.innerHTML = '';
-
-    if (continueButton) {
-        continueButton.style.display = 'block';
-        continueButton.textContent = 'Game Over';
-        continueButton.disabled = true;
-    }
-
-    console.log('[DIALOG] GAME OVER:', result);
-}
-
-async function handleTravelerAction(action) {
-    if (!currentTraveler) return;
-
-    const td = currentTraveler.traveler;
-    const dialog = document.getElementById('traveler-dialog');
-    if (!dialog) return;
-
-    const itemMap = {
-        check_papers: 'lantern fuel',
-        holy_water: 'holy water',
-        medicinal_herbs: 'medicinal herbs'
-    };
-    const item = itemMap[action];
-
-    if ((currentInventory[item] || 0) <= 0) {
-        dialog.textContent = `Not enough ${item}.`;
-        return;
-    }
-
-    const responses = {
-        check_papers: td.dialog?.papers || "The papers seem to be in order.",
-        holy_water: td.dialog?.holy_water || (td.faction === 'possessed' ? "The traveler shrieks in pain!" : "The traveler reacts normally to the holy water."),
-        medicinal_herbs: td.dialog?.medicinal_herbs || (td.faction === 'infected' ? "The traveler coughs violently!" : "The traveler shows no unusual reaction.")
-    };
-
-    dialog.textContent = responses[action];
-    await updateInventory(item, -1);
-    renderInventory();
-    setupDynamicActionButtons();
-}
-
-async function completeCurrentTraveler(decision) {
-    if (!currentTraveler) return;
-
-    const td = currentTraveler.traveler;
-    const dialog = document.getElementById('traveler-dialog');
-    if (!dialog) return;
-
-    const responseDialogs = {
-        allow: td.dialog?.in || "Thank you for allowing me passage.",
-        deny: td.dialog?.out || "Very well. I will leave peacefully.",
-        execute: td.dialog?.execution || "Please, have mercy!",
-        complete_fixed: null
-    };
-
-    const responseText = responseDialogs[decision];
-    if (responseText) {
-        dialog.textContent = responseText;
-        document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
-        const cb = document.getElementById('continue-button');
-        if (cb) cb.style.display = 'none';
-    }
-
-    try {
-        const response = await fetch('/api/travelers/decision', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chatId: currentPlayer.chat_id, travelerId: currentTraveler.id, decision })
-        });
-
-        if (!response.ok) throw new Error('Failed to process decision');
-
-        const data = await response.json();
-        if (data.success) {
-            if (data.population) currentPopulation = data.population;
-            if (data.hidden_reputation) currentHiddenReputation = data.hidden_reputation;
-
-            switchScreen('travelers-screen', 'home-screen');
-            await refreshGameData();
-        }
-    } catch (error) {
-        console.error('Complete traveler error:', error);
-        alert('Failed to complete traveler.');
-    }
-}
-
-async function handleTravelerDecision(decision) {
-    await completeCurrentTraveler(decision);
-}
-
-async function handleEndDay() {
-    try {
-        const response = await fetch('/api/day/advance', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chatId: currentPlayer.chat_id })
-        });
-
-        if (!response.ok) throw new Error('Failed to advance day');
-
-        const data = await response.json();
-        if (data.success) {
-            currentSession = data.session;
-            currentTravelers = data.travelers || [];
-            currentEvents = data.events || [];
-
-            updateDayDisplay();
-            renderEvents();
-            checkForPendingTravelers();
-
-            alert(`Day ${data.session.day} begins!`);
-        }
-    } catch (error) {
-        console.error('End day error:', error);
-        alert('Failed to advance to next day.');
-    }
-}
 
 async function refreshGameData() {
+    if (!currentPlayer) return;
     try {
         const response = await fetch('/api/auth/check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                chatId: currentPlayer.chat_id,
-                playerName: currentPlayer.player_name,
+                chatId:         currentPlayer.chat_id,
+                playerName:     currentPlayer.player_name,
                 playerLanguage: currentPlayer.player_language,
-                timezone: currentPlayer.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+                timezone:       currentPlayer.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
             })
         });
 
         if (!response.ok) return;
 
         const data = await response.json();
-        _applySessionData(data);
-        checkForPendingTravelers();
+        applySessionData(data);
+        updateGateNavGlow();
     } catch (error) {
         console.error('Refresh error:', error);
     }
 }
 
 async function updateInventory(item, amount) {
+    if (!currentInventory) return;
     currentInventory[item] = Math.max(0, (currentInventory[item] || 0) + amount);
     try {
         await fetch('/api/inventory/update', {
@@ -904,28 +852,20 @@ function handleIconClick(e) {
     const { type, key, name, icon, level, count } = e.currentTarget.dataset;
     const value = level || count;
 
-    const overlay = document.getElementById('modal-overlay');
+    const overlay   = document.getElementById('modal-overlay');
     const modalIcon = document.getElementById('modal-icon');
     const modalTitle = document.getElementById('modal-title');
-    const modalDesc = document.getElementById('modal-description');
+    const modalDesc  = document.getElementById('modal-description');
     if (!overlay || !modalIcon || !modalTitle || !modalDesc) return;
 
-    modalIcon.src = `assets/art/icons/${icon}.png`;
-    modalIcon.alt = name;
-
+    modalIcon.src   = `assets/art/icons/${icon}.png`;
+    modalIcon.alt   = name;
     modalTitle.textContent = `${name}: ${value}`;
-    modalDesc.textContent = type === 'population'
-        ? (populationDescriptions[key] || "No description available.")
-        : (itemDescriptions[key] || "No description available.");
+    modalDesc.textContent  = type === 'population'
+        ? (populationDescriptions[key] || 'No description available.')
+        : (itemDescriptions[key]       || 'No description available.');
 
     overlay.classList.add('active');
-}
-
-function switchScreen(fromId, toId) {
-    const from = document.getElementById(fromId);
-    const to = document.getElementById(toId);
-    if (from) from.classList.remove('active');
-    if (to) to.classList.add('active');
 }
 
 window.addEventListener('load', initializeApp);

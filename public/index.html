@@ -11,7 +11,8 @@
     <script src="dialog_trees.js"></script>
 </head>
 <body>
-    <div id="loading-screen" class="screen active">
+
+    <div id="flow-loading" class="flow-screen active">
         <div class="loading-container">
             <div class="loading-bar-track">
                 <div class="loading-bar-fill" id="loading-bar-fill"></div>
@@ -20,10 +21,9 @@
         </div>
     </div>
 
-    <div id="tutorial-screen" class="screen">
+    <div id="flow-tutorial" class="flow-screen">
         <div class="tutorial-container">
             <div class="tutorial-slides" id="tutorial-slides">
-
                 <div class="tutorial-slide active">
                     <div class="tutorial-art">
                         <img src="assets/art/town_day.png" class="tutorial-bg-img">
@@ -33,7 +33,6 @@
                         <p class="tutorial-text">You are the gatekeeper of a small, frightened town. Plague and dark forces close in from all sides. Every soul that passes through your gate is your responsibility.</p>
                     </div>
                 </div>
-
                 <div class="tutorial-slide">
                     <div class="tutorial-art tutorial-art-icon">
                         <img src="assets/art/icons/town.png" class="tutorial-icon-img">
@@ -43,7 +42,6 @@
                         <p class="tutorial-text">Watch the population counter carefully. Your town holds humans, the infected, and the possessed. Let the wrong ones in and the balance shifts. Lose everyone and it is over.</p>
                     </div>
                 </div>
-
                 <div class="tutorial-slide">
                     <div class="tutorial-art tutorial-art-icon">
                         <img src="assets/art/icons/lantern_fuel.png" class="tutorial-icon-img">
@@ -53,7 +51,6 @@
                         <p class="tutorial-text">Six travelers arrive each day. Use your lantern to check papers, holy water to test for possession, medicinal herbs to detect infection. Then choose — let them in, turn them away, or execute them.</p>
                     </div>
                 </div>
-
                 <div class="tutorial-slide">
                     <div class="tutorial-art tutorial-art-icon">
                         <img src="assets/art/icons/holy_water.png" class="tutorial-icon-img">
@@ -63,7 +60,6 @@
                         <p class="tutorial-text">Travelers lie. Papers can be forged. Some hide what they are. Your supplies are limited — use them wisely. Every decision carries a cost, and reputation follows you whether you want it to or not.</p>
                     </div>
                 </div>
-
                 <div class="tutorial-slide">
                     <div class="tutorial-art tutorial-art-icon">
                         <img src="assets/art/icons/medicinal_herbs.png" class="tutorial-icon-img">
@@ -73,9 +69,7 @@
                         <p class="tutorial-text">A companion will travel with you through these dark days. Choose wisely. They will not judge your decisions — but they will witness every one of them.</p>
                     </div>
                 </div>
-
             </div>
-
             <div class="tutorial-footer">
                 <div class="tutorial-dots" id="tutorial-dots"></div>
                 <button class="tutorial-next-button" id="tutorial-next">Continue</button>
@@ -83,9 +77,8 @@
         </div>
     </div>
 
-    <div id="pet-selection-screen" class="screen">
+    <div id="flow-pet-selection" class="flow-screen">
         <h1 class="pet-selection-title">Choose Your Companion</h1>
-
         <div class="pet-options">
             <div class="pet-option" id="pet-cat-option">
                 <img src="assets/art/pets/pet_cat_1.webp" class="pet-static" alt="Cat">
@@ -94,29 +87,24 @@
                     <source src="assets/art/pets/pet_cat_animation_2.mp4" type="video/mp4">
                 </video>
             </div>
-
             <div class="pet-option" id="pet-owl-option">
                 <img src="assets/art/pets/pet_owl_1.webp" class="pet-static" alt="Owl">
                 <video class="pet-video" muted playsinline preload="none">
                     <source src="assets/art/pets/pet_owl_animation_1.mp4" type="video/mp4">
                 </video>
             </div>
-
             <div class="pet-option coming-soon" id="pet-fox-option">
                 <div class="coming-soon-text">COMING SOON</div>
             </div>
-
             <div class="pet-option coming-soon" id="pet-raven-option">
                 <div class="coming-soon-text">COMING SOON</div>
             </div>
         </div>
-
         <div class="pet-description" id="pet-description"></div>
-
         <button class="confirm-pet-button" id="confirm-pet-button" disabled>Confirm Choice</button>
     </div>
 
-    <div id="pet-naming-screen" class="screen">
+    <div id="flow-pet-naming" class="flow-screen">
         <div class="naming-container">
             <div class="naming-pet-preview" id="naming-pet-preview">
                 <img class="pet-static" id="naming-pet-img" src="" alt="">
@@ -124,109 +112,110 @@
             </div>
             <h2 class="naming-title">Name Your Companion</h2>
             <div class="naming-input-row">
-                <input
-                    type="text"
-                    class="pet-name-input"
-                    id="pet-name-input"
-                    maxlength="24"
-                    autocomplete="off"
-                >
+                <input type="text" class="pet-name-input" id="pet-name-input" maxlength="24" autocomplete="off">
                 <button class="dice-button" id="dice-button">⚄</button>
             </div>
             <button class="confirm-pet-button" id="begin-button">Begin</button>
         </div>
     </div>
 
-    <div id="home-screen" class="screen">
-        <div class="home-container">
-            <div class="main-content" style="height:70vh;">
-                <div class="stats-overlay">
-                    <div class="reputation-container" id="reputation-container"></div>
-                    <div class="inventory-container" id="inventory-container"></div>
-                </div>
-                <div class="day-display" id="day-display">
-                   <span id="current-day">1</span>
-                </div>
-                <div class="events-container" id="events-container">
-                    <div id="events-list"></div>
-                </div>
-                <div class="pet-display" id="pet-display" style="display: none;"></div>
+    <div id="app-shell" class="flow-screen">
+
+        <div id="shell-header">
+            <div id="header-left">
+                <div class="reputation-container" id="reputation-container"></div>
             </div>
-            <div class="content-controls" style="height:20vh;"></div>
-            <div class="bottom-controls" style="height:10vh;">
-                <div class="bottom-buttons">
-                    <button class="bottom-button" id="travelers-button">Gate</button>
-                    <button class="bottom-button" id="preparation-button">City</button>
-                    <button class="bottom-button" id="keep-button">Keep</button>
-                    <button class="bottom-button" id="heroes-button">Heroes</button>
+            <div id="header-center">
+                <div class="day-display" id="day-display">
+                    <span id="current-day">Day 1</span>
                 </div>
+            </div>
+            <div id="header-right">
+                <div class="inventory-container" id="inventory-container"></div>
             </div>
         </div>
-    </div>
 
-    <div id="city-screen" class="screen">
-        <div class="city-container">
-            <div class="main-content" style="height:70vh;">
-                <div class="city-header">
-                    <div class="traveler-day" id="city-phase-label"></div>
+        <div id="shell-content">
+
+            <div id="tab-keep" class="tab-panel active" style="background-image: url('assets/art/guard_room.jpg');">
+                <div class="tab-bg-overlay"></div>
+                <div class="tab-inner">
+                    <div class="events-container" id="events-container">
+                        <div id="events-list"></div>
+                    </div>
+                    <div class="pet-display" id="pet-display" style="display:none;"></div>
                 </div>
+            </div>
+
+            <div id="tab-gate" class="tab-panel" style="background-image: url('assets/art/town_day.png');">
+                <div class="tab-bg-overlay"></div>
+                <div class="tab-inner gate-inner">
+                    <div class="traveler-art-container">
+                        <img id="traveler-art" src="" alt="Traveler" class="traveler-art">
+                    </div>
+                    <div class="traveler-dialog-container">
+                        <div id="traveler-dialog" class="traveler-dialog"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-city" class="tab-panel">
                 <div class="city-bg" id="city-bg"></div>
                 <div class="city-buildings" id="city-buildings"></div>
             </div>
-            <div class="content-controls" style="height:20vh;">
-                <div class="city-info-panel" id="city-info-panel" style="display:none;">
+
+            <div id="tab-heroes" class="tab-panel" style="background-image: url('assets/art/guard_room.jpg');">
+                <div class="tab-bg-overlay"></div>
+                <div class="tab-inner">
+                    <div class="coming-soon-panel">
+                        <div class="coming-soon-icon">⚔️</div>
+                        <h2 class="coming-soon-title">Heroes</h2>
+                        <p class="coming-soon-desc">Champions and mercenaries will answer your call in time.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="shell-controls">
+
+            <div id="gate-actions" class="controls-panel" style="display:none;">
+                <div class="action-row" id="gate-row-1"></div>
+                <div class="action-row" id="gate-row-2"></div>
+                <button class="action-button action-continue" id="continue-button" style="display:none;">Continue</button>
+            </div>
+
+            <div id="city-controls" class="controls-panel" style="display:none;">
+                <div class="city-info-panel" id="city-info-panel">
                     <div class="city-info-text" id="city-info-text"></div>
                     <div class="city-action-buttons" id="city-action-buttons"></div>
                 </div>
             </div>
-            <div class="bottom-controls" style="height:10vh;">
-                <div class="bottom-buttons">
-                    <button class="bottom-button" id="travelers-button">Gate</button>
-                    <button class="bottom-button" id="preparation-button">City</button>
-                    <button class="bottom-button" id="keep-button">Keep</button>
-                    <button class="bottom-button" id="heroes-button">Heroes</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div id="travelers-screen" class="screen">
-        <div class="travelers-container">
-            <div class="main-content" style="height:70vh;">
-                <div class="traveler-header">
-                    <div class="traveler-day" id="traveler-day">Day 1</div>
-                </div>
-                <div class="traveler-art-container">
-                    <img id="traveler-art" src="" alt="Traveler" class="traveler-art">
-                </div>
-                <div class="traveler-dialog-container">
-                    <div id="traveler-dialog" class="traveler-dialog"></div>
-                </div>
-            </div>
-            <div class="content-controls" style="height:20vh;">
-                <div class="traveler-actions" id="traveler-actions">
-                    <div class="action-row">
-                        <button class="action-button check-papers" id="check-papers">Check Papers</button>
-                        <button class="action-button holy-water" id="holy-water">Holy Water</button>
-                        <button class="action-button medicinal-herbs" id="medicinal-herbs">Medicinal Herbs</button>
-                    </div>
-                    <div class="action-row">
-                        <button class="action-button allow" id="allow">Let In</button>
-                        <button class="action-button deny" id="deny">Push Out</button>
-                        <button class="action-button execute" id="execute">Execute</button>
-                    </div>
-                    <button class="action-button continue" id="continue-button">Continue</button>
-                </div>
-            </div>
-            <div class="bottom-controls" style="height:10vh;">
-                <div class="bottom-buttons">
-                    <button class="bottom-button" id="travelers-button">Gate</button>
-                    <button class="bottom-button" id="preparation-button">City</button>
-                    <button class="bottom-button" id="keep-button">Keep</button>
-                    <button class="bottom-button" id="heroes-button">Heroes</button>
-                </div>
-            </div>
+            <div id="keep-controls" class="controls-panel" style="display:none;"></div>
+            <div id="heroes-controls" class="controls-panel" style="display:none;"></div>
+
         </div>
+
+        <nav id="shell-nav">
+            <button class="nav-btn active" data-tab="keep" id="nav-keep">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Keep</span>
+            </button>
+            <button class="nav-btn" data-tab="gate" id="nav-gate">
+                <span class="nav-icon">⚔️</span>
+                <span class="nav-label">Gate</span>
+            </button>
+            <button class="nav-btn" data-tab="city" id="nav-city">
+                <span class="nav-icon">🏛️</span>
+                <span class="nav-label">City</span>
+            </button>
+            <button class="nav-btn" data-tab="heroes" id="nav-heroes">
+                <span class="nav-icon">🛡️</span>
+                <span class="nav-label">Heroes</span>
+            </button>
+        </nav>
+
     </div>
 
     <div id="modal-overlay" class="modal-overlay">
