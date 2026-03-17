@@ -24,7 +24,7 @@ const DIALOG_TREES = {
      * MITHRAIL - Inquisition Paladin
      * Teaches about holy water, unlocks church
      */
-    Explanation_H: {
+    mithrail_greeting: {
         start: {
             text: "Greetings, citizen. I am Mithrail of the Inquisition. I will teach you to discern truth from deception.",
             options: [
