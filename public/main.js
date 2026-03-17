@@ -318,16 +318,21 @@ function setupBottomButtons() {
         setActiveButton('travelers', buttons);
         switchScreen('city-screen', 'home-screen');
         switchScreen('travelers-screen', 'home-screen');
+        switchScreen('city-screen', 'home-screen');
+        switchScreen('home-screen', 'travelers-screen');
         loadTravelersForCurrentDay();
     });
     buttons.preparation.addEventListener('click', () => {
         setActiveButton('preparation', buttons);
         switchScreen('home-screen', 'city-screen');
         switchScreen('travelers-screen', 'city-screen');
+        switchScreen('home-screen', 'city-screen');
         openCityScreen();
     });
     buttons.keep.addEventListener('click', () => {
         setActiveButton('keep', buttons);
+        switchScreen('city-screen', 'home-screen');
+        switchScreen('travelers-screen', 'home-screen');
         switchScreen('city-screen', 'home-screen');
         switchScreen('travelers-screen', 'home-screen');
     });
