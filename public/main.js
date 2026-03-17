@@ -352,6 +352,12 @@ function setupBottomButtons() {
     }
 }
 
+function setActiveButton(active, buttons) {
+    Object.entries(buttons).forEach(([key, btn]) => {
+        if (btn) btn.classList.toggle('active', key === active);
+    });
+}
+
 const BUILDING_POSITIONS = {
     1: { x: 20, y: 30 },
     2: { x: 75, y: 25 },
