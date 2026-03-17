@@ -32,11 +32,11 @@ async function initializeApp() {
     try {
         animateLoadingBar();
 
-        const initData       = tg.initDataUnsafe;
-        const chatId         = initData?.user?.id?.toString() || 'test_user';
-        const playerName     = initData?.user?.first_name || 'Player';
+        const initData = tg.initDataUnsafe;
+        const chatId = initData?.user?.id?.toString() || 'test_user';
+        const playerName = initData?.user?.first_name || 'Player';
         const playerLanguage = initData?.user?.language_code?.toUpperCase() || 'EN';
-        const timezone       = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
         const response = await fetch('/api/auth/check', {
             method: 'POST',
@@ -82,16 +82,16 @@ async function initializeApp() {
         const loadingText = document.querySelector('.loading-text');
         if (loadingText) {
             loadingText.style.display = 'block';
-            loadingText.textContent   = 'Error loading. Please try again.';
+            loadingText.textContent = 'Error loading. Please try again.';
         }
     }
 }
 
 function _initTutorial(onComplete) {
-    const slides    = Array.from(document.querySelectorAll('.tutorial-slide'));
-    const dotsEl    = document.getElementById('tutorial-dots');
-    const nextBtn   = document.getElementById('tutorial-next');
-    let current     = 0;
+    const slides = Array.from(document.querySelectorAll('.tutorial-slide'));
+    const dotsEl = document.getElementById('tutorial-dots');
+    const nextBtn = document.getElementById('tutorial-next');
+    let current = 0;
 
     slides.forEach((_, i) => {
         const dot = document.createElement('div');
@@ -153,7 +153,7 @@ function _initPetSelection() {
                 petType,
                 onConfirm: async (pet) => {
                     const initData = tg.initDataUnsafe;
-                    const chatId   = initData?.user?.id?.toString() || 'test_user';
+                    const chatId = initData?.user?.id?.toString() || 'test_user';
 
                     const res = await fetch('/api/pet/select', {
                         method: 'POST',
@@ -180,15 +180,15 @@ function _initPetSelection() {
 }
 
 function _applySessionData(data) {
-    currentSession               = data.session;
-    currentPopulation            = data.population;
-    currentHiddenReputation      = data.hidden_reputation;
-    currentInventory             = data.inventory;
+    currentSession = data.session;
+    currentPopulation = data.population;
+    currentHiddenReputation = data.hidden_reputation;
+    currentInventory = data.inventory;
     currentAvailableInteractions = data.available_interactions || ['check-papers', 'let-in', 'push-out'];
-    currentEvents                = data.events    || [];
-    currentTravelers             = data.travelers || [];
-    currentPet                   = data.pet       || null;
-    currentStructures            = data.structures || [];
+    currentEvents = data.events || [];
+    currentTravelers = data.travelers || [];
+    currentPet = data.pet || null;
+    currentStructures = data.structures || [];
 
     updateDayDisplay();
     renderPopulation();
@@ -231,9 +231,9 @@ function renderPopulation() {
     if (!container) return;
     container.innerHTML = '';
 
-    const total = (currentPopulation.human     || 0)
-                + (currentPopulation.infected  || 0)
-                + (currentPopulation.possessed || 0);
+    const total = (currentPopulation.human || 0)
+        + (currentPopulation.infected || 0)
+        + (currentPopulation.possessed || 0);
 
     const item = document.createElement('div');
     item.className = 'reputation-item';
@@ -251,8 +251,8 @@ function renderInventory() {
     container.innerHTML = '';
 
     [
-        { key: 'holy water',      name: 'Holy Water',      icon: 'holy_water' },
-        { key: 'lantern fuel',    name: 'Lantern Fuel',    icon: 'lantern_fuel' },
+        { key: 'holy water', name: 'Holy Water', icon: 'holy_water' },
+        { key: 'lantern fuel', name: 'Lantern Fuel', icon: 'lantern_fuel' },
         { key: 'medicinal herbs', name: 'Medicinal Herbs', icon: 'medicinal_herbs' }
     ].forEach(item => {
         const count = currentInventory[item.key] || 0;
@@ -276,7 +276,7 @@ function renderEvents() {
 
     if (currentEvents.length === 0) {
         const el = document.createElement('div');
-        el.className  = 'event-item';
+        el.className = 'event-item';
         el.textContent = 'No events yet. Your adventure begins now!';
         list.appendChild(el);
         return;
@@ -284,14 +284,14 @@ function renderEvents() {
 
     currentEvents.slice(-10).reverse().forEach(event => {
         const el = document.createElement('div');
-        el.className  = 'event-item';
+        el.className = 'event-item';
         el.textContent = event.event;
         list.appendChild(el);
     });
 }
 
 function setupModalEvents() {
-    const modalClose   = document.getElementById('modal-close');
+    const modalClose = document.getElementById('modal-close');
     const modalOverlay = document.getElementById('modal-overlay');
     if (!modalClose || !modalOverlay) return;
 
@@ -299,18 +299,18 @@ function setupModalEvents() {
         item.addEventListener('click', handleIconClick);
     });
 
-    modalClose.addEventListener('click',   () => modalOverlay.classList.remove('active'));
-    modalOverlay.addEventListener('click', e  => {
+    modalClose.addEventListener('click', () => modalOverlay.classList.remove('active'));
+    modalOverlay.addEventListener('click', e => {
         if (e.target === modalOverlay) modalOverlay.classList.remove('active');
     });
 }
 
 function setupBottomButtons() {
     const buttons = {
-        travelers:   document.getElementById('travelers-button'),
+        travelers: document.getElementById('travelers-button'),
         preparation: document.getElementById('preparation-button'),
-        keep:        document.getElementById('keep-button'),
-        heroes:      document.getElementById('heroes-button')
+        keep: document.getElementById('keep-button'),
+        heroes: document.getElementById('heroes-button')
     };
     if (!buttons.travelers) return;
 
@@ -351,30 +351,29 @@ const BUILDING_POSITIONS = {
 };
 
 const BUILDING_EMOJIS = {
-    church:          '⛪',
-    apothecary:      '⚗️',
-    inn:             '🏠',
-    'post office':   '✉️',
-    'fortune teller':'🔮',
-    blacksmith:      '⚒️',
+    church: '⛪',
+    apothecary: '⚗️',
+    inn: '🏠',
+    'post office': '✉️',
+    'fortune teller': '🔮',
+    blacksmith: '⚒️',
 };
 
 const PHASE_BACKGROUNDS = {
-    Dawn:      'assets/art/town_dawn.jpg',
-    Morning:   'assets/art/town_morning.jpg',
-    Noon:      'assets/art/town_noon.jpg',
+    Dawn: 'assets/art/town_dawn.jpg',
+    Morning: 'assets/art/town_morning.jpg',
+    Noon: 'assets/art/town_noon.jpg',
     Afternoon: 'assets/art/town_afternoon.jpg',
-    Dusk:      'assets/art/town_dusk.jpg',
-    Night:     'assets/art/town_night.jpg',
+    Dusk: 'assets/art/town_dusk.jpg',
+    Night: 'assets/art/town_night.jpg',
 };
 
 function openCityScreen() {
-    const phase       = getCurrentPhase();
-    const bg          = document.getElementById('city-bg');
-    const label       = document.getElementById('city-phase-label');
+    const phase = getCurrentPhase();
+    const bg = document.getElementById('city-bg');
+    const label = document.getElementById('city-phase-label');
     const buildingsEl = document.getElementById('city-buildings');
-    const backBtn     = document.getElementById('city-back-button');
-    const infoPanel   = document.getElementById('city-info-panel');
+    const infoPanel = document.getElementById('city-info-panel');
 
     bg.style.backgroundImage = `url('${PHASE_BACKGROUNDS[phase] || PHASE_BACKGROUNDS.Noon}')`;
     label.textContent = `Day ${currentSession.day} — ${phase}`;
@@ -383,20 +382,20 @@ function openCityScreen() {
     if (infoPanel) infoPanel.style.display = 'none';
 
     currentStructures.forEach(structure => {
-        const template   = structure.structures_templates;
+        const template = structure.structures_templates;
         const templateId = Number(structure.structure);
-        const pos        = BUILDING_POSITIONS[templateId] || { x: 50, y: 50 };
-        const name       = template?.name || `Building ${templateId}`;
-        const emoji      = BUILDING_EMOJIS[name.toLowerCase()] || '🏛️';
-        const isActive   = structure.is_active || false;
-        const pop        = parseInt(structure.status?.human     || 0)
-                         + parseInt(structure.status?.infected  || 0)
-                         + parseInt(structure.status?.possessed || 0);
+        const pos = BUILDING_POSITIONS[templateId] || { x: 50, y: 50 };
+        const name = template?.name || `Building ${templateId}`;
+        const emoji = BUILDING_EMOJIS[name.toLowerCase()] || '🏛️';
+        const isActive = structure.is_active || false;
+        const pop = parseInt(structure.status?.human || 0)
+            + parseInt(structure.status?.infected || 0)
+            + parseInt(structure.status?.possessed || 0);
 
         const marker = document.createElement('div');
-        marker.className  = 'building-marker' + (isActive ? '' : ' inactive');
+        marker.className = 'building-marker' + (isActive ? '' : ' inactive');
         marker.style.left = `${pos.x}%`;
-        marker.style.top  = `${pos.y}%`;
+        marker.style.top = `${pos.y}%`;
 
         marker.innerHTML = `
             <div class="building-icon-wrap">
@@ -413,18 +412,13 @@ function openCityScreen() {
         buildingsEl.appendChild(marker);
     });
 
-    backBtn.onclick = () => {
-        if (infoPanel) infoPanel.style.display = 'none';
-        switchScreen('city-screen', 'home-screen');
-    };
-
     switchScreen('home-screen', 'city-screen');
 }
 
 function showCityBuildingInfo({ name, isActive, templateId, structure }) {
-    const infoPanel   = document.getElementById('city-info-panel');
-    const infoText    = document.getElementById('city-info-text');
-    const actionBtns  = document.getElementById('city-action-buttons');
+    const infoPanel = document.getElementById('city-info-panel');
+    const infoText = document.getElementById('city-info-text');
+    const actionBtns = document.getElementById('city-action-buttons');
     if (!infoPanel || !infoText || !actionBtns) return;
 
     const statusLabel = isActive
@@ -437,7 +431,7 @@ function showCityBuildingInfo({ name, isActive, templateId, structure }) {
 
     if (isActive) {
         const squireBtn = document.createElement('button');
-        squireBtn.className   = 'city-action-btn send-squire';
+        squireBtn.className = 'city-action-btn send-squire';
         squireBtn.textContent = 'Send Squire';
         squireBtn.addEventListener('click', () => handleSendSquire({ name, templateId, structure }));
         actionBtns.appendChild(squireBtn);
@@ -472,7 +466,7 @@ async function handleSendSquire({ name, templateId, structure }) {
 }
 
 function setupTravelersScreen() {
-    const backButton     = document.getElementById('back-button');
+    const backButton = document.getElementById('back-button');
     const continueButton = document.getElementById('continue-button');
     if (!backButton || !continueButton) return;
 
@@ -487,11 +481,11 @@ function setupTravelersScreen() {
 
 function checkForPendingTravelers() {
     const travelersButton = document.getElementById('travelers-button');
-    const endDayButton    = document.getElementById('end-day-button');
+    const endDayButton = document.getElementById('end-day-button');
     if (!travelersButton || !endDayButton) return;
 
-    const pending   = currentTravelers.filter(t => !t.complete);
-    const completed = currentTravelers.filter(t =>  t.complete);
+    const pending = currentTravelers.filter(t => !t.complete);
+    const completed = currentTravelers.filter(t => t.complete);
 
     if (pending.length > 0) {
         travelersButton.style.display = 'flex';
@@ -545,19 +539,19 @@ function loadCurrentTraveler() {
     currentTraveler = currentDayTravelers[currentTravelerIndex];
     const td = currentTraveler.traveler;
 
-    const travelerDay    = document.getElementById('traveler-day');
-    const travelerArt    = document.getElementById('traveler-art');
+    const travelerDay = document.getElementById('traveler-day');
+    const travelerArt = document.getElementById('traveler-art');
     const travelerDialog = document.getElementById('traveler-dialog');
     const continueButton = document.getElementById('continue-button');
     if (!travelerDay || !travelerArt || !travelerDialog || !continueButton) return;
 
-    travelerDay.textContent    = `Day ${currentSession.day} - ${getCurrentPhase()}`;
-    travelerArt.src            = `assets/art/travelers/${td.art}.png`;
+    travelerDay.textContent = `Day ${currentSession.day} - ${getCurrentPhase()}`;
+    travelerArt.src = `assets/art/travelers/${td.art}.png`;
     travelerDialog.textContent = td.description || "A traveler approaches…";
 
-    continueButton.textContent   = 'Continue';
+    continueButton.textContent = 'Continue';
     continueButton.style.display = 'block';
-    continueButton.onclick       = showTravelerGreeting;
+    continueButton.onclick = showTravelerGreeting;
 
     document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
 }
@@ -571,12 +565,12 @@ function setupDynamicActionButtons() {
     row2.innerHTML = '';
 
     const interactionMap = {
-        'check-papers':    { row: 1, text: 'Check Papers',    cls: 'check-papers',    action: 'check_papers',    item: 'lantern fuel' },
-        'holy-water':      { row: 1, text: 'Holy Water',      cls: 'holy-water',      action: 'holy_water',      item: 'holy water' },
+        'check-papers': { row: 1, text: 'Check Papers', cls: 'check-papers', action: 'check_papers', item: 'lantern fuel' },
+        'holy-water': { row: 1, text: 'Holy Water', cls: 'holy-water', action: 'holy_water', item: 'holy water' },
         'medicinal-herbs': { row: 1, text: 'Medicinal Herbs', cls: 'medicinal-herbs', action: 'medicinal_herbs', item: 'medicinal herbs' },
-        'let-in':   { row: 2, text: 'Let In',   cls: 'allow',   decision: 'allow' },
-        'push-out': { row: 2, text: 'Push Out', cls: 'deny',    decision: 'deny' },
-        'execute':  { row: 2, text: 'Execute',  cls: 'execute', decision: 'execute' },
+        'let-in': { row: 2, text: 'Let In', cls: 'allow', decision: 'allow' },
+        'push-out': { row: 2, text: 'Push Out', cls: 'deny', decision: 'deny' },
+        'execute': { row: 2, text: 'Execute', cls: 'execute', decision: 'execute' },
     };
 
     currentAvailableInteractions.forEach(id => {
@@ -584,7 +578,7 @@ function setupDynamicActionButtons() {
         if (!bd) return;
 
         const btn = document.createElement('button');
-        btn.className   = `action-button ${bd.cls}`;
+        btn.className = `action-button ${bd.cls}`;
         btn.textContent = bd.text;
 
         if (bd.row === 1) {
@@ -601,7 +595,7 @@ function setupDynamicActionButtons() {
 function showTravelerGreeting() {
     if (!currentTraveler) return;
 
-    const td             = currentTraveler.traveler;
+    const td = currentTraveler.traveler;
     const continueButton = document.getElementById('continue-button');
     const travelerDialog = document.getElementById('traveler-dialog');
     if (!continueButton || !travelerDialog) return;
@@ -609,7 +603,7 @@ function showTravelerGreeting() {
     if (td.is_fixed) {
         // Check if this traveler has a dialog tree
         const dialogTreeId = td.dialog?.trigger;  // The trigger field holds the tree ID
-        
+
         if (dialogTreeId && DIALOG_TREES[dialogTreeId]) {
             // Use new dialog system
             currentDialogTree = getDialogTree(dialogTreeId);
@@ -619,19 +613,19 @@ function showTravelerGreeting() {
             const greetingText = td.dialog?.greeting || "A special visitor arrives.";
             travelerDialog.textContent = greetingText;
             executeTrigger(dialogTreeId, td, currentSession);
-            
+
             const newBtn = continueButton.cloneNode(true);
             continueButton.parentNode.replaceChild(newBtn, continueButton);
             newBtn.style.display = 'block';
-            newBtn.textContent   = 'Complete';
-            newBtn.onclick       = () => completeCurrentTraveler('complete_fixed');
+            newBtn.textContent = 'Complete';
+            newBtn.onclick = () => completeCurrentTraveler('complete_fixed');
             document.querySelectorAll('.action-row').forEach(row => row.style.display = 'none');
         }
     } else {
         // Regular traveler (not fixed)
         const greetingText = td.dialog?.greeting || "Greetings. I seek entry to your town.";
         travelerDialog.textContent = greetingText;
-        
+
         continueButton.style.display = 'none';
         setupDynamicActionButtons();
         document.querySelectorAll('.action-row').forEach(row => row.style.display = 'flex');
@@ -660,7 +654,7 @@ function showDialogNode() {
 
     // Get current options
     const options = currentDialogTree.getOptions();
-    
+
     if (options.length === 0) {
         // No options, show complete button
         continueButton.style.display = 'block';
@@ -734,7 +728,7 @@ function handleDialogGameOver(result) {
     }
 
     if (row1) row1.innerHTML = '';
-    
+
     if (continueButton) {
         continueButton.style.display = 'block';
         continueButton.textContent = 'Game Over';
@@ -747,13 +741,13 @@ function handleDialogGameOver(result) {
 async function handleTravelerAction(action) {
     if (!currentTraveler) return;
 
-    const td     = currentTraveler.traveler;
+    const td = currentTraveler.traveler;
     const dialog = document.getElementById('traveler-dialog');
     if (!dialog) return;
 
     const itemMap = {
-        check_papers:    'lantern fuel',
-        holy_water:      'holy water',
+        check_papers: 'lantern fuel',
+        holy_water: 'holy water',
         medicinal_herbs: 'medicinal herbs'
     };
     const item = itemMap[action];
@@ -764,9 +758,9 @@ async function handleTravelerAction(action) {
     }
 
     const responses = {
-        check_papers:    td.dialog?.papers         || "The papers seem to be in order.",
-        holy_water:      td.dialog?.holy_water      || (td.faction === 'possessed' ? "The traveler shrieks in pain!" : "The traveler reacts normally to the holy water."),
-        medicinal_herbs: td.dialog?.medicinal_herbs || (td.faction === 'infected'  ? "The traveler coughs violently!" : "The traveler shows no unusual reaction.")
+        check_papers: td.dialog?.papers || "The papers seem to be in order.",
+        holy_water: td.dialog?.holy_water || (td.faction === 'possessed' ? "The traveler shrieks in pain!" : "The traveler reacts normally to the holy water."),
+        medicinal_herbs: td.dialog?.medicinal_herbs || (td.faction === 'infected' ? "The traveler coughs violently!" : "The traveler shows no unusual reaction.")
     };
 
     dialog.textContent = responses[action];
@@ -778,14 +772,14 @@ async function handleTravelerAction(action) {
 async function completeCurrentTraveler(decision) {
     if (!currentTraveler) return;
 
-    const td     = currentTraveler.traveler;
+    const td = currentTraveler.traveler;
     const dialog = document.getElementById('traveler-dialog');
     if (!dialog) return;
 
     const responseDialogs = {
-        allow:          td.dialog?.in        || "Thank you for allowing me passage.",
-        deny:           td.dialog?.out       || "Very well. I will leave peacefully.",
-        execute:        td.dialog?.execution || "Please, have mercy!",
+        allow: td.dialog?.in || "Thank you for allowing me passage.",
+        deny: td.dialog?.out || "Very well. I will leave peacefully.",
+        execute: td.dialog?.execution || "Please, have mercy!",
         complete_fixed: null
     };
 
@@ -808,7 +802,7 @@ async function completeCurrentTraveler(decision) {
 
         const data = await response.json();
         if (data.success) {
-            if (data.population)        currentPopulation       = data.population;
+            if (data.population) currentPopulation = data.population;
             if (data.hidden_reputation) currentHiddenReputation = data.hidden_reputation;
 
             switchScreen('travelers-screen', 'home-screen');
@@ -836,9 +830,9 @@ async function handleEndDay() {
 
         const data = await response.json();
         if (data.success) {
-            currentSession   = data.session;
+            currentSession = data.session;
             currentTravelers = data.travelers || [];
-            currentEvents    = data.events    || [];
+            currentEvents = data.events || [];
 
             updateDayDisplay();
             renderEvents();
@@ -858,10 +852,10 @@ async function refreshGameData() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                chatId:         currentPlayer.chat_id,
-                playerName:     currentPlayer.player_name,
+                chatId: currentPlayer.chat_id,
+                playerName: currentPlayer.player_name,
                 playerLanguage: currentPlayer.player_language,
-                timezone:       currentPlayer.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+                timezone: currentPlayer.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
             })
         });
 
@@ -892,28 +886,28 @@ function handleIconClick(e) {
     const { type, key, name, icon, level, count } = e.currentTarget.dataset;
     const value = level || count;
 
-    const overlay    = document.getElementById('modal-overlay');
-    const modalIcon  = document.getElementById('modal-icon');
+    const overlay = document.getElementById('modal-overlay');
+    const modalIcon = document.getElementById('modal-icon');
     const modalTitle = document.getElementById('modal-title');
-    const modalDesc  = document.getElementById('modal-description');
+    const modalDesc = document.getElementById('modal-description');
     if (!overlay || !modalIcon || !modalTitle || !modalDesc) return;
 
     modalIcon.src = `assets/art/icons/${icon}.png`;
     modalIcon.alt = name;
 
     modalTitle.textContent = `${name}: ${value}`;
-    modalDesc.textContent  = type === 'population'
+    modalDesc.textContent = type === 'population'
         ? (populationDescriptions[key] || "No description available.")
-        : (itemDescriptions[key]       || "No description available.");
+        : (itemDescriptions[key] || "No description available.");
 
     overlay.classList.add('active');
 }
 
 function switchScreen(fromId, toId) {
     const from = document.getElementById(fromId);
-    const to   = document.getElementById(toId);
+    const to = document.getElementById(toId);
     if (from) from.classList.remove('active');
-    if (to)   to.classList.add('active');
+    if (to) to.classList.add('active');
 }
 
 window.addEventListener('load', initializeApp);
