@@ -477,12 +477,12 @@ function buildDynamicActionButtons() {
     row2.innerHTML = '';
 
     const interactionMap = {
-        'check-papers':    { row: 1, text: 'Check Papers',    cls: 'action-check-papers',    action: 'check_papers',    item: 'lantern fuel'    },
-        'holy-water':      { row: 1, text: 'Holy Water',      cls: 'action-holy-water',       action: 'holy_water',      item: 'holy water'      },
-        'medicinal-herbs': { row: 1, text: 'Medicinal Herbs', cls: 'action-medicinal-herbs',  action: 'medicinal_herbs', item: 'medicinal herbs' },
-        'let-in':          { row: 2, text: 'Let In',          cls: 'action-allow',   decision: 'allow'   },
-        'push-out':        { row: 2, text: 'Push Out',        cls: 'action-deny',    decision: 'deny'    },
-        'execute':         { row: 2, text: 'Execute',         cls: 'action-execute', decision: 'execute' },
+        'check-papers':    { row: 1, text: 'Check Papers',    cls: 'check-papers',    action: 'check_papers',    item: 'lantern fuel'    },
+        'holy-water':      { row: 1, text: 'Holy Water',      cls: 'holy-water',      action: 'holy_water',      item: 'holy water'      },
+        'medicinal-herbs': { row: 1, text: 'Medicinal Herbs', cls: 'medicinal-herbs', action: 'medicinal_herbs', item: 'medicinal herbs' },
+        'let-in':          { row: 2, text: 'Let In',          cls: 'allow',   decision: 'allow'   },
+        'push-out':        { row: 2, text: 'Push Out',        cls: 'deny',    decision: 'deny'    },
+        'execute':         { row: 2, text: 'Execute',         cls: 'execute', decision: 'execute' },
     };
 
     currentAvailableInteractions.forEach(id => {
@@ -571,7 +571,7 @@ function showDialogNode() {
 
     options.forEach((option, index) => {
         const btn = document.createElement('button');
-        btn.className   = 'action-button action-continue';
+        btn.className   = 'action-button continue';
         btn.textContent = option.text;
         btn.style.flex  = '1';
         btn.onclick     = () => handleDialogChoice(index);
