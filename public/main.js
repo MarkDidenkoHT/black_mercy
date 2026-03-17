@@ -308,34 +308,37 @@ function setupModalEvents() {
 function setupBottomButtons() {
     const buttons = {
         travelers:   document.getElementById('travelers-button'),
-        endDay:      document.getElementById('end-day-button'),
-        events:      document.getElementById('events-button'),
         preparation: document.getElementById('preparation-button'),
+        heroes:      document.getElementById('heroes-button'),
+        events:      document.getElementById('events-button'),
+        endDay:      document.getElementById('end-day-button'),
         settings:    document.getElementById('settings-button')
     };
-    const eventsContainer = document.getElementById('events-container');
-    if (!buttons.travelers || !eventsContainer) return;
+
+    if (!buttons.travelers) return;
 
     buttons.travelers.addEventListener('click', () => {
-        eventsContainer.style.display = 'none';
         setActiveButton('travelers', buttons);
         loadTravelersForCurrentDay();
     });
-    buttons.endDay.addEventListener('click', async () => {
-        eventsContainer.style.display = 'none';
-        await handleEndDay();
-    });
-    buttons.events.addEventListener('click', () => {
-        eventsContainer.style.display = 'block';
-        setActiveButton('events', buttons);
-    });
     buttons.preparation.addEventListener('click', () => {
-        eventsContainer.style.display = 'none';
         setActiveButton('preparation', buttons);
         openCityScreen();
     });
+    if (buttons.heroes) {
+        buttons.heroes.addEventListener('click', () => {
+            setActiveButton('heroes', buttons);
+            // Placeholder: show alert for now
+            alert('Heroes functionality coming soon!');
+        });
+    }
+    buttons.events.addEventListener('click', () => {
+        setActiveButton('events', buttons);
+    });
+    buttons.endDay.addEventListener('click', async () => {
+        await handleEndDay();
+    });
     buttons.settings.addEventListener('click', () => {
-        eventsContainer.style.display = 'none';
         setActiveButton('settings', buttons);
     });
 }
