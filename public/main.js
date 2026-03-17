@@ -306,50 +306,50 @@ function setupModalEvents() {
 }
 
 function setupBottomButtons() {
-    const buttons = {
-        travelers:   document.getElementById('travelers-button'),
-        preparation: document.getElementById('preparation-button'),
-        keep:        document.getElementById('keep-button'),
-        heroes:      document.getElementById('heroes-button')
-    };
-    if (!buttons.travelers) return;
+    const travelersBtn = document.getElementById('travelers-button');
+    const cityBtn = document.getElementById('preparation-button');
+    const keepBtn = document.getElementById('keep-button');
+    const heroesBtn = document.getElementById('heroes-button');
 
-    buttons.travelers.addEventListener('click', () => {
-        setActiveButton('travelers', buttons);
-        switchScreen('city-screen', 'home-screen');
-        switchScreen('travelers-screen', 'home-screen');
-        switchScreen('city-screen', 'home-screen');
-        switchScreen('home-screen', 'travelers-screen');
-        loadTravelersForCurrentDay();
-    });
-    buttons.preparation.addEventListener('click', () => {
-        setActiveButton('preparation', buttons);
-        switchScreen('home-screen', 'city-screen');
-        switchScreen('travelers-screen', 'city-screen');
-        switchScreen('home-screen', 'city-screen');
-        openCityScreen();
-    });
-    buttons.keep.addEventListener('click', () => {
-        setActiveButton('keep', buttons);
-        switchScreen('city-screen', 'home-screen');
-        switchScreen('travelers-screen', 'home-screen');
-        switchScreen('city-screen', 'home-screen');
-        switchScreen('travelers-screen', 'home-screen');
-    });
-    if (buttons.heroes) {
-        buttons.heroes.addEventListener('click', () => {
+    const buttons = {
+        travelers: travelersBtn,
+        preparation: cityBtn,
+        keep: keepBtn,
+        heroes: heroesBtn
+    };
+
+    if (travelersBtn) {
+        travelersBtn.onclick = () => {
+            setActiveButton('travelers', buttons);
+            switchScreen('city-screen', 'home-screen');
+            switchScreen('travelers-screen', 'home-screen');
+            switchScreen('home-screen', 'travelers-screen');
+            loadTravelersForCurrentDay();
+        };
+    }
+    if (cityBtn) {
+        cityBtn.onclick = () => {
+            setActiveButton('preparation', buttons);
+            switchScreen('home-screen', 'city-screen');
+            switchScreen('travelers-screen', 'city-screen');
+            openCityScreen();
+        };
+    }
+    if (keepBtn) {
+        keepBtn.onclick = () => {
+            setActiveButton('keep', buttons);
+            switchScreen('city-screen', 'home-screen');
+            switchScreen('travelers-screen', 'home-screen');
+        };
+    }
+    if (heroesBtn) {
+        heroesBtn.onclick = () => {
             setActiveButton('heroes', buttons);
             switchScreen('city-screen', 'home-screen');
             switchScreen('travelers-screen', 'home-screen');
             alert('Heroes functionality coming soon!');
-        });
+        };
     }
-}
-
-function setActiveButton(active, buttons) {
-    Object.entries(buttons).forEach(([key, btn]) => {
-        if (btn) btn.classList.toggle('active', key === active);
-    });
 }
 
 const BUILDING_POSITIONS = {
