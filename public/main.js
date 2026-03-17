@@ -310,11 +310,9 @@ function setupBottomButtons() {
         travelers:   document.getElementById('travelers-button'),
         preparation: document.getElementById('preparation-button'),
         heroes:      document.getElementById('heroes-button'),
-        events:      document.getElementById('events-button'),
         endDay:      document.getElementById('end-day-button'),
         settings:    document.getElementById('settings-button')
     };
-
     if (!buttons.travelers) return;
 
     buttons.travelers.addEventListener('click', () => {
@@ -328,13 +326,9 @@ function setupBottomButtons() {
     if (buttons.heroes) {
         buttons.heroes.addEventListener('click', () => {
             setActiveButton('heroes', buttons);
-            // Placeholder: show alert for now
             alert('Heroes functionality coming soon!');
         });
     }
-    buttons.events.addEventListener('click', () => {
-        setActiveButton('events', buttons);
-    });
     buttons.endDay.addEventListener('click', async () => {
         await handleEndDay();
     });
