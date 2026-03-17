@@ -309,9 +309,8 @@ function setupBottomButtons() {
     const buttons = {
         travelers:   document.getElementById('travelers-button'),
         preparation: document.getElementById('preparation-button'),
-        heroes:      document.getElementById('heroes-button'),
-        endDay:      document.getElementById('end-day-button'),
-        settings:    document.getElementById('settings-button')
+        keep:        document.getElementById('keep-button'),
+        heroes:      document.getElementById('heroes-button')
     };
     if (!buttons.travelers) return;
 
@@ -323,18 +322,17 @@ function setupBottomButtons() {
         setActiveButton('preparation', buttons);
         openCityScreen();
     });
+    buttons.keep.addEventListener('click', () => {
+        setActiveButton('keep', buttons);
+        switchScreen('city-screen', 'home-screen');
+        switchScreen('travelers-screen', 'home-screen');
+    });
     if (buttons.heroes) {
         buttons.heroes.addEventListener('click', () => {
             setActiveButton('heroes', buttons);
             alert('Heroes functionality coming soon!');
         });
     }
-    buttons.endDay.addEventListener('click', async () => {
-        await handleEndDay();
-    });
-    buttons.settings.addEventListener('click', () => {
-        setActiveButton('settings', buttons);
-    });
 }
 
 function setActiveButton(active, buttons) {
