@@ -375,11 +375,11 @@ const PHASE_BACKGROUNDS = {
 };
 
 function openCityScreen() {
-    const phase = getCurrentPhase();
-    const bg = document.getElementById('city-bg');
-    const label = document.getElementById('city-phase-label');
+    const phase       = getCurrentPhase();
+    const bg          = document.getElementById('city-bg');
+    const label       = document.getElementById('city-phase-label');
     const buildingsEl = document.getElementById('city-buildings');
-    const infoPanel = document.getElementById('city-info-panel');
+    const infoPanel   = document.getElementById('city-info-panel');
 
     bg.style.backgroundImage = `url('${PHASE_BACKGROUNDS[phase] || PHASE_BACKGROUNDS.Noon}')`;
     label.textContent = `Day ${currentSession.day} — ${phase}`;
@@ -388,20 +388,20 @@ function openCityScreen() {
     if (infoPanel) infoPanel.style.display = 'none';
 
     currentStructures.forEach(structure => {
-        const template = structure.structures_templates;
+        const template   = structure.structures_templates;
         const templateId = Number(structure.structure);
-        const pos = BUILDING_POSITIONS[templateId] || { x: 50, y: 50 };
-        const name = template?.name || `Building ${templateId}`;
-        const emoji = BUILDING_EMOJIS[name.toLowerCase()] || '🏛️';
-        const isActive = structure.is_active || false;
-        const pop = parseInt(structure.status?.human || 0)
-            + parseInt(structure.status?.infected || 0)
-            + parseInt(structure.status?.possessed || 0);
+        const pos        = BUILDING_POSITIONS[templateId] || { x: 50, y: 50 };
+        const name       = template?.name || `Building ${templateId}`;
+        const emoji      = BUILDING_EMOJIS[name.toLowerCase()] || '🏛️';
+        const isActive   = structure.is_active || false;
+        const pop        = parseInt(structure.status?.human     || 0)
+                         + parseInt(structure.status?.infected  || 0)
+                         + parseInt(structure.status?.possessed || 0);
 
         const marker = document.createElement('div');
-        marker.className = 'building-marker' + (isActive ? '' : ' inactive');
+        marker.className  = 'building-marker' + (isActive ? '' : ' inactive');
         marker.style.left = `${pos.x}%`;
-        marker.style.top = `${pos.y}%`;
+        marker.style.top  = `${pos.y}%`;
 
         marker.innerHTML = `
             <div class="building-icon-wrap">
@@ -444,6 +444,7 @@ function showCityBuildingInfo({ name, isActive, templateId, structure }) {
     }
 
     infoPanel.style.display = 'flex';
+    infoPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function handleSendSquire({ name, templateId, structure }) {

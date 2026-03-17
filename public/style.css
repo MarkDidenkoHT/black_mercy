@@ -1007,24 +1007,22 @@ button {
     background: linear-gradient(135deg, #5a5a5a 0%, #3d3d3d 100%);
 }
 
-
 .city-info-panel {
-    position: absolute;
-    bottom: 50px;
-    left: 0;
     width: 100%;
-    z-index: 10;
-    padding: 0 10px;
+    max-width: 600px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 8px;
-}
-
-.city-info-text {
     background: rgb(123 122 122 / 71%);
     border: 1px solid #ffd700;
     border-radius: 10px;
     padding: 10px 14px;
+    position: relative;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+
+.city-info-text {
     font-size: 14px;
     color: #ffffff;
     line-height: 1.5;
@@ -1044,6 +1042,7 @@ button {
 .city-action-buttons {
     display: flex;
     gap: 10px;
+    margin-top: 8px;
 }
 
 .city-action-btn {
@@ -1077,7 +1076,8 @@ button {
     display: flex;
     flex-direction: column;
     position: relative;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    align-items: stretch;
 }
 
 .content-controls {
@@ -1085,9 +1085,11 @@ button {
     height: 20vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
     align-items: center;
     position: relative;
+    background: rgba(0,0,0,0.5);
+    z-index: 10;
 }
 
 .bottom-controls {
