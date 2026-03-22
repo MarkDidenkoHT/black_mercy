@@ -62,9 +62,6 @@ input {
     font-family: inherit;
 }
 
-
-/* ─── FLOW SCREENS ─────────────────────────────────────────────────────────── */
-
 .flow-screen {
     display: none;
     position: fixed;
@@ -79,9 +76,6 @@ input {
     flex-direction: column;
 }
 
-
-/* ─── LOADING ───────────────────────────────────────────────────────────────── */
-
 #flow-loading {
     background-image: url('assets/art/loading.jpg');
     background-size: cover;
@@ -95,69 +89,34 @@ input {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding-bottom: 14%;
+    padding-bottom: 12%;
 }
 
 .loading-panel {
-    position: relative;
-    width: 86%;
-    max-width: 400px;
-    background: rgba(6, 4, 2, 0.78);
-    border: 1px solid var(--gold-dark);
-    border-radius: 6px;
-    padding: 14px 16px;
+    width: 80%;
+    max-width: 360px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    backdrop-filter: blur(6px);
-    box-shadow:
-        0 0 0 1px rgba(200, 146, 42, 0.12),
-        0 8px 32px rgba(0, 0, 0, 0.85),
-        inset 0 1px 0 rgba(255, 215, 0, 0.07);
+    gap: 10px;
 }
-
-.loading-panel-corner {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border-color: var(--gold);
-    border-style: solid;
-    border-width: 0;
-}
-.loading-panel-corner--tl { top: -1px;    left: -1px;   border-top-width: 2px;    border-left-width: 2px;   border-top-left-radius: 4px;     }
-.loading-panel-corner--tr { top: -1px;    right: -1px;  border-top-width: 2px;    border-right-width: 2px;  border-top-right-radius: 4px;    }
-.loading-panel-corner--bl { bottom: -1px; left: -1px;   border-bottom-width: 2px; border-left-width: 2px;   border-bottom-left-radius: 4px;  }
-.loading-panel-corner--br { bottom: -1px; right: -1px;  border-bottom-width: 2px; border-right-width: 2px;  border-bottom-right-radius: 4px; }
 
 .loading-bar-track {
     width: 100%;
-    height: 12px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 4px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
     overflow: hidden;
-    border: 1px solid rgba(200, 146, 42, 0.35);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .loading-bar-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(
-        90deg,
-        var(--gold-richer) 0%,
-        var(--gold-deep)   20%,
-        var(--gold-dark)   45%,
-        var(--gold)        50%,
-        var(--gold-dark)   55%,
-        var(--gold-deep)   80%,
-        var(--gold-richer) 100%
-    );
+    background: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--gold-deep));
     background-size: 200% 100%;
-    border-radius: 3px;
+    border-radius: 2px;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 10px rgba(200, 146, 42, 0.7), inset 0 1px 0 rgba(255, 220, 100, 0.3);
-    animation: barShimmer 1.6s linear infinite;
+    animation: barShimmer 1.8s linear infinite;
 }
 
 @keyframes barShimmer {
@@ -168,14 +127,10 @@ input {
 .loading-text {
     font-size: 11px;
     color: var(--text-dim);
-    letter-spacing: 0.12em;
-    text-align: center;
-    font-family: Georgia, serif;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
+    font-family: Georgia, serif;
 }
-
-
-/* ─── TUTORIAL ──────────────────────────────────────────────────────────────── */
 
 #flow-tutorial {
     background: var(--bg-dark);
@@ -320,9 +275,6 @@ input {
     opacity: 0.85;
 }
 
-
-/* ─── PET SELECTION ─────────────────────────────────────────────────────────── */
-
 #flow-pet-selection {
     background: rgba(0,0,0,0.88);
     align-items: center;
@@ -447,9 +399,6 @@ input {
     cursor: not-allowed;
 }
 
-
-/* ─── PET NAMING ────────────────────────────────────────────────────────────── */
-
 #flow-pet-naming {
     background: rgba(0,0,0,0.88);
     align-items: center;
@@ -531,9 +480,6 @@ input {
     border-color: var(--gold);
 }
 
-
-/* ─── APP SHELL ─────────────────────────────────────────────────────────────── */
-
 #app-shell {
     display: none;
     flex-direction: column;
@@ -545,9 +491,6 @@ input {
 #app-shell.active {
     display: flex;
 }
-
-
-/* ─── HEADER ────────────────────────────────────────────────────────────────── */
 
 #shell-header {
     position: absolute;
@@ -639,9 +582,6 @@ input {
     text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
 }
 
-
-/* ─── CONTENT ───────────────────────────────────────────────────────────────── */
-
 #shell-content {
     height: var(--content-h);
     flex-shrink: 0;
@@ -692,9 +632,6 @@ input {
     justify-content: flex-end;
     padding: 10px;
 }
-
-
-/* ─── KEEP TAB ──────────────────────────────────────────────────────────────── */
 
 .events-container {
     max-height: 42%;
@@ -755,9 +692,6 @@ input {
 .pet-display-media.pet-static { z-index: 1; opacity: 1; }
 .pet-display-media.pet-video  { z-index: 2; opacity: 0; background: transparent; }
 
-
-/* ─── GATE TAB ──────────────────────────────────────────────────────────────── */
-
 .gate-inner {
     justify-content: flex-start;
     gap: 0;
@@ -801,9 +735,6 @@ input {
     font-family: Georgia, serif;
     font-style: italic;
 }
-
-
-/* ─── CITY TAB ──────────────────────────────────────────────────────────────── */
 
 #tab-city {
     background-color: var(--bg-dark);
@@ -910,9 +841,6 @@ input {
     box-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
-
-/* ─── COMING SOON ───────────────────────────────────────────────────────────── */
-
 .coming-soon-panel {
     display: flex;
     flex-direction: column;
@@ -944,9 +872,6 @@ input {
     line-height: 1.6;
     max-width: 260px;
 }
-
-
-/* ─── CONTROLS ──────────────────────────────────────────────────────────────── */
 
 #shell-controls {
     height: var(--controls-h);
@@ -1002,9 +927,6 @@ input {
 .deny            { background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); color: #ffffff; }
 .execute         { background: linear-gradient(135deg, #4B0082 0%, #8A2BE2 100%); color: #ffffff; }
 
-
-/* ─── NAV ───────────────────────────────────────────────────────────────────── */
-
 #shell-nav {
     flex-shrink: 0;
     height: var(--nav-h);
@@ -1053,9 +975,6 @@ input {
     from { box-shadow: 0 0 10px var(--gold); }
     to   { box-shadow: 0 0 20px var(--gold), 0 0 30px var(--gold); }
 }
-
-
-/* ─── CITY INFO PANEL ───────────────────────────────────────────────────────── */
 
 .city-info-panel {
     width: 100%;
@@ -1110,9 +1029,6 @@ input {
     font-weight: bold;
     letter-spacing: 0.05em;
 }
-
-
-/* ─── MODAL ─────────────────────────────────────────────────────────────────── */
 
 .modal-overlay {
     display: none;
