@@ -218,10 +218,10 @@ const DIALOG_TREES = {
     },
 
     /**
-     * THE GRAVEDIGGER - Claims to see the dead rise
+     * scared_man - Claims to see the dead rise
      * Warning about undead threat
      */
-    undead: {
+    scared_man_greeting: {
         start: {
             text: "A gaunt man covered in grave soil approaches. His eyes are wide with fear. 'They're rising. The dead are rising from the earth. I've seen them.'",
             options: [
@@ -270,6 +270,11 @@ const DIALOG_TREES = {
             ]
         }
     },
+
+     /**
+     * TODO - add undead dialog and check
+     */
+
 
     /**
      * THE CULTIST - Temptation and threat
