@@ -239,6 +239,61 @@ const DialogActions = {
         alert(`GAME ${ending.toUpperCase()}: ${message}`);
 
         return { success: true, ending, message };
+    },
+
+    /**
+     * Recruit a hero to join the player
+     * params: { hero: 'hero_name', reputation: { cult: 0, inquisition: 1, undead: 0 } }
+     */
+    recruit_hero: async (params) => {
+        try {
+            const response = await fetch('/api/heroes/recruit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chatId: currentPlayer.chat_id,
+                    hero: params.hero,
+                    reputation: params.reputation || {}
+                })
+            });
+            if (!response.ok) throw new Error('Failed to recruit hero');
+            const data = await response.json();
+            if (data.success) {
+                currentHiddenReputation = data.hidden_reputation;
+                currentEvents.push({ event: `${params.hero} has joined your cause.` });
+                renderEvents();
+            }
+            return { success: true, data };
+        } catch (error) {
+            console.error('[DIALOG] recruit_hero error:', error);
+            return { success: false, error };
+        }
+    },
+
+    /**
+     * Modify reputation (add to hidden reputation)
+     * params: { changes: { cult: number, inquisition: number, undead: number } }
+     */
+    modify_reputation: async (params) => {
+        try {
+            const response = await fetch('/api/session/modify-reputation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chatId: currentPlayer.chat_id,
+                    changes: params.changes || {}
+                })
+            });
+            if (!response.ok) throw new Error('Failed to modify reputation');
+            const data = await response.json();
+            if (data.success) {
+                currentHiddenReputation = data.hidden_reputation;
+            }
+            return data;
+        } catch (error) {
+            console.error('[DIALOG] modify_reputation error:', error);
+            return { success: false, error };
+        }
     }
 };
 

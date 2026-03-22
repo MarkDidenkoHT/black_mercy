@@ -14,8 +14,10 @@ let currentDayTravelers = [];
 let currentTraveler = null;
 let currentPet = null;
 let currentStructures = [];
+let currentHeroes = [];
 let currentDialogTree = null;
 let activeTab = 'keep';
+let heroSliderIndex = 0;
 
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
@@ -237,6 +239,7 @@ function applySessionData(data) {
     currentTravelers            = data.travelers || [];
     currentPet                  = data.pet || null;
     currentStructures           = data.structures || [];
+    currentHeroes               = data.heroes || [];
 
     updateDayDisplay();
     renderPopulation();
@@ -591,12 +594,17 @@ async function handleDialogChoice(optionIndex) {
 
     if (result.actions && result.actions.length > 0) {
         const actionResults = await executeDialogActions(result.actions);
-        for (const { result: actionResult } of actionResults) {
+        let recruitedHero = false;
+        for (const { actionId, result: actionResult } of actionResults) {
+            if (actionId === 'recruit_hero' && actionResult?.success) {
+                recruitedHero = true;
+            }
             if (actionResult?.gameOverRequired) {
                 handleDialogGameOver(actionResult);
                 return;
             }
         }
+        if (recruitedHero) await refreshHeroes();
     }
 
     if (result.end) {
@@ -848,6 +856,21 @@ async function updateInventory(item, amount) {
     }
 }
 
+async function refreshHeroes() {
+    if (!currentPlayer) return;
+    try {
+        const response = await fetch(`/api/heroes/list?chatId=${currentPlayer.chat_id}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.success) {
+            currentHeroes = data.heroes;
+            renderHeroSlider();
+        }
+    } catch (error) {
+        console.error('Refresh heroes error:', error);
+    }
+}
+
 function handleIconClick(e) {
     const { type, key, name, icon, level, count } = e.currentTarget.dataset;
     const value = level || count;
@@ -867,6 +890,85 @@ function handleIconClick(e) {
 
     overlay.classList.add('active');
 }
+
+function renderHeroSlider() {
+    const container = document.getElementById('hero-slider-container');
+    const content   = document.getElementById('hero-slider-content');
+    const prevBtn   = document.getElementById('hero-slider-prev');
+    const nextBtn   = document.getElementById('hero-slider-next');
+    const comingSoon = document.getElementById('heroes-coming-soon');
+
+    if (!container || !content || !prevBtn || !nextBtn || !currentHeroes) return;
+
+    if (currentHeroes.length === 0) {
+        container.style.display = 'none';
+        if (comingSoon) comingSoon.style.display = 'block';
+        return;
+    }
+    if (comingSoon) comingSoon.style.display = 'none';
+    container.style.display = 'flex';
+
+    heroSliderIndex = Math.max(0, Math.min(heroSliderIndex, currentHeroes.length - 1));
+    const hero = currentHeroes[heroSliderIndex];
+    if (!hero) return;
+
+    // Parse stats/talents if needed
+    let stats = hero.stats;
+    if (typeof stats === 'string') try { stats = JSON.parse(stats); } catch {}
+    let talents = hero.talents;
+    if (typeof talents === 'string') talents = [talents];
+    if (talents && !Array.isArray(talents)) talents = [talents];
+    let rep = hero.reputation;
+    if (typeof rep === 'string') try { rep = JSON.parse(rep); } catch {}
+
+    content.innerHTML = `
+        <div class="hero-art-name">
+            <img class="hero-art" src="assets/art/heroes/${hero.art || hero.hero}.png" alt="${hero.hero}">
+            <h2 class="hero-name">${hero.hero}</h2>
+        </div>
+        <div class="hero-stats">
+            <div><strong>Zeal:</strong> ${stats?.zeal ?? '-'}</div>
+            <div><strong>Mercy:</strong> ${stats?.mercy ?? '-'}</div>
+            <div><strong>Insight:</strong> ${stats?.insight ?? '-'}</div>
+            <div><strong>Authority:</strong> ${stats?.authority ?? '-'}</div>
+            <div><strong>Swiftness:</strong> ${stats?.swiftness ?? '-'}</div>
+        </div>
+        <div class="hero-talents">
+            <strong>Talents:</strong> ${(talents && talents.length > 0) ? talents.join(', ') : '-'}
+        </div>
+        <div class="hero-reputation">
+            <strong>Reputation:</strong> ${rep?.player ?? '-'}
+        </div>
+    `;
+
+    prevBtn.disabled = heroSliderIndex === 0;
+    nextBtn.disabled = heroSliderIndex === currentHeroes.length - 1;
+
+    prevBtn.onclick = () => {
+        if (heroSliderIndex > 0) {
+            heroSliderIndex--;
+            renderHeroSlider();
+        }
+    };
+    nextBtn.onclick = () => {
+        if (heroSliderIndex < currentHeroes.length - 1) {
+            heroSliderIndex++;
+            renderHeroSlider();
+        }
+    };
+}
+
+// Call this after loading heroes or switching to the tab
+function refreshHeroesTab() {
+    renderHeroSlider();
+}
+
+// Patch showTab to refresh heroes tab
+const origShowTab = showTab;
+showTab = function(tab) {
+    origShowTab(tab);
+    if (tab === 'heroes') refreshHeroesTab();
+};
 
 window.addEventListener('load', initializeApp);
 tg.ready();

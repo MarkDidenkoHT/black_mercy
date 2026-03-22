@@ -830,6 +830,165 @@ app.post('/api/session/add-interaction', async (req, res) => {
   }
 });
 
+app.post('/api/session/modify-reputation', async (req, res) => {
+  try {
+    const { chatId, changes } = req.body;
+
+    if (!chatId || !changes) return res.status(400).json({ error: 'chatId and changes are required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Active session not found' });
+
+    const { data: reputation } = await supabase
+      .from('reputation')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .single();
+
+    if (!reputation) return res.status(404).json({ error: 'Reputation not found' });
+
+    const currentHiddenRep = reputation.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 };
+    const updatedRep = {
+      cult: (currentHiddenRep.cult || 0) + (changes.cult || 0),
+      inquisition: (currentHiddenRep.inquisition || 0) + (changes.inquisition || 0),
+      undead: (currentHiddenRep.undead || 0) + (changes.undead || 0)
+    };
+
+    await supabase
+      .from('reputation')
+      .update({ hidden_reputation: updatedRep })
+      .eq('id', reputation.id);
+
+    return res.json({ success: true, hidden_reputation: updatedRep });
+
+  } catch (error) {
+    console.error('Modify reputation error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/heroes/recruit', async (req, res) => {
+  try {
+    const { chatId, hero, reputation } = req.body;
+
+    if (!chatId || !hero) return res.status(400).json({ error: 'chatId and hero are required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Active session not found' });
+
+    const { data: existingHero } = await supabase
+      .from('heroes')
+      .select('*')
+      .eq('session', session.id)
+      .eq('hero', hero)
+      .single();
+
+    if (existingHero) {
+      return res.status(400).json({ error: 'Hero already recruited' });
+    }
+
+    const { data: newHero, error: heroError } = await supabase
+      .from('heroes')
+      .insert([{
+        session: session.id,
+        hero: hero,
+        reputation: reputation || { cult: 0, inquisition: 0, undead: 0 },
+        stats: { level: 1, experience: 0 },
+        talents: []
+      }])
+      .select()
+      .single();
+
+    if (heroError) throw heroError;
+
+    const { data: reputationData } = await supabase
+      .from('reputation')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id)
+      .single();
+
+    return res.json({
+      success: true,
+      hero: newHero,
+      hidden_reputation: reputationData?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 }
+    });
+
+  } catch (error) {
+    console.error('Recruit hero error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/heroes/list', async (req, res) => {
+  try {
+    const { chatId } = req.query;
+
+    if (!chatId) return res.status(400).json({ error: 'chatId is required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Active session not found' });
+
+    const { data: heroes } = await supabase
+      .from('heroes')
+      .select('*')
+      .eq('session', session.id)
+      .order('hero', { ascending: true });
+
+    return res.json({
+      success: true,
+      heroes: heroes || []
+    });
+
+  } catch (error) {
+    console.error('List heroes error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -1,89 +1,226 @@
-/**
- * Dialog Trees - Editable Templates for Fixed Travelers
- * 
- * Format:
- * {
- *   "start": {
- *     "text": "Dialog text shown to player",
- *     "options": [
- *       {
- *         "text": "Option button text",
- *         "next": "nodeId",      // next node to show
- *         "end": false,          // OR set to true to end dialogue
- *         "actions": [...],      // Actions to execute when chosen
- *         "condition": "optional_check"
- *       }
- *     ]
- *   },
- *   "nodeId": { ... }
- * }
- */
-
-const DIALOG_TREES = {
-    /**
-     * MITHRAIL - Inquisition Paladin
-     * Teaches about holy water, unlocks church
-     */
+const DIALOG_TREES = {  
+    
     mithrail_greeting: {
         start: {
-            text: "Greetings, citizen. I am Mithrail of the Inquisition. I will teach you to discern truth from deception.",
+            text: "A stern man in Inquisitorial garb approaches. His eyes scan you with unsettling intensity. 'I am Mithrail of the Church. Tell me, gatekeeper—that gravedigger who passed through before me. Did he seem... unusual to you?'",
             options: [
                 {
-                    text: "What can you teach me?",
-                    next: "explanation"
+                    text: "He was terrified and spoke of the dead rising.",
+                    next: "truth_acknowledged"
                 },
                 {
-                    text: "We don't need your help.",
-                    next: "rejected"
+                    text: "He seemed like any other traveler.",
+                    next: "lie_detected"
+                },
+                {
+                    text: "Why do you ask about him?",
+                    next: "question_mithrail"
                 }
             ]
         },
-        explanation: {
-            text: "The possessed scream when exposed to blessed water. Use this knowledge wisely. I shall grant your town the blessings of the Church.",
+        truth_acknowledged: {
+            text: "Mithrail nods slowly, a hint of approval in his expression. 'Good. You observe. That man was digging in places he should not have been. The Inquisition has been... watching him. Your honesty is noted.'",
             options: [
                 {
-                    text: "Thank you, Mithrail.",
+                    text: "What does the Church want from us?",
+                    next: "explain_help"
+                },
+                {
+                    text: "That's none of my concern.",
+                    next: "dismissive_response"
+                }
+            ]
+        },
+        lie_detected: {
+            text: "Mithrail's jaw tightens. His hand drifts toward a holy symbol at his belt. 'Curious. Because my scouts saw him raving about the undead and defiling graves. Yet you noticed nothing?' He studies you with barely contained disdain. 'The Inquisition does not take kindly to deception, gatekeeper.'",
+            options: [
+                {
+                    text: "I misspoke. He did seem troubled.",
+                    next: "half_truth"
+                },
+                {
+                    text: "I answer to no one but myself.",
+                    next: "defiant_response"
+                }
+            ]
+        },
+        question_mithrail: {
+            text: "Mithrail's gaze sharpens. 'Because the Church concerns itself with the shadows that gather beyond your walls. That man has been under watch—he disturbs graves and speaks of things rising from the earth. I need to know if you're complicit in his heresy, or merely blind.'",
+            options: [
+                {
+                    text: "He spoke of the dead rising. I listened but took no action.",
+                    next: "truth_acknowledged"
+                },
+                {
+                    text: "He said nothing of importance.",
+                    next: "lie_detected"
+                }
+            ]
+        },
+        half_truth: {
+            text: "Mithrail's expression softens only slightly. 'A moment of clarity. Very well. I shall assume you are merely overwhelmed by the chaos at your gates. The Church can work with that.' He extends a hand. 'We are not enemies, gatekeeper.'",
+            options: [
+                {
+                    text: "What can the Church offer?",
+                    next: "neutral_alliance"
+                },
+                {
+                    text: "I'm still not sure about you.",
+                    next: "cautious_response"
+                }
+            ]
+        },
+        defiant_response: {
+            text: "Mithrail's hand closes into a fist. 'Pride. How predictable. The Church will remember your defiance when plague and shadow consume your town. We came to offer salvation. You chose isolation.' He turns to leave, then pauses. 'When the darkness comes, do not reach out to us.'",
+            options: [
+                {
+                    text: "Wait—I apologize.",
+                    next: "reconciliation_attempt"
+                },
+                {
+                    text: "Go then. We don't need the Church.",
+                    end: true,
+                    actions: [
+                        { id: 'modify_reputation', params: { changes: { inquisition: -2 } } },
+                        { 
+                            id: 'log_event', 
+                            params: { event: 'You turned away Mithrail. The Church marks you as unreliable. An enemy, perhaps.' } 
+                        }
+                    ]
+                }
+            ]
+        },
+        dismissive_response: {
+            text: "Mithrail's eyes narrow. 'Foolish. That man walks between worlds—neither living nor properly dead. The undead are stirring, and you dismiss it as 'not your concern?' The Church came to protect you, gatekeeper. But we cannot help those who will not see.'",
+            options: [
+                {
+                    text: "The Church's help comes with a price. What is it?",
+                    next: "negotiation"
+                },
+                {
+                    text: "Then we need nothing from you.",
+                    next: "rejection_path"
+                }
+            ]
+        },
+        reconciliation_attempt: {
+            text: "Mithrail turns back. 'An apology, at last. Perhaps there is wisdom in you after all, gatekeeper. I came here seeking answers, and I have found them. You are pragmatic. The Church respects that.' He extends his hand once more. 'We can be allies.'",
+            options: [
+                {
+                    text: "Yes. Tell me how we can work together.",
+                    next: "explain_help"
+                }
+            ]
+        },
+        cautious_response: {
+            text: "Mithrail studies you for a long moment. 'Caution is wise. I do not blame you for questioning the Church. But know this—we have seen what is coming. The undead will not wait for you to make up your mind. When you're ready to ask for aid, send word.'",
+            options: [
+                {
+                    text: "What kind of aid? What have you seen?",
+                    next: "reveal_knowledge"
+                },
+                {
+                    text: "We will call if we need the Church.",
+                    end: true,
+                    actions: [
+                        { id: 'modify_reputation', params: { changes: { inquisition: 0 } } },
+                        { 
+                            id: 'log_event', 
+                            params: { event: 'Mithrail left on uncertain terms. The Church remains... watchful.' } 
+                        }
+                    ]
+                }
+            ]
+        },
+        negotiation: {
+            text: "Mithrail's expression hardens into something almost like respect. 'Ah, now you show intelligence. Yes, there is a price. But it is not gold or tithes. The Church seeks knowledge of what passes through your gates. We need to know what dangers approach. In exchange, we offer the light of faith—blessed water, holy ground, and the strength of the Church behind you.'",
+            options: [
+                {
+                    text: "I agree. We will share information.",
+                    next: "explain_help"
+                },
+                {
+                    text: "That's too much to ask.",
+                    next: "rejection_path"
+                }
+            ]
+        },
+        rejection_path: {
+            text: "Mithrail nods, though his jaw tightens. 'So be it. But remember this moment when darkness knocks at your gate, and you have no light to answer it.' He begins to leave, then calls back: 'The offer stands, should you change your mind.'",
+            options: [
+                {
+                    text: "Actually, wait.",
+                    next: "last_chance"
+                },
+                {
+                    text: "Goodbye.",
+                    end: true,
+                    actions: [
+                        { id: 'modify_reputation', params: { changes: { inquisition: -1 } } },
+                        { 
+                            id: 'log_event', 
+                            params: { event: 'Mithrail departed without the Church\'s blessing. You have made a powerful potential enemy.' } 
+                        }
+                    ]
+                }
+            ]
+        },
+        last_chance: {
+            text: "Mithrail turns back, an eyebrow raised. 'Yes?'",
+            options: [
+                {
+                    text: "I was wrong. I accept your help.",
+                    next: "explain_help"
+                },
+                {
+                    text: "Nothing. Farewell.",
+                    next: "rejection_path"
+                }
+            ]
+        },
+        explain_help: {
+            text: "Mithrail steps closer, and his austere expression softens into something almost like a smile. 'The possessed scream when exposed to blessed water. Use this knowledge wisely. I shall join your cause, gatekeeper. Together, we will hold back the darkness.' He places a hand on his chest. 'Mithrail of the Inquisition now stands with you.'",
+            options: [
+                {
+                    text: "Thank you, Mithrail. Welcome.",
                     end: true,
                     actions: [
                         { id: 'give_items', params: { items: { 'holy water': 2 } } },
                         { id: 'unlock_structure', params: { structureTemplateId: 1 } },
                         { id: 'unlock_interaction', params: { interaction: 'holy-water' } },
                         { 
+                            id: 'recruit_hero', 
+                            params: { 
+                                hero: 'Mithrail', 
+                                reputation: { inquisition: 1, cult: 0, undead: 0 } 
+                            } 
+                        },
+                        { 
                             id: 'log_event', 
-                            params: { event: 'Mithrail blessed your supplies. You received 2 Holy Water. The Church is now active.' } 
+                            params: { event: 'Mithrail of the Inquisition has joined you. The Church\'s blessing now rests upon your town. You receive 2 Holy Water.' } 
                         }
                     ]
                 }
             ]
         },
-        rejected: {
-            text: "So be it. But when darkness comes, remember that you turned away aid. The Church's blessing will be needed.",
+        reveal_knowledge: {
+            text: "Mithrail leans in, his voice dropping. 'The undead stir in the burial grounds beyond your walls. We do not yet know their purpose or strength, but they are gathering. The man who fled your gates—he has been desecrating graves, perhaps awakening something older than the plague itself. You need us, gatekeeper. And we need you to be our eyes and ears at this crossroads.'",
             options: [
                 {
-                    text: "Perhaps I was hasty...",
-                    next: "explanation"
+                    text: "Then let's work together.",
+                    next: "explain_help"
                 },
                 {
-                    text: "Leave us.",
-                    end: true,
-                    actions: [
-                        { 
-                            id: 'log_event', 
-                            params: { event: 'You turned away Mithrail of the Inquisition. The Church remains closed to you.' } 
-                        }
-                    ]
+                    text: "This is too much. I can't help you.",
+                    next: "rejection_path"
                 }
             ]
         }
     },
 
-    /**
-     * NORA - Herbalist
-     * Teaches about medicinal herbs, unlocks apothecary
-     */
-    Explanation_M: {
+    nora_greeting: {
         start: {
-            text: "A weathered herbalist approaches. 'I am Nora. I know the old remedies - the ones that burn in the lungs of the infected.'",
+            text: "I am Nora. I know the old remedies - the ones that burn in the lungs of the infected.",
             options: [
                 {
                     text: "Can you help us?",
@@ -134,93 +271,6 @@ const DIALOG_TREES = {
         }
     },
 
-    /**
-     * THE JUDGE - Tribunal member
-     * Critical decision: failing this check = game over
-     */
-    Inquisition: {
-        start: {
-            text: "A stern figure in formal attire blocks your gate. 'I am from the High Tribunal. I must inspect your operations. Do you keep proper records?'",
-            options: [
-                {
-                    text: "Yes, all records are in order.",
-                    next: "inspect",
-                    condition: "check_supplies"  // Must have lantern fuel
-                },
-                {
-                    text: "We do our best with what we have.",
-                    next: "unsure"
-                },
-                {
-                    text: "That is none of your concern.",
-                    next: "refuse"
-                }
-            ]
-        },
-        inspect: {
-            text: "You present your records. The Judge examines them carefully, then nods. 'Satisfactory. Your diligence is noted. The Tribunal will remember this.'",
-            options: [
-                {
-                    text: "Thank you for understanding.",
-                    end: true,
-                    actions: [
-                        { 
-                            id: 'log_event', 
-                            params: { event: 'The Judge approved your records. The Tribunal favors you.' } 
-                        }
-                    ]
-                }
-            ]
-        },
-        unsure: {
-            text: "The Judge studies you with narrowed eyes. 'Then prove it. Show me your records... your supplies... your people.'",
-            options: [
-                {
-                    text: "Here, inspect everything.",
-                    next: "supplies_check"
-                },
-                {
-                    text: "I cannot allow this intrusion.",
-                    next: "refuse"
-                }
-            ]
-        },
-        supplies_check: {
-            text: "The Judge checks your supplies and records. If you lack basic tools, the Tribunal may declare you unfit to govern... This could end everything.",
-            options: [
-                {
-                    text: "Accept the judgment.",
-                    end: true,
-                    actions: [
-                        { 
-                            id: 'check_supplies',
-                            params: { items: { 'lantern fuel': 1 } }
-                        }
-                    ]
-                }
-            ]
-        },
-        refuse: {
-            text: "The Judge's expression hardens. 'Refusing the Tribunal. This will be reported. You have made a grave mistake.'",
-            options: [
-                {
-                    text: "Let them report.",
-                    end: true,
-                    actions: [
-                        { 
-                            id: 'log_event', 
-                            params: { event: 'You defied the Tribunal. The Judge has left... and you know this will have consequences.' } 
-                        }
-                    ]
-                }
-            ]
-        }
-    },
-
-    /**
-     * scared_man - Claims to see the dead rise
-     * Warning about undead threat
-     */
     scared_man_greeting: {
         start: {
             text: "A gaunt man covered in grave soil approaches. His eyes are wide with fear. 'They're rising. The dead are rising from the earth. I've seen them.'",
@@ -339,9 +389,6 @@ const DIALOG_TREES = {
     }
 };
 
-/**
- * Get a dialog tree by ID
- */
 function getDialogTree(treeId) {
     const treeData = DIALOG_TREES[treeId];
     if (!treeData) {
