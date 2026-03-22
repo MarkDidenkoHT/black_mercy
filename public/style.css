@@ -63,6 +63,8 @@ input {
 }
 
 
+/* ─── FLOW SCREENS ─────────────────────────────────────────────────────────── */
+
 .flow-screen {
     display: none;
     position: fixed;
@@ -78,6 +80,8 @@ input {
 }
 
 
+/* ─── LOADING ───────────────────────────────────────────────────────────────── */
+
 #flow-loading {
     background-image: url('assets/art/loading.jpg');
     background-size: cover;
@@ -88,32 +92,52 @@ input {
 .loading-container {
     width: 100%;
     height: 100%;
-    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 14%;
 }
 
-.loading-text {
-    position: absolute;
-    bottom: 40px;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    font-size: 22px;
-    color: var(--text);
-    letter-spacing: 0.08em;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+.loading-panel {
+    position: relative;
+    width: 86%;
+    max-width: 400px;
+    background: rgba(6, 4, 2, 0.78);
+    border: 1px solid var(--gold-dark);
+    border-radius: 6px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(6px);
+    box-shadow:
+        0 0 0 1px rgba(200, 146, 42, 0.12),
+        0 8px 32px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 rgba(255, 215, 0, 0.07);
 }
+
+.loading-panel-corner {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: var(--gold);
+    border-style: solid;
+    border-width: 0;
+}
+.loading-panel-corner--tl { top: -1px;    left: -1px;   border-top-width: 2px;    border-left-width: 2px;   border-top-left-radius: 4px;     }
+.loading-panel-corner--tr { top: -1px;    right: -1px;  border-top-width: 2px;    border-right-width: 2px;  border-top-right-radius: 4px;    }
+.loading-panel-corner--bl { bottom: -1px; left: -1px;   border-bottom-width: 2px; border-left-width: 2px;   border-bottom-left-radius: 4px;  }
+.loading-panel-corner--br { bottom: -1px; right: -1px;  border-bottom-width: 2px; border-right-width: 2px;  border-bottom-right-radius: 4px; }
 
 .loading-bar-track {
-    position: absolute;
-    bottom: 28.7%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 88%;
-    height: 14px;
-    background: rgba(0,0,0,0.4);
-    border-radius: 3px;
+    width: 100%;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 4px;
     overflow: hidden;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(200, 146, 42, 0.35);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .loading-bar-fill {
@@ -130,7 +154,7 @@ input {
         var(--gold-richer) 100%
     );
     background-size: 200% 100%;
-    border-radius: 2px;
+    border-radius: 3px;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 0 10px rgba(200, 146, 42, 0.7), inset 0 1px 0 rgba(255, 220, 100, 0.3);
     animation: barShimmer 1.6s linear infinite;
@@ -141,6 +165,17 @@ input {
     100% { background-position: -200% center; }
 }
 
+.loading-text {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-align: center;
+    font-family: Georgia, serif;
+    text-transform: uppercase;
+}
+
+
+/* ─── TUTORIAL ──────────────────────────────────────────────────────────────── */
 
 #flow-tutorial {
     background: var(--bg-dark);
@@ -286,6 +321,8 @@ input {
 }
 
 
+/* ─── PET SELECTION ─────────────────────────────────────────────────────────── */
+
 #flow-pet-selection {
     background: rgba(0,0,0,0.88);
     align-items: center;
@@ -411,6 +448,8 @@ input {
 }
 
 
+/* ─── PET NAMING ────────────────────────────────────────────────────────────── */
+
 #flow-pet-naming {
     background: rgba(0,0,0,0.88);
     align-items: center;
@@ -493,6 +532,8 @@ input {
 }
 
 
+/* ─── APP SHELL ─────────────────────────────────────────────────────────────── */
+
 #app-shell {
     display: none;
     flex-direction: column;
@@ -505,6 +546,8 @@ input {
     display: flex;
 }
 
+
+/* ─── HEADER ────────────────────────────────────────────────────────────────── */
 
 #shell-header {
     position: absolute;
@@ -597,6 +640,8 @@ input {
 }
 
 
+/* ─── CONTENT ───────────────────────────────────────────────────────────────── */
+
 #shell-content {
     height: var(--content-h);
     flex-shrink: 0;
@@ -648,6 +693,8 @@ input {
     padding: 10px;
 }
 
+
+/* ─── KEEP TAB ──────────────────────────────────────────────────────────────── */
 
 .events-container {
     max-height: 42%;
@@ -709,6 +756,8 @@ input {
 .pet-display-media.pet-video  { z-index: 2; opacity: 0; background: transparent; }
 
 
+/* ─── GATE TAB ──────────────────────────────────────────────────────────────── */
+
 .gate-inner {
     justify-content: flex-start;
     gap: 0;
@@ -753,6 +802,8 @@ input {
     font-style: italic;
 }
 
+
+/* ─── CITY TAB ──────────────────────────────────────────────────────────────── */
 
 #tab-city {
     background-color: var(--bg-dark);
@@ -860,6 +911,8 @@ input {
 }
 
 
+/* ─── COMING SOON ───────────────────────────────────────────────────────────── */
+
 .coming-soon-panel {
     display: flex;
     flex-direction: column;
@@ -892,6 +945,8 @@ input {
     max-width: 260px;
 }
 
+
+/* ─── CONTROLS ──────────────────────────────────────────────────────────────── */
 
 #shell-controls {
     height: var(--controls-h);
@@ -948,6 +1003,8 @@ input {
 .execute         { background: linear-gradient(135deg, #4B0082 0%, #8A2BE2 100%); color: #ffffff; }
 
 
+/* ─── NAV ───────────────────────────────────────────────────────────────────── */
+
 #shell-nav {
     flex-shrink: 0;
     height: var(--nav-h);
@@ -997,6 +1054,8 @@ input {
     to   { box-shadow: 0 0 20px var(--gold), 0 0 30px var(--gold); }
 }
 
+
+/* ─── CITY INFO PANEL ───────────────────────────────────────────────────────── */
 
 .city-info-panel {
     width: 100%;
@@ -1052,6 +1111,8 @@ input {
     letter-spacing: 0.05em;
 }
 
+
+/* ─── MODAL ─────────────────────────────────────────────────────────────────── */
 
 .modal-overlay {
     display: none;
