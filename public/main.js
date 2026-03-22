@@ -27,6 +27,14 @@ const HERO_STAT_ICONS = {
     swiftness: '💨'
 };
 
+const HERO_STAT_DESCRIPTIONS = {
+    zeal:      'Burning conviction that drives the hero into danger without hesitation. High zeal means greater damage but less caution.',
+    mercy:     'Compassion for the suffering. Heroes with mercy will spare enemies when possible and tend to the wounded.',
+    insight:   'The ability to perceive hidden truths — spotting lies, detecting curses, and reading the unseen.',
+    authority: 'Command and presence. High authority lets the hero rally allies, intimidate foes, and enforce order.',
+    swiftness: 'Quickness of body and mind. Determines who acts first and how fast the hero can move across the land.'
+};
+
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
 };
@@ -394,7 +402,6 @@ function updateGateNavGlow() {
     }
 }
 
-
 function refreshGateTab() {
     updateGateNavGlow();
     loadTravelersForCurrentDay();
@@ -672,7 +679,6 @@ async function handleTravelerAction(action) {
 async function completeCurrentTraveler(decision) {
     if (!currentTraveler) return;
 
-    // Hide gate UI immediately to prevent flicker
     const travelerDialog = document.getElementById('traveler-dialog');
     const gateActions    = document.getElementById('gate-actions');
     const row1           = document.getElementById('gate-row-1');
@@ -730,7 +736,6 @@ async function completeCurrentTraveler(decision) {
 async function handleTravelerDecision(decision) {
     await completeCurrentTraveler(decision);
 }
-
 
 function refreshCityTab() {
     const phase       = getCurrentPhase();
@@ -828,7 +833,6 @@ async function handleSendSquire({ name }) {
     }
 }
 
-
 async function refreshGameData() {
     if (!currentPlayer) return;
     try {
@@ -902,6 +906,35 @@ function handleIconClick(e) {
     overlay.classList.add('active');
 }
 
+function showStatModal(statKey) {
+    const overlay    = document.getElementById('modal-overlay');
+    const modalIcon  = document.getElementById('modal-icon');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDesc  = document.getElementById('modal-description');
+    if (!overlay || !modalTitle || !modalDesc) return;
+
+    const icon = HERO_STAT_ICONS[statKey] || '📊';
+    const desc = HERO_STAT_DESCRIPTIONS[statKey] || 'No description available.';
+    const label = statKey.charAt(0).toUpperCase() + statKey.slice(1);
+
+    modalIcon.src = '';
+    modalIcon.alt = '';
+    modalIcon.style.display = 'none';
+    modalTitle.textContent = `${icon} ${label}`;
+    modalDesc.textContent  = desc;
+
+    overlay.classList.add('active');
+
+    const modalClose = document.getElementById('modal-close');
+    if (modalClose) {
+        const cleanup = () => {
+            modalIcon.style.display = '';
+            modalClose.removeEventListener('click', cleanup);
+        };
+        modalClose.addEventListener('click', cleanup);
+    }
+}
+
 function renderHeroSlider() {
     const container = document.getElementById('hero-slider-container');
     const content   = document.getElementById('hero-slider-content');
@@ -921,7 +954,6 @@ function renderHeroSlider() {
     const hero = currentHeroes[heroSliderIndex];
     if (!hero) return;
 
-    // Parse stats/talents if needed
     let stats = hero.stats;
     if (typeof stats === 'string') try { stats = JSON.parse(stats); } catch {}
     let talents = hero.talents;
@@ -930,7 +962,6 @@ function renderHeroSlider() {
     let rep = hero.reputation;
     if (typeof rep === 'string') try { rep = JSON.parse(rep); } catch {}
 
-    // Name and image in tab
     content.innerHTML = `
         <div class="hero-art-name">
             <img class="hero-art" src="assets/art/heroes/${hero.art || hero.hero}.png" alt="${hero.hero}">
@@ -938,17 +969,25 @@ function renderHeroSlider() {
         </div>
     `;
 
-    // Stats row in controls
     const statsRow = document.getElementById('hero-stats-row');
     if (statsRow) {
         statsRow.innerHTML = '<div class="hero-stats-row">' +
             Object.entries(HERO_STAT_ICONS).map(([key, icon]) =>
-                `<span class="hero-stat"><span class="hero-stat-icon">${icon}</span><span class="hero-stat-value">${stats?.[key] ?? '-'}</span></span>`
+                `<span class="hero-stat" data-stat="${key}">
+                    <span class="hero-stat-icon">${icon}</span>
+                    <span class="hero-stat-value">${stats?.[key] ?? '-'}</span>
+                </span>`
             ).join('') +
             '</div>';
+
+        statsRow.querySelectorAll('.hero-stat').forEach(el => {
+            el.addEventListener('click', () => {
+                const statKey = el.dataset.stat;
+                if (statKey) showStatModal(statKey);
+            });
+        });
     }
 
-    // Reputation pie chart in controls
     const repPie = document.getElementById('hero-rep-pie');
     if (repPie) {
         const cult = rep?.cult ?? 0;
@@ -958,7 +997,6 @@ function renderHeroSlider() {
         const cultPct = (cult / total) * 100;
         const inqPct = (inquisition / total) * 100;
         const undeadPct = (undead / total) * 100;
-        // Pie chart SVG
         const pie = `<svg width="64" height="64" viewBox="0 0 32 32">
             <circle r="16" cx="16" cy="16" fill="#222" />
             <circle r="16" cx="16" cy="16" fill="none" stroke="#a02020" stroke-width="32" stroke-dasharray="${cultPct} ${100-cultPct}" stroke-dashoffset="0" />
