@@ -522,25 +522,27 @@ input {
 
 .reputation-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 6px;
     align-items: center;
 }
 
 .inventory-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 6px;
     align-items: center;
 }
 
 .reputation-item {
-    display: flex;
-    flex-direction: column;
+    position: relative;
+    display: inline-flex;
     align-items: center;
-    gap: 2px;
+    justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    width: 36px;
+    height: 36px;
 }
 
 .inventory-item {
@@ -557,11 +559,12 @@ input {
 .reputation-icon {
     width: 36px;
     height: 36px;
-    border-radius: 50%;
+    border-radius: 8px;
     border: 1px solid var(--gold-dark);
     background: rgba(0,0,0,0.6);
     object-fit: cover;
     transition: border-color 0.2s, box-shadow 0.2s;
+    display: block;
 }
 
 .inventory-icon {
@@ -582,11 +585,24 @@ input {
 }
 
 .reputation-level {
-    font-size: 13px;
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    background: rgba(0,0,0,0.85);
+    border: 1px solid var(--gold-dark);
     color: var(--gold);
+    font-size: 10px;
     font-weight: bold;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 2px;
+    pointer-events: none;
 }
 
 .inventory-count {
