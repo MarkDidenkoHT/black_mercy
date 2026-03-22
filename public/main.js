@@ -672,11 +672,17 @@ async function handleTravelerAction(action) {
 async function completeCurrentTraveler(decision) {
     if (!currentTraveler) return;
 
-    const td             = currentTraveler.traveler;
+    // Hide gate UI immediately to prevent flicker
     const travelerDialog = document.getElementById('traveler-dialog');
-    const continueButton = document.getElementById('continue-button');
+    const gateActions    = document.getElementById('gate-actions');
     const row1           = document.getElementById('gate-row-1');
     const row2           = document.getElementById('gate-row-2');
+    if (travelerDialog) travelerDialog.innerHTML = '';
+    if (gateActions) gateActions.innerHTML = '';
+    if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
+    if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
+
+    const td = currentTraveler.traveler;
 
     const responseDialogs = {
         allow:          td.dialog?.in        || 'Thank you for allowing me passage.',
@@ -688,9 +694,6 @@ async function completeCurrentTraveler(decision) {
     const responseText = responseDialogs[decision];
     if (responseText && travelerDialog) {
         travelerDialog.textContent = responseText;
-        if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
-        if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
-        if (continueButton) continueButton.style.display = 'none';
     }
 
     try {
