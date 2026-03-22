@@ -19,6 +19,14 @@ let currentDialogTree = null;
 let activeTab = 'keep';
 let heroSliderIndex = 0;
 
+const HERO_STAT_ICONS = {
+    zeal: '🔥',
+    mercy: '🤲',
+    insight: '👁️',
+    authority: '⚖️',
+    swiftness: '💨'
+};
+
 const populationDescriptions = {
     total: "Total population in your town. Everything is lost if no one remains."
 };
@@ -707,8 +715,8 @@ async function completeCurrentTraveler(decision) {
             updateGateNavGlow();
 
             setTimeout(() => {
-                currentTravelerIndex++;
-                loadCurrentTraveler();
+                showTab('keep');
+                showFlowScreen('app-shell');
             }, 900);
         }
     } catch (error) {
@@ -896,17 +904,15 @@ function renderHeroSlider() {
     const content   = document.getElementById('hero-slider-content');
     const prevBtn   = document.getElementById('hero-slider-prev');
     const nextBtn   = document.getElementById('hero-slider-next');
-    const comingSoon = document.getElementById('heroes-coming-soon');
-
     if (!container || !content || !prevBtn || !nextBtn || !currentHeroes) return;
 
     if (currentHeroes.length === 0) {
         container.style.display = 'none';
-        if (comingSoon) comingSoon.style.display = 'block';
+        document.getElementById('heroes-controls').style.display = 'none';
         return;
     }
-    if (comingSoon) comingSoon.style.display = 'none';
     container.style.display = 'flex';
+    document.getElementById('heroes-controls').style.display = 'flex';
 
     heroSliderIndex = Math.max(0, Math.min(heroSliderIndex, currentHeroes.length - 1));
     const hero = currentHeroes[heroSliderIndex];
@@ -921,25 +927,48 @@ function renderHeroSlider() {
     let rep = hero.reputation;
     if (typeof rep === 'string') try { rep = JSON.parse(rep); } catch {}
 
+    // Name and image in tab
     content.innerHTML = `
         <div class="hero-art-name">
             <img class="hero-art" src="assets/art/heroes/${hero.art || hero.hero}.png" alt="${hero.hero}">
             <h2 class="hero-name">${hero.hero}</h2>
         </div>
-        <div class="hero-stats">
-            <div><strong>Zeal:</strong> ${stats?.zeal ?? '-'}</div>
-            <div><strong>Mercy:</strong> ${stats?.mercy ?? '-'}</div>
-            <div><strong>Insight:</strong> ${stats?.insight ?? '-'}</div>
-            <div><strong>Authority:</strong> ${stats?.authority ?? '-'}</div>
-            <div><strong>Swiftness:</strong> ${stats?.swiftness ?? '-'}</div>
-        </div>
-        <div class="hero-talents">
-            <strong>Talents:</strong> ${(talents && talents.length > 0) ? talents.join(', ') : '-'}
-        </div>
-        <div class="hero-reputation">
-            <strong>Reputation:</strong> ${rep?.player ?? '-'}
-        </div>
     `;
+
+    // Stats row in controls
+    const statsRow = document.getElementById('hero-stats-row');
+    if (statsRow) {
+        statsRow.innerHTML = '<div class="hero-stats-row">' +
+            Object.entries(HERO_STAT_ICONS).map(([key, icon]) =>
+                `<span class="hero-stat"><span class="hero-stat-icon">${icon}</span><span class="hero-stat-value">${stats?.[key] ?? '-'}</span></span>`
+            ).join('') +
+            '</div>';
+    }
+
+    // Reputation pie chart in controls
+    const repPie = document.getElementById('hero-rep-pie');
+    if (repPie) {
+        const cult = rep?.cult ?? 0;
+        const inquisition = rep?.inquisition ?? 0;
+        const undead = rep?.undead ?? 0;
+        const total = cult + inquisition + undead || 1;
+        const cultPct = (cult / total) * 100;
+        const inqPct = (inquisition / total) * 100;
+        const undeadPct = (undead / total) * 100;
+        // Pie chart SVG
+        const pie = `<svg width="64" height="64" viewBox="0 0 32 32">
+            <circle r="16" cx="16" cy="16" fill="#222" />
+            <circle r="16" cx="16" cy="16" fill="none" stroke="#a02020" stroke-width="32" stroke-dasharray="${cultPct} ${100-cultPct}" stroke-dashoffset="0" />
+            <circle r="16" cx="16" cy="16" fill="none" stroke="#ffd700" stroke-width="32" stroke-dasharray="${inqPct} ${100-inqPct}" stroke-dashoffset="-${cultPct}" />
+            <circle r="16" cx="16" cy="16" fill="none" stroke="#5a2aaa" stroke-width="32" stroke-dasharray="${undeadPct} ${100-undeadPct}" stroke-dashoffset="-${cultPct+inqPct}" />
+        </svg>
+        <div class="hero-rep-legend">
+            <span style="color:#a02020">●</span> Cult
+            <span style="color:#ffd700">●</span> Inquisition
+            <span style="color:#5a2aaa">●</span> Undead
+        </div>`;
+        repPie.innerHTML = pie;
+    }
 
     prevBtn.disabled = heroSliderIndex === 0;
     nextBtn.disabled = heroSliderIndex === currentHeroes.length - 1;
@@ -958,12 +987,10 @@ function renderHeroSlider() {
     };
 }
 
-// Call this after loading heroes or switching to the tab
 function refreshHeroesTab() {
     renderHeroSlider();
 }
 
-// Patch showTab to refresh heroes tab
 const origShowTab = showTab;
 showTab = function(tab) {
     origShowTab(tab);

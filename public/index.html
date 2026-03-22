@@ -169,15 +169,10 @@
             <div id="tab-heroes" class="tab-panel" style="background-image: url('assets/art/guard_room.jpg');">
                 <div class="tab-bg-overlay"></div>
                 <div class="tab-inner">
-                    <div class="hero-slider-container" id="hero-slider-container" style="display:none;">
+                    <div class="hero-slider-container" id="hero-slider-container">
                         <button class="hero-slider-btn" id="hero-slider-prev">&#8592;</button>
                         <div class="hero-slider-content" id="hero-slider-content"></div>
                         <button class="hero-slider-btn" id="hero-slider-next">&#8594;</button>
-                    </div>
-                    <div class="coming-soon-panel" id="heroes-coming-soon">
-                        <div class="coming-soon-icon">⚔️</div>
-                        <h2 class="coming-soon-title">Heroes</h2>
-                        <p class="coming-soon-desc">Champions and mercenaries will answer your call in time.</p>
                     </div>
                 </div>
             </div>
@@ -200,7 +195,10 @@
             </div>
 
             <div id="keep-controls" class="controls-panel" style="display:none;"></div>
-            <div id="heroes-controls" class="controls-panel" style="display:none;"></div>
+            <div id="heroes-controls" class="controls-panel" style="display:none;">
+                <div id="hero-stats-row"></div>
+                <div id="hero-rep-pie"></div>
+            </div>
 
         </div>
 
