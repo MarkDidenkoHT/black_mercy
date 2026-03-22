@@ -884,13 +884,13 @@ app.post('/api/session/modify-reputation', async (req, res) => {
 
 app.post('/api/heroes/recruit', async (req, res) => {
   try {
-    const { chatId, hero, reputation } = req.body;
+    const { chatId, hero } = req.body;
 
     if (!chatId || !hero) return res.status(400).json({ error: 'chatId and hero are required' });
 
     const { data: player } = await supabase
       .from('players')
-      .select('*')
+      .select('id')
       .eq('chat_id', chatId)
       .single();
 
@@ -898,41 +898,57 @@ app.post('/api/heroes/recruit', async (req, res) => {
 
     const { data: session } = await supabase
       .from('sessions')
-      .select('*')
+      .select('id')
       .eq('player', player.id)
       .eq('active', true)
       .single();
 
     if (!session) return res.status(404).json({ error: 'Active session not found' });
 
+    // Find the traveler's row for this hero in this session
+    const { data: traveler } = await supabase
+      .from('travelers')
+      .select('hero_data')
+      .eq('session', session.id)
+      .eq('player', player.id)
+      .contains('hero_data', { hero })
+      .single();
+
+    if (!traveler || !traveler.hero_data) {
+      return res.status(404).json({ error: 'Hero data not found in travelers' });
+    }
+
+    // Check if already recruited
     const { data: existingHero } = await supabase
       .from('heroes')
-      .select('*')
+      .select('id')
       .eq('session', session.id)
       .eq('hero', hero)
       .single();
-
     if (existingHero) {
       return res.status(400).json({ error: 'Hero already recruited' });
     }
 
+    // Insert hero using hero_data from traveler
+    const heroData = traveler.hero_data;
     const { data: newHero, error: heroError } = await supabase
       .from('heroes')
       .insert([{
         session: session.id,
-        hero: hero,
-        reputation: reputation || { cult: 0, inquisition: 0, undead: 0 },
-        stats: { level: 1, experience: 0 },
-        talents: []
+        hero: heroData.hero,
+        stats: heroData.stats,
+        reputation: heroData.reputation,
+        talents: heroData.talents,
+        art: heroData.art
       }])
       .select()
       .single();
-
     if (heroError) throw heroError;
 
+    // Get updated reputation
     const { data: reputationData } = await supabase
       .from('reputation')
-      .select('*')
+      .select('hidden_reputation')
       .eq('player', player.id)
       .eq('session', session.id)
       .single();
@@ -942,7 +958,6 @@ app.post('/api/heroes/recruit', async (req, res) => {
       hero: newHero,
       hidden_reputation: reputationData?.hidden_reputation || { cult: 0, inquisition: 0, undead: 0 }
     });
-
   } catch (error) {
     console.error('Recruit hero error:', error);
     res.status(500).json({ error: 'Internal server error' });

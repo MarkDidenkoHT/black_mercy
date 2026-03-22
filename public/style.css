@@ -720,10 +720,9 @@ input {
     background: var(--bg-glass);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px 14px;
-    margin: 0 0 6px;
+    padding: 6px;
     backdrop-filter: blur(6px);
-    max-height: 22%;
+    max-height: 35%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
@@ -905,7 +904,7 @@ input {
     cursor: pointer;
     transition: transform 0.12s ease, opacity 0.15s ease, box-shadow 0.15s ease;
     border: 1px solid var(--gold-dim);
-    color: var(--text);
+    /* color: var(--text); */
     -webkit-tap-highlight-color: transparent;
 }
 

@@ -141,7 +141,7 @@ const DialogActions = {
             const data = await response.json();
             if (data.success) {
                 currentAvailableInteractions = data.available_interactions;
-                setupDynamicActionButtons();
+                if (typeof buildDynamicActionButtons === 'function') buildDynamicActionButtons();
             }
             return data;
         } catch (error) {
