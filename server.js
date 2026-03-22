@@ -160,6 +160,12 @@ app.post('/api/auth/check', async (req, res) => {
         .eq('player', existingPlayer.id)
         .eq('session', activeSession.id);
 
+      const { data: heroesData } = await supabase
+        .from('heroes')
+        .select('*')
+        .eq('session', activeSession.id)
+        .order('hero', { ascending: true });
+
       return res.json({ 
         exists: true, 
         player: existingPlayer,
@@ -171,7 +177,8 @@ app.post('/api/auth/check', async (req, res) => {
         events: eventsData || [],
         travelers: currentTravelers || [],
         structures: structuresData || [],
-        pet: activeSession.pet || null
+        pet: activeSession.pet || null,
+        heroes: heroesData || []
       });
     }
 
