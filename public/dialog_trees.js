@@ -326,9 +326,6 @@ const DIALOG_TREES = {
      */
 
 
-    /**
-     * THE CULTIST - Temptation and threat
-     */
     cult: {
         start: {
             text: "A hooded figure approaches. 'Our master sees potential in you. Join us, and we shall grant you knowledge and power beyond mortal understanding.'",
