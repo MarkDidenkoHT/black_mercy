@@ -4,6 +4,7 @@ class DialogTree {
         this.data = treeData;
         this.currentNodeId = 'start';
         this.history = [];
+        this.path = [];
     }
 
     getCurrentNode() {
@@ -27,6 +28,7 @@ class DialogTree {
         if (!option) return null;
 
         this.history.push(this.currentNodeId);
+        this.path.push(optionIndex);
 
         if (option.end) {
             this.currentNodeId = 'end';
@@ -55,6 +57,11 @@ class DialogTree {
     reset() {
         this.currentNodeId = 'start';
         this.history = [];
+        this.path = [];
+    }
+
+    getPath() {
+        return [...this.path];
     }
 }
 
@@ -280,8 +287,12 @@ async function executeDialogActions(actions = []) {
             params = action.params || {};
         }
 
-        const result = await executeDialogAction(actionId, params);
-        results.push({ actionId, result });
+        if (actionId === 'check_supplies' || actionId === 'check_population' || actionId === 'trigger_ending') {
+            const result = await DialogActions[actionId](params);
+            results.push({ actionId, result });
+        } else {
+            results.push({ actionId, result: { success: true } });
+        }
     }
 
     return results;

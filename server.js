@@ -25,6 +25,9 @@ const supabase = createClient(
   }
 );
 
+const { DIALOG_TREES } = require('./public/dialog_trees');
+const dialogHelpers = require('./dialog_helpers')(supabase);
+
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
@@ -1013,4 +1016,47 @@ app.get('/api/heroes/list', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+app.post('/api/dialog/execute', async (req, res) => {
+  try {
+    const { chatId, treeId, path } = req.body;
+
+    if (!chatId || !treeId || !path) return res.status(400).json({ error: 'chatId, treeId, and path are required' });
+
+    const { player, session } = await dialogHelpers.getPlayerAndSession(chatId);
+    if (!player || !session) return res.status(404).json({ error: 'Player or session not found' });
+
+    const tree = DIALOG_TREES[treeId];
+    if (!tree) return res.status(400).json({ error: 'Invalid dialog tree' });
+
+    let currentNode = tree.start;
+    let actions = [];
+
+    for (const choice of path) {
+      if (!currentNode.options || !currentNode.options[choice]) {
+        return res.status(400).json({ error: 'Invalid dialog path' });
+      }
+      const option = currentNode.options[choice];
+      if (option.actions) actions = actions.concat(option.actions);
+      if (option.next) {
+        currentNode = tree[option.next];
+      } else if (option.end) {
+        break;
+      } else {
+        return res.status(400).json({ error: 'Invalid dialog option' });
+      }
+    }
+
+    const result = await dialogHelpers.applyDialogActions(player.id, session.id, actions);
+
+    return res.json({
+      success: true,
+      result
+    });
+
+  } catch (error) {
+    console.error('Dialog execute error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
