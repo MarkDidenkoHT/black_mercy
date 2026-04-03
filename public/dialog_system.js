@@ -1,8 +1,3 @@
-/**
- * Dialog Tree System
- * Handles branching conversations with fixed travelers
- */
-
 class DialogTree {
     constructor(treeId, treeData) {
         this.treeId = treeId;
@@ -25,9 +20,6 @@ class DialogTree {
         return node?.options || [];
     }
 
-    /**
-     * Move to next node and return its data
-     */
     selectOption(optionIndex) {
         const node = this.getCurrentNode();
         const option = node?.options?.[optionIndex];
@@ -56,9 +48,6 @@ class DialogTree {
         return null;
     }
 
-    /**
-     * Check if dialog has ended
-     */
     isEnded() {
         return this.currentNodeId === 'end';
     }
@@ -69,15 +58,9 @@ class DialogTree {
     }
 }
 
-/**
- * Dialog Action Executor
- * Executes mechanics triggered by dialog choices
- */
+
 const DialogActions = {
-    /**
-     * Give items to player
-     * params: { items: { 'item_name': quantity } }
-     */
+
     give_items: async (params) => {
         try {
             const response = await fetch('/api/inventory/give', {
@@ -101,10 +84,7 @@ const DialogActions = {
         }
     },
 
-    /**
-     * Unlock/activate a structure
-     * params: { structureTemplateId: number }
-     */
+
     unlock_structure: async (params) => {
         try {
             const response = await fetch('/api/structures/set-active', {
@@ -123,10 +103,7 @@ const DialogActions = {
         }
     },
 
-    /**
-     * Unlock a new interaction type
-     * params: { interaction: 'check-papers' | 'holy-water' | 'medicinal-herbs' | 'execute' }
-     */
+
     unlock_interaction: async (params) => {
         try {
             const response = await fetch('/api/session/add-interaction', {
@@ -150,10 +127,7 @@ const DialogActions = {
         }
     },
 
-    /**
-     * Log an event
-     * params: { event: 'event text' }
-     */
+
     log_event: async (params) => {
         try {
             const response = await fetch('/api/events/add', {
@@ -176,10 +150,7 @@ const DialogActions = {
         }
     },
 
-    /**
-     * Check a win condition - if you don't have required items, it's game over
-     * params: { items: { 'item_name': min_quantity } }
-     */
+
     check_supplies: async (params) => {
         const required = params.items || {};
         const missing = [];
@@ -203,10 +174,7 @@ const DialogActions = {
         return { success: true, message: 'You have sufficient supplies.' };
     },
 
-    /**
-     * Check population condition - if population is below threshold, game over
-     * params: { minPopulation: number }
-     */
+
     check_population: async (params) => {
         const total = (currentPopulation.human || 0) 
                     + (currentPopulation.infected || 0) 
@@ -225,10 +193,7 @@ const DialogActions = {
         return { success: true, message: 'Your town still stands.' };
     },
 
-    /**
-     * End the game with a specific ending
-     * params: { ending: 'victory' | 'defeat', message: 'ending text' }
-     */
+
     trigger_ending: async (params) => {
         const ending = params.ending || 'defeat';
         const message = params.message || 'Your journey ends here.';
@@ -241,10 +206,7 @@ const DialogActions = {
         return { success: true, ending, message };
     },
 
-    /**
-     * Recruit a hero to join the player
-     * params: { hero: 'hero_name', reputation: { cult: 0, inquisition: 1, undead: 0 } }
-     */
+
     recruit_hero: async (params) => {
         try {
             const response = await fetch('/api/heroes/recruit', {
@@ -270,10 +232,7 @@ const DialogActions = {
         }
     },
 
-    /**
-     * Modify reputation (add to hidden reputation)
-     * params: { changes: { cult: number, inquisition: number, undead: number } }
-     */
+
     modify_reputation: async (params) => {
         try {
             const response = await fetch('/api/session/modify-reputation', {
@@ -297,9 +256,7 @@ const DialogActions = {
     }
 };
 
-/**
- * Execute a dialog action
- */
+
 async function executeDialogAction(actionId, params = {}) {
     const action = DialogActions[actionId];
     if (!action) {
@@ -310,9 +267,7 @@ async function executeDialogAction(actionId, params = {}) {
     return await action(params);
 }
 
-/**
- * Execute multiple dialog actions
- */
+
 async function executeDialogActions(actions = []) {
     const results = [];
     
