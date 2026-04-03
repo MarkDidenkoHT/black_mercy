@@ -12,7 +12,7 @@ let currentTravelers = [];
 let currentTravelerIndex = 0;
 let currentDayTravelers = [];
 let currentTraveler = null;
-let currentPet = null;
+/* let currentPet = null; */
 let currentStructures = [];
 let currentHeroes = [];
 let currentDialogTree = null;
@@ -142,12 +142,22 @@ async function initializeApp() {
             if (!data.player.tutorial) {
                 showFlowScreen('flow-tutorial');
                 initTutorial(() => {
-                    showFlowScreen('flow-pet-selection');
-                    initPetSelection();
+                    /* showFlowScreen('flow-pet-selection');
+                    initPetSelection(); */
+                    // Skip pet selection for now
+                    applySessionData(data);
+                    setupShell();
+                    showFlowScreen('app-shell');
+                    showTab('keep');
                 });
             } else {
-                showFlowScreen('flow-pet-selection');
-                initPetSelection();
+                /* showFlowScreen('flow-pet-selection');
+                initPetSelection(); */
+                // Skip pet selection for now
+                applySessionData(data);
+                setupShell();
+                showFlowScreen('app-shell');
+                showTab('keep');
             }
         } else {
             applySessionData(data);
@@ -210,6 +220,7 @@ function initTutorial(onComplete) {
     });
 }
 
+/*
 function initPetSelection() {
     Pet.setupSelection({
         fetchDescription: async (pet) => {
@@ -244,6 +255,7 @@ function initPetSelection() {
         }
     });
 }
+*/
 
 function applySessionData(data) {
     currentSession              = data.session;
@@ -253,7 +265,7 @@ function applySessionData(data) {
     currentAvailableInteractions = data.available_interactions || ['check-papers', 'let-in', 'push-out'];
     currentEvents               = data.events || [];
     currentTravelers            = data.travelers || [];
-    currentPet                  = data.pet || null;
+    /* currentPet                  = data.pet || null; */
     currentStructures           = data.structures || [];
     currentHeroes               = data.heroes || [];
 
@@ -268,7 +280,7 @@ function setupShell() {
     setupModalEvents();
     setupGateActionButtons();
     updateGateNavGlow();
-    if (currentPet) Pet.setupHomeWidget(currentPet);
+    /* if (currentPet) Pet.setupHomeWidget(currentPet); */
 }
 
 function setupNavButtons() {

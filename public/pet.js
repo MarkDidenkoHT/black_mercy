@@ -1,3 +1,4 @@
+/*
 const Pet = (() => {
 
     const ANIMATIONS = {
@@ -272,3 +273,4 @@ const Pet = (() => {
     return { setupSelection, setupNaming, setupHomeWidget };
 
 })();
+*/

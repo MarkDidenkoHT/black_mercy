@@ -118,10 +118,68 @@ app.post('/api/auth/check', async (req, res) => {
         .single();
 
       if (!activeSession) {
+        // Create session without pet for existing player without session
+        const { data: newSession, error: sessionError } = await supabase
+          .from('sessions')
+          .insert([{
+            player: existingPlayer.id,
+            active: true,
+            day: 1,
+            // pet: null
+          }])
+          .select()
+          .single();
+
+        if (sessionError) throw sessionError;
+
+        await callGenerateTravelers(existingPlayer.id, newSession.id);
+
+        await supabase.from('reputation').insert([{
+          player: existingPlayer.id,
+          session: newSession.id,
+          hidden_reputation: { cult: 0, inquisition: 0, undead: 0 }
+        }]);
+
+        await supabase.from('inventory').insert([{
+          player: existingPlayer.id,
+          session: newSession.id,
+          items: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 }
+        }]);
+
+        await supabase.from('events').insert([{
+          player: existingPlayer.id,
+          session: newSession.id,
+          event: `Your adventure begins.`
+        }]);
+
+        const { data: day1Travelers } = await supabase
+          .from('travelers')
+          .select('*')
+          .eq('player', existingPlayer.id)
+          .eq('session', newSession.id)
+          .eq('day', 1)
+          .order('order->position');
+
+        const structureTotals = await calculateStructureTotals(existingPlayer.id, newSession.id);
+
+        const { data: newStructuresData } = await supabase
+          .from('structures')
+          .select('*, structures_templates(id, name, effects)')
+          .eq('player', existingPlayer.id)
+          .eq('session', newSession.id);
+
         return res.json({ 
-          exists: true, 
+          exists: true,
           player: existingPlayer,
-          needsPetSelection: true
+          session: newSession,
+          population: structureTotals,
+          hidden_reputation: { cult: 0, inquisition: 0, undead: 0 },
+          inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
+          available_interactions: ['check-papers', 'let-in', 'push-out'],
+          events: [{ event: `Your adventure begins.` }],
+          travelers: day1Travelers || [],
+          structures: newStructuresData || [],
+          // pet: null
         });
       }
 
@@ -198,10 +256,68 @@ app.post('/api/auth/check', async (req, res) => {
 
     if (playerError) throw playerError;
 
+    // Create session without pet for now
+    const { data: newSession, error: sessionError } = await supabase
+      .from('sessions')
+      .insert([{
+        player: newPlayer.id,
+        active: true,
+        day: 1,
+        // pet: null or omit
+      }])
+      .select()
+      .single();
+
+    if (sessionError) throw sessionError;
+
+    await callGenerateTravelers(newPlayer.id, newSession.id);
+
+    await supabase.from('reputation').insert([{
+      player: newPlayer.id,
+      session: newSession.id,
+      hidden_reputation: { cult: 0, inquisition: 0, undead: 0 }
+    }]);
+
+    await supabase.from('inventory').insert([{
+      player: newPlayer.id,
+      session: newSession.id,
+      items: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 }
+    }]);
+
+    await supabase.from('events').insert([{
+      player: newPlayer.id,
+      session: newSession.id,
+      event: `Your adventure begins.`
+    }]);
+
+    const { data: day1Travelers } = await supabase
+      .from('travelers')
+      .select('*')
+      .eq('player', newPlayer.id)
+      .eq('session', newSession.id)
+      .eq('day', 1)
+      .order('order->position');
+
+    const structureTotals = await calculateStructureTotals(newPlayer.id, newSession.id);
+
+    const { data: newStructuresData } = await supabase
+      .from('structures')
+      .select('*, structures_templates(id, name, effects)')
+      .eq('player', newPlayer.id)
+      .eq('session', newSession.id);
+
     return res.json({ 
-      exists: false, 
+      exists: false,
       player: newPlayer,
-      needsPetSelection: true
+      session: newSession,
+      population: structureTotals,
+      hidden_reputation: { cult: 0, inquisition: 0, undead: 0 },
+      inventory: { 'holy water': 2, 'lantern fuel': 2, 'medicinal herbs': 2 },
+      available_interactions: ['check-papers', 'let-in', 'push-out'],
+      events: [{ event: `Your adventure begins.` }],
+      travelers: day1Travelers || [],
+      structures: newStructuresData || [],
+      // pet: null
     });
 
   } catch (error) {
@@ -210,6 +326,7 @@ app.post('/api/auth/check', async (req, res) => {
   }
 });
 
+/*
 app.post('/api/pet/select', async (req, res) => {
   try {
     const { chatId, pet } = req.body;
@@ -303,6 +420,7 @@ app.post('/api/pet/select', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+*/
 
 app.post('/api/travelers/get-day', async (req, res) => {
   try {
@@ -709,6 +827,7 @@ app.post('/api/structures/set-active', async (req, res) => {
   }
 });
 
+/*
 app.post('/api/pets/description', async (req, res) => {
   try {
     const { pet } = req.body;
@@ -733,6 +852,7 @@ app.post('/api/pets/description', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+*/
 
 app.post('/api/tutorial/complete', async (req, res) => {
   try {
