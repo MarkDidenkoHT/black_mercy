@@ -491,7 +491,10 @@ function loadCurrentTraveler() {
     if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
 
     console.log('Loaded traveler', currentTravelerIndex, td.name || td.art, { showContinue: true });
-    if (gateActions) gateActions.style.display = 'flex';
+    if (gateActions) {
+        gateActions.style.display = 'flex';
+        console.log('loadCurrentTraveler gateActions display:', gateActions.style.display, 'continueButtonVisible:', continueButton?.style.display);
+    }
 }
 
 function setupGateActionButtons() {
@@ -596,10 +599,11 @@ function showTravelerGreeting() {
 
         const row1 = document.getElementById('gate-row-1');
         const row2 = document.getElementById('gate-row-2');
-        console.log('Post-action-build row counts', row1?.children.length, row2?.children.length);
+        console.log('Post-action-build row counts', row1?.children.length, row2?.children.length, 'continue display before hide:', continueButton.style.display);
         if (row1?.children.length > 0 || row2?.children.length > 0) {
             continueButton.style.display = 'none';
         }
+        console.log('showTravelerGreeting continue display after build:', continueButton.style.display);
     }
 }
 
