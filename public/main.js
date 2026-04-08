@@ -524,8 +524,13 @@ function buildDynamicActionButtons() {
         btn.textContent = bd.text;
 
         if (bd.row === 1) {
-            if (!currentInventory?.[bd.item] || currentInventory[bd.item] <= 0) return;
-            btn.addEventListener('click', () => handleTravelerAction(bd.action));
+            const missingItem = !currentInventory?.[bd.item] || currentInventory[bd.item] <= 0;
+            if (missingItem) {
+                btn.disabled = true;
+                btn.title = `Not enough ${bd.item}`;
+            } else {
+                btn.addEventListener('click', () => handleTravelerAction(bd.action));
+            }
             row1.appendChild(btn);
         } else {
             btn.addEventListener('click', () => handleTravelerDecision(bd.decision));
