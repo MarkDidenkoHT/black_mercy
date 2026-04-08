@@ -437,7 +437,9 @@ async function loadTravelersForCurrentDay() {
 
         const data = await response.json();
         currentDayTravelers = data.travelers.filter(t => !t.complete);
-        if (data.available_interactions) currentAvailableInteractions = data.available_interactions;
+        currentAvailableInteractions = data.available_interactions || currentAvailableInteractions;
+
+        console.log('Loaded travelers:', currentDayTravelers.length, 'available interactions:', currentAvailableInteractions);
 
         if (currentDayTravelers.length > 0) {
             currentTravelerIndex = 0;
@@ -499,6 +501,7 @@ function setupGateActionButtons() {
 }
 
 function buildDynamicActionButtons() {
+    console.log('Building actions with interactions:', currentAvailableInteractions);
     const row1 = document.getElementById('gate-row-1');
     const row2 = document.getElementById('gate-row-2');
     if (!row1 || !row2) return;
