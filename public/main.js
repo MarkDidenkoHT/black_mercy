@@ -108,6 +108,7 @@ function showTab(tab) {
     }
 
     if (tab === 'gate') {
+        console.log('showTab gate selected, currentTravelerIndex=', currentTravelerIndex, 'currentAvailableInteractions=', currentAvailableInteractions);
         refreshGateTab();
     } else if (tab === 'city') {
         refreshCityTab();
@@ -456,6 +457,7 @@ async function loadTravelersForCurrentDay() {
 }
 
 function loadCurrentTraveler() {
+    console.log('loadCurrentTraveler', { currentTravelerIndex, currentDayTravelersLength: currentDayTravelers.length });
     if (currentTravelerIndex >= currentDayTravelers.length) {
         const travelerDialog = document.getElementById('traveler-dialog');
         const gateActions    = document.getElementById('gate-actions');
@@ -488,6 +490,7 @@ function loadCurrentTraveler() {
     if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
     if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
 
+    console.log('Loaded traveler', currentTravelerIndex, td.name || td.art, { showContinue: true });
     if (gateActions) gateActions.style.display = 'flex';
 }
 
@@ -495,6 +498,7 @@ function setupGateActionButtons() {
     const continueButton = document.getElementById('continue-button');
     if (continueButton) {
         continueButton.onclick = () => {
+            console.log('continueButton clicked, currentTraveler=', currentTraveler && (currentTraveler.traveler?.name || currentTraveler.traveler?.art));
             if (currentTraveler) showTravelerGreeting();
         };
     }
@@ -543,6 +547,10 @@ function buildDynamicActionButtons() {
 
     row1.style.display = row1.children.length > 0 ? 'flex' : 'none';
     row2.style.display = row2.children.length > 0 ? 'flex' : 'none';
+    console.log('Gate rows:', row1.children.length, row2.children.length, {
+        row1Texts: Array.from(row1.children).map(btn => btn.textContent),
+        row2Texts: Array.from(row2.children).map(btn => btn.textContent)
+    });
 }
 
 function showTravelerGreeting() {
@@ -556,6 +564,7 @@ function showTravelerGreeting() {
 
     if (td.is_fixed) {
         const dialogTreeId = td.dialog?.trigger;
+        console.log('showTravelerGreeting fixed traveler', td.name || td.art, { dialogTreeId });
 
         if (dialogTreeId && typeof DIALOG_TREES !== 'undefined' && DIALOG_TREES[dialogTreeId]) {
             currentDialogTree = getDialogTree(dialogTreeId);
@@ -576,9 +585,21 @@ function showTravelerGreeting() {
             if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
         }
     } else {
+        console.log('showTravelerGreeting follow-up traveler', td.name || td.art, { currentAvailableInteractions, currentInventory });
         travelerDialog.textContent = td.dialog?.greeting || 'Greetings. I seek entry to your town.';
-        continueButton.style.display = 'none';
+        continueButton.textContent  = 'Continue';
+        continueButton.style.display = 'block';
+        continueButton.disabled     = false;
+        continueButton.onclick      = showTravelerGreeting;
+
         buildDynamicActionButtons();
+
+        const row1 = document.getElementById('gate-row-1');
+        const row2 = document.getElementById('gate-row-2');
+        console.log('Post-action-build row counts', row1?.children.length, row2?.children.length);
+        if (row1?.children.length > 0 || row2?.children.length > 0) {
+            continueButton.style.display = 'none';
+        }
     }
 }
 
@@ -666,6 +687,7 @@ function handleDialogGameOver(result) {
 }
 
 async function handleTravelerAction(action) {
+    console.log('handleTravelerAction', action, { currentTraveler, currentInventory });
     if (!currentTraveler) return;
 
     const td             = currentTraveler.traveler;
@@ -697,6 +719,7 @@ async function handleTravelerAction(action) {
 }
 
 async function completeCurrentTraveler(decision) {
+    console.log('completeCurrentTraveler start', { decision, currentTravelerIndex, currentTraveler });
     if (!currentTraveler) return;
 
     const travelerDialog = document.getElementById('traveler-dialog');
@@ -721,6 +744,7 @@ async function completeCurrentTraveler(decision) {
     if (responseText && travelerDialog) {
         travelerDialog.textContent = responseText;
     }
+    console.log('Processing traveler decision', { decision, travelerId: currentTraveler.id, currentTraveler });
 
     try {
         const response = await fetch('/api/travelers/decision', {
@@ -733,9 +757,10 @@ async function completeCurrentTraveler(decision) {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to process decision');
+        if (!response.ok) throw new Error('Failed to process decision: ' + response.statusText);
 
         const data = await response.json();
+        console.log('Decision response', data);
         if (data.success) {
             if (data.population)          currentPopulation        = data.population;
             if (data.hidden_reputation)   currentHiddenReputation  = data.hidden_reputation;
