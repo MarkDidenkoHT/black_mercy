@@ -125,6 +125,8 @@ app.post('/api/auth/check', async (req, res) => {
             player: existingPlayer.id,
             active: true,
             day: 1,
+            status_hidden: { cult: 0, inquisition: 0, undead: 0 },
+            available_interactions: ['check-papers', 'let-in', 'push-out'],
             // pet: null
           }])
           .select()
@@ -263,6 +265,8 @@ app.post('/api/auth/check', async (req, res) => {
         player: newPlayer.id,
         active: true,
         day: 1,
+        status_hidden: { cult: 0, inquisition: 0, undead: 0 },
+        available_interactions: ['check-papers', 'let-in', 'push-out'],
         // pet: null or omit
       }])
       .select()
@@ -566,6 +570,11 @@ app.post('/api/travelers/decision', async (req, res) => {
       .from('reputation')
       .update({ hidden_reputation: currentHiddenRep })
       .eq('id', reputation.id);
+
+    await supabase
+      .from('sessions')
+      .update({ status_hidden: currentHiddenRep })
+      .eq('id', session.id);
 
     await supabase
       .from('travelers')
