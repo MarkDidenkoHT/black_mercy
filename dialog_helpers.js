@@ -141,7 +141,6 @@ module.exports = function initDialogHelpers(supabase) {
                 session: sessionId,
                 hero: heroData.hero,
                 stats: heroData.stats,
-                reputation: heroData.reputation,
                 talents: heroData.talents,
                 art: heroData.art
             }])

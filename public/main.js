@@ -1012,8 +1012,6 @@ function renderHeroSlider() {
     let talents = hero.talents;
     if (typeof talents === 'string') talents = [talents];
     if (talents && !Array.isArray(talents)) talents = [talents];
-    let rep = hero.reputation;
-    if (typeof rep === 'string') try { rep = JSON.parse(rep); } catch {}
 
     content.innerHTML = `
         <div class="hero-art-name">
@@ -1039,29 +1037,6 @@ function renderHeroSlider() {
                 if (statKey) showStatModal(statKey);
             });
         });
-    }
-
-    const repPie = document.getElementById('hero-rep-pie');
-    if (repPie) {
-        const cult = rep?.cult ?? 0;
-        const inquisition = rep?.inquisition ?? 0;
-        const undead = rep?.undead ?? 0;
-        const total = cult + inquisition + undead || 1;
-        const cultPct = (cult / total) * 100;
-        const inqPct = (inquisition / total) * 100;
-        const undeadPct = (undead / total) * 100;
-        const pie = `<svg width="64" height="64" viewBox="0 0 32 32">
-            <circle r="16" cx="16" cy="16" fill="#222" />
-            <circle r="16" cx="16" cy="16" fill="none" stroke="#a02020" stroke-width="32" stroke-dasharray="${cultPct} ${100-cultPct}" stroke-dashoffset="0" />
-            <circle r="16" cx="16" cy="16" fill="none" stroke="#ffd700" stroke-width="32" stroke-dasharray="${inqPct} ${100-inqPct}" stroke-dashoffset="-${cultPct}" />
-            <circle r="16" cx="16" cy="16" fill="none" stroke="#5a2aaa" stroke-width="32" stroke-dasharray="${undeadPct} ${100-undeadPct}" stroke-dashoffset="-${cultPct+inqPct}" />
-        </svg>
-        <div class="hero-rep-legend">
-            <span style="color:#a02020">●</span> Cult
-            <span style="color:#ffd700">●</span> Inquisition
-            <span style="color:#5a2aaa">●</span> Undead
-        </div>`;
-        repPie.innerHTML = pie;
     }
 
     prevBtn.disabled = heroSliderIndex === 0;

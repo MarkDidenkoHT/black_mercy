@@ -225,7 +225,7 @@ app.post('/api/auth/check', async (req, res) => {
 
       const { data: heroesData } = await supabase
         .from('heroes')
-        .select('*')
+        .select('id, session, hero, stats, talents, art')
         .eq('session', activeSession.id)
         .order('hero', { ascending: true });
 
@@ -1076,7 +1076,6 @@ app.post('/api/heroes/recruit', async (req, res) => {
         session: session.id,
         hero: heroData.hero,
         stats: heroData.stats,
-        reputation: heroData.reputation,
         talents: heroData.talents,
         art: heroData.art
       }])
@@ -1128,7 +1127,7 @@ app.get('/api/heroes/list', async (req, res) => {
 
     const { data: heroes } = await supabase
       .from('heroes')
-      .select('*')
+      .select('id, session, hero, stats, talents, art')
       .eq('session', session.id)
       .order('hero', { ascending: true });
 

@@ -1280,19 +1280,3 @@ input {
     font-weight: bold;
     color: var(--gold);
 }
-
-#hero-rep-pie {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.hero-rep-legend {
-    display: flex;
-    gap: 10px;
-    font-size: 13px;
-    margin-top: 2px;
-    color: var(--text-dim);
-    align-items: center;
-    justify-content: center;
-}
