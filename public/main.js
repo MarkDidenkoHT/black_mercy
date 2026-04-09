@@ -18,6 +18,7 @@ let currentHeroes = [];
 let currentDialogTree = null;
 let activeTab = 'keep';
 let heroSliderIndex = 0;
+let currentTravelerUsedInteractions = new Set();
 
 const HERO_STAT_ICONS = {
     zeal: '🔥',
@@ -468,6 +469,7 @@ function loadCurrentTraveler() {
     }
 
     currentTraveler = currentDayTravelers[currentTravelerIndex];
+    currentTravelerUsedInteractions = new Set();
     const td = currentTraveler.traveler;
 
     const travelerArt    = document.getElementById('traveler-art');
@@ -533,11 +535,13 @@ function buildDynamicActionButtons() {
         btn.className = `action-button ${bd.cls}`;
         btn.textContent = bd.text;
 
+        const isUsed = currentTravelerUsedInteractions.has(id);
+
         if (bd.row === 1) {
             const missingItem = !currentInventory?.[bd.item] || currentInventory[bd.item] <= 0;
-            if (missingItem) {
+            if (missingItem || isUsed) {
                 btn.disabled = true;
-                btn.title = `Not enough ${bd.item}`;
+                btn.title = isUsed ? 'Already used on this traveler' : `Not enough ${bd.item}`;
             } else {
                 btn.addEventListener('click', () => handleTravelerAction(bd.action));
             }
@@ -718,6 +722,7 @@ async function handleTravelerAction(action) {
 
     travelerDialog.textContent = responses[action];
     await updateInventory(item, -1);
+    currentTravelerUsedInteractions.add(action.replace(/_/g, '-'));
     renderInventory();
     buildDynamicActionButtons();
 }
