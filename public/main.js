@@ -275,6 +275,7 @@ function applySessionData(data) {
     renderPopulation();
     renderInventory();
     renderEvents();
+    updateGateNavLabel();
 }
 
 function setupShell() {
@@ -414,11 +415,68 @@ function updateGateNavGlow() {
     } else {
         gateBtn.classList.remove('glow');
     }
+    updateGateNavLabel();
+}
+
+function updateGateNavLabel() {
+    const gateBtn = document.getElementById('nav-gate');
+    if (!gateBtn) return;
+    const hasPending = (currentTravelers || []).some(t => !t.complete);
+    gateBtn.textContent = hasPending ? 'Gate' : 'End Day';
 }
 
 function refreshGateTab() {
     updateGateNavGlow();
     loadTravelersForCurrentDay();
+}
+
+async function advanceDay() {
+    if (!currentPlayer) return;
+
+    const travelerDialog = document.getElementById('traveler-dialog');
+    if (travelerDialog) travelerDialog.textContent = 'Advancing to the next day...';
+
+    try {
+        const response = await fetch('/api/day/advance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId: currentPlayer.chat_id })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            const message = data?.error || 'Could not advance the day.';
+            if (travelerDialog) travelerDialog.textContent = message;
+            return;
+        }
+
+        await refreshGameData();
+        showTab('gate');
+    } catch (error) {
+        console.error('Advance day error:', error);
+        if (travelerDialog) travelerDialog.textContent = 'Failed to advance the day.';
+    }
+}
+
+function showEndDayPrompt() {
+    const travelerDialog = document.getElementById('traveler-dialog');
+    const gateActions    = document.getElementById('gate-actions');
+    const continueButton = document.getElementById('continue-button');
+    const row1           = document.getElementById('gate-row-1');
+    const row2           = document.getElementById('gate-row-2');
+
+    if (travelerDialog) travelerDialog.textContent = 'All travelers have been processed for today.';
+    if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
+    if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
+
+    if (continueButton) {
+        continueButton.textContent  = 'End Day';
+        continueButton.style.display = 'block';
+        continueButton.disabled     = false;
+        continueButton.onclick      = advanceDay;
+    }
+
+    if (gateActions) gateActions.style.display = 'flex';
 }
 
 async function loadTravelersForCurrentDay() {
@@ -449,7 +507,7 @@ async function loadTravelersForCurrentDay() {
         } else {
             if (travelerArt)    travelerArt.src = '';
             if (travelerDialog) travelerDialog.textContent = 'All travelers have been processed for today.';
-            if (gateActions)    gateActions.style.display = 'none';
+            showEndDayPrompt();
         }
     } catch (error) {
         console.error('Load travelers error:', error);
@@ -460,10 +518,7 @@ async function loadTravelersForCurrentDay() {
 function loadCurrentTraveler() {
     console.log('loadCurrentTraveler', { currentTravelerIndex, currentDayTravelersLength: currentDayTravelers.length });
     if (currentTravelerIndex >= currentDayTravelers.length) {
-        const travelerDialog = document.getElementById('traveler-dialog');
-        const gateActions    = document.getElementById('gate-actions');
-        if (travelerDialog) travelerDialog.textContent = 'No more travelers today.';
-        if (gateActions)    gateActions.style.display = 'none';
+        showEndDayPrompt();
         refreshGameData();
         return;
     }
