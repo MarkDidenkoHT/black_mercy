@@ -4,7 +4,6 @@ tg.expand();
 let currentPlayer = null;
 let currentSession = null;
 let currentPopulation = null;
-let currentHiddenReputation = null;
 let currentInventory = null;
 let currentAvailableInteractions = [];
 let currentEvents = [];
@@ -262,7 +261,6 @@ function initPetSelection() {
 function applySessionData(data) {
     currentSession              = data.session;
     currentPopulation           = data.population;
-    currentHiddenReputation     = data.hidden_reputation;
     currentInventory            = data.inventory;
     currentAvailableInteractions = data.available_interactions || ['check-papers', 'let-in', 'push-out'];
     currentEvents               = data.events || [];
@@ -272,7 +270,6 @@ function applySessionData(data) {
     currentHeroes               = data.heroes || [];
 
     updateDayDisplay();
-    renderPopulation();
     renderInventory();
     renderEvents();
 }
@@ -337,26 +334,6 @@ function updateDayDisplay() {
 function getCurrentPhase() {
     const completed = currentTravelers.filter(t => t.complete).length;
     return dayPhases[Math.min(completed, 5)];
-}
-
-function renderPopulation() {
-    const container = document.getElementById('reputation-container');
-    if (!container) return;
-    container.innerHTML = '';
-
-    const total = (currentPopulation?.human     || 0)
-                + (currentPopulation?.infected   || 0)
-                + (currentPopulation?.possessed  || 0);
-
-    const item = document.createElement('div');
-    item.className = 'reputation-item';
-    Object.assign(item.dataset, { type: 'population', key: 'total', name: 'Population', icon: 'town', count: total });
-    item.innerHTML = `
-        <img src="assets/art/icons/town.png" alt="Population" class="reputation-icon">
-        <span class="reputation-level">${total}</span>
-    `;
-    item.addEventListener('click', handleIconClick);
-    container.appendChild(item);
 }
 
 function renderInventory() {
@@ -771,7 +748,6 @@ async function completeCurrentTraveler(decision) {
         console.log('Decision response', data);
         if (data.success) {
             if (data.population)          currentPopulation        = data.population;
-            if (data.hidden_reputation)   currentHiddenReputation  = data.hidden_reputation;
 
             await refreshGameData();
             updateGateNavGlow();
@@ -1012,8 +988,6 @@ function renderHeroSlider() {
     let talents = hero.talents;
     if (typeof talents === 'string') talents = [talents];
     if (talents && !Array.isArray(talents)) talents = [talents];
-    let rep = hero.reputation;
-    if (typeof rep === 'string') try { rep = JSON.parse(rep); } catch {}
 
     content.innerHTML = `
         <div class="hero-art-name">
@@ -1039,29 +1013,6 @@ function renderHeroSlider() {
                 if (statKey) showStatModal(statKey);
             });
         });
-    }
-
-    const repPie = document.getElementById('hero-rep-pie');
-    if (repPie) {
-        const cult = rep?.cult ?? 0;
-        const inquisition = rep?.inquisition ?? 0;
-        const undead = rep?.undead ?? 0;
-        const total = cult + inquisition + undead || 1;
-        const cultPct = (cult / total) * 100;
-        const inqPct = (inquisition / total) * 100;
-        const undeadPct = (undead / total) * 100;
-        const pie = `<svg width="64" height="64" viewBox="0 0 32 32">
-            <circle r="16" cx="16" cy="16" fill="#222" />
-            <circle r="16" cx="16" cy="16" fill="none" stroke="#a02020" stroke-width="32" stroke-dasharray="${cultPct} ${100-cultPct}" stroke-dashoffset="0" />
-            <circle r="16" cx="16" cy="16" fill="none" stroke="#ffd700" stroke-width="32" stroke-dasharray="${inqPct} ${100-inqPct}" stroke-dashoffset="-${cultPct}" />
-            <circle r="16" cx="16" cy="16" fill="none" stroke="#5a2aaa" stroke-width="32" stroke-dasharray="${undeadPct} ${100-undeadPct}" stroke-dashoffset="-${cultPct+inqPct}" />
-        </svg>
-        <div class="hero-rep-legend">
-            <span style="color:#a02020">●</span> Cult
-            <span style="color:#ffd700">●</span> Inquisition
-            <span style="color:#5a2aaa">●</span> Undead
-        </div>`;
-        repPie.innerHTML = pie;
     }
 
     prevBtn.disabled = heroSliderIndex === 0;
