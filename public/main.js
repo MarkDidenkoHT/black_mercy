@@ -731,7 +731,6 @@ async function completeCurrentTraveler(decision) {
     const row1           = document.getElementById('gate-row-1');
     const row2           = document.getElementById('gate-row-2');
     if (travelerDialog) travelerDialog.innerHTML = '';
-    if (gateActions) gateActions.innerHTML = '';
     if (row1) { row1.innerHTML = ''; row1.style.display = 'none'; }
     if (row2) { row2.innerHTML = ''; row2.style.display = 'none'; }
 
