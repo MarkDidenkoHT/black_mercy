@@ -280,7 +280,7 @@ async function executeDialogAction(actionId, params = {}) {
 
 async function executeDialogActions(actions = []) {
     const results = [];
-    
+
     for (const action of actions) {
         let actionId = action;
         let params = {};
@@ -290,12 +290,22 @@ async function executeDialogActions(actions = []) {
             params = action.params || {};
         }
 
-        if (actionId === 'check_supplies' || actionId === 'check_population' || actionId === 'trigger_ending') {
-            const result = await DialogActions[actionId](params);
-            results.push({ actionId, result });
-        } else {
-            results.push({ actionId, result: { success: true } });
+        if (!actionId) {
+            results.push({ actionId, result: { success: false, error: 'Missing action id' } });
+            continue;
         }
+
+        const actionFn = DialogActions[actionId];
+        if (!actionFn) {
+            console.warn('[DIALOG] executeDialogActions unknown action:', actionId);
+            results.push({ actionId, result: { success: false, error: 'Unknown action' } });
+            continue;
+        }
+
+        console.log('[DIALOG] executing action', { actionId, params });
+        const result = await actionFn(params);
+        console.log('[DIALOG] action result', { actionId, result });
+        results.push({ actionId, result });
     }
 
     return results;

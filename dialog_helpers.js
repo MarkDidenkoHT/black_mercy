@@ -155,35 +155,50 @@ module.exports = function initDialogHelpers(supabase) {
     async function applyDialogActions(playerId, sessionId, actions) {
         const output = {};
 
+        console.log('[DIALOG HELPERS] applyDialogActions start', { playerId, sessionId, actions });
+
         for (const action of actions || []) {
             const { id, params } = action;
+            console.log('[DIALOG HELPERS] applying action', { id, params });
             if (id === 'give_items') {
                 output.inventory = await addInventory(playerId, sessionId, params?.items || {});
+                console.log('[DIALOG HELPERS] give_items result', { inventory: output.inventory });
                 continue;
             }
             if (id === 'unlock_structure') {
-                await unlockStructure(playerId, sessionId, params?.structureTemplateId);
+                const result = await unlockStructure(playerId, sessionId, params?.structureTemplateId);
+                console.log('[DIALOG HELPERS] unlock_structure result', { result });
                 continue;
             }
             if (id === 'unlock_interaction') {
                 output.available_interactions = await addInteraction(playerId, sessionId, params?.interaction);
+                console.log('[DIALOG HELPERS] unlock_interaction result', { available_interactions: output.available_interactions });
                 continue;
             }
             if (id === 'log_event') {
                 output.event = await logEvent(playerId, sessionId, params?.event);
+                console.log('[DIALOG HELPERS] log_event result', { event: output.event });
                 continue;
             }
             if (id === 'modify_reputation') {
                 output.hidden_reputation = await modifyReputation(playerId, sessionId, params?.changes || {});
+                console.log('[DIALOG HELPERS] modify_reputation result', { hidden_reputation: output.hidden_reputation });
                 continue;
             }
             if (id === 'recruit_hero') {
                 const recruited = await recruitHero(playerId, sessionId, params?.hero);
-                if (recruited) output.recruited_hero = recruited.hero;
+                if (recruited) {
+                    output.recruited_hero = recruited.hero;
+                    console.log('[DIALOG HELPERS] recruit_hero success', { recruited_hero: output.recruited_hero });
+                } else {
+                    console.log('[DIALOG HELPERS] recruit_hero failed', { hero: params?.hero });
+                }
                 continue;
             }
+            console.warn('[DIALOG HELPERS] unknown dialog action skipped', { action });
         }
 
+        console.log('[DIALOG HELPERS] applyDialogActions complete', { output });
         return output;
     }
 

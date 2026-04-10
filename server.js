@@ -1184,7 +1184,11 @@ app.post('/api/dialog/execute', async (req, res) => {
       }
     }
 
+    console.log('Dialog execute request', { chatId, treeId, path, actions });
+
     const result = await dialogHelpers.applyDialogActions(player.id, session.id, actions);
+
+    console.log('Dialog execute result', { chatId, treeId, path, result });
 
     return res.json({
       success: true,
