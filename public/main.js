@@ -634,7 +634,6 @@ function showTravelerGreeting() {
         } else {
             const greetingText = td.dialog?.greeting || 'A special visitor arrives.';
             travelerDialog.textContent = greetingText;
-            if (dialogTreeId) executeTrigger(dialogTreeId, td, currentSession);
 
             continueButton.textContent  = 'Complete';
             continueButton.style.display = 'block';
