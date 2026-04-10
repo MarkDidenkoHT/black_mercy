@@ -532,7 +532,7 @@ function loadCurrentTraveler() {
     const continueButton = document.getElementById('continue-button');
     const gateActions    = document.getElementById('gate-actions');
 
-    if (travelerArt)    travelerArt.src = `assets/art/travelers/${td.art}.png`;
+    if (travelerArt)    travelerArt.src = td.is_fixed ? `assets/art/heroes/${td.art}.png` : `assets/art/travelers/${td.art}.png`;
     if (travelerDialog) travelerDialog.textContent = td.description || 'A traveler approaches…';
 
     if (continueButton) {
