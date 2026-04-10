@@ -242,9 +242,10 @@ const DIALOG_TREES = {
                         { id: 'give_items', params: { items: { 'medicinal herbs': 2 } } },
                         { id: 'unlock_structure', params: { structureTemplateId: 2 } },
                         { id: 'unlock_interaction', params: { interaction: 'medicinal-herbs' } },
+                        { id: 'recruit_hero', params: { hero: 'Nora' } },
                         { 
                             id: 'log_event', 
-                            params: { event: 'Nora taught you to use medicinal herbs. You received 2 Medicinal Herbs. The Apothecary is now active.' } 
+                            params: { event: 'Nora joins your cause and teaches you to use medicinal herbs. You receive 2 Medicinal Herbs and the Apothecary is now active.' } 
                         }
                     ]
                 }

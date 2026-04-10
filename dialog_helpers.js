@@ -33,6 +33,8 @@ module.exports = function initDialogHelpers(supabase) {
             updatedItems[key] = Math.max(0, (updatedItems[key] || 0) + amount);
         });
 
+        console.log('[DIALOG HELPERS] addInventory', { playerId, sessionId, items, updatedItems });
+
         await supabase
             .from('inventory')
             .update({ items: updatedItems })

@@ -83,6 +83,9 @@ const DialogActions = {
             if (data.success) {
                 currentInventory = data.inventory;
                 renderInventory();
+                console.log('[DIALOG] give_items success', { items: params.items, inventory: data.inventory });
+            } else {
+                console.warn('[DIALOG] give_items returned failure', { items: params.items, data });
             }
             return { success: true, data };
         } catch (error) {

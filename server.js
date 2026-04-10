@@ -777,6 +777,14 @@ app.post('/api/inventory/give', async (req, res) => {
       updatedItems[key] = (updatedItems[key] || 0) + amount;
     });
 
+    console.log('Inventory give request:', {
+      playerId: player.id,
+      sessionId: session.id,
+      items,
+      before: inventory.items,
+      after: updatedItems
+    });
+
     await supabase
       .from('inventory')
       .update({ items: updatedItems })
