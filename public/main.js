@@ -625,7 +625,7 @@ function showTravelerGreeting() {
     if (!continueButton || !travelerDialog) return;
 
     if (td.is_fixed) {
-        const dialogTreeId = td.dialog?.trigger;
+        const dialogTreeId = getDialogTreeForTraveler(td);
         console.log('showTravelerGreeting fixed traveler', td.name || td.art, { dialogTreeId });
 
         if (dialogTreeId && typeof DIALOG_TREES !== 'undefined' && DIALOG_TREES[dialogTreeId]) {
@@ -663,6 +663,21 @@ function showTravelerGreeting() {
         }
         console.log('showTravelerGreeting continue display after build:', continueButton.style.display);
     }
+}
+
+function getDialogTree(treeId) {
+    if (typeof DIALOG_TREES === 'undefined' || !DIALOG_TREES[treeId]) {
+        console.warn('[DIALOG] Dialog tree not found:', treeId);
+        return null;
+    }
+    return new DialogTree(treeId, DIALOG_TREES[treeId]);
+}
+
+function getDialogTreeForTraveler(traveler) {
+    if (traveler.name === 'Shadow' || traveler.art === 'shadow') {
+        return 'shadow_encounter';
+    }
+    return traveler.dialog?.trigger;
 }
 
 function showDialogNode() {

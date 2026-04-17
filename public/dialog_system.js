@@ -263,6 +263,39 @@ const DialogActions = {
             console.error('[DIALOG] modify_reputation error:', error);
             return { success: false, error };
         }
+    },
+
+    shadow_combat: async (params) => {
+        try {
+            const response = await fetch('/api/shadow/combat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chatId: currentPlayer.chat_id
+                })
+            });
+            if (!response.ok) throw new Error('Failed to execute shadow combat');
+            const data = await response.json();
+            
+            await executeDialogAction('log_event', { event: data.message });
+            
+            if (data.outcome === 'victory') {
+                await executeDialogAction('trigger_ending', {
+                    ending: 'victory',
+                    message: 'You have defeated the Shadow! Your town is saved... for now.'
+                });
+            } else {
+                await executeDialogAction('trigger_ending', {
+                    ending: 'defeat',
+                    message: 'The Shadow consumes all. Darkness falls over your town.'
+                });
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('[DIALOG] shadow_combat error:', error);
+            return { success: false, error };
+        }
     }
 };
 

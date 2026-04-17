@@ -1154,6 +1154,65 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+app.post('/api/shadow/combat', async (req, res) => {
+  try {
+    const { chatId } = req.body;
+
+    if (!chatId) return res.status(400).json({ error: 'chatId is required' });
+
+    const { data: player } = await supabase
+      .from('players')
+      .select('*')
+      .eq('chat_id', chatId)
+      .single();
+
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('player', player.id)
+      .eq('active', true)
+      .single();
+
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    const { data: structures } = await supabase
+      .from('structures')
+      .select('*')
+      .eq('player', player.id)
+      .eq('session', session.id);
+
+    let shadowPower = (session.status_hidden?.undead || 0);
+    let playerPower = 0;
+
+    if (structures && structures.length > 0) {
+      structures.forEach(structure => {
+        const status = structure.status || {};
+        shadowPower += parseInt(status.infected || 0);
+        playerPower += parseInt(status.human || 0);
+      });
+    }
+
+    const outcome = playerPower > shadowPower ? 'victory' : 'defeat';
+    const message = outcome === 'victory' 
+      ? `You stand against the darkness: ${playerPower} souls vs Shadow's ${shadowPower} minions. Your resolve prevails!`
+      : `The Shadow overwhelms you: your ${playerPower} souls cannot withstand Shadow's ${shadowPower} undead horrors.`;
+
+    return res.json({
+      success: true,
+      player_power: playerPower,
+      shadow_power: shadowPower,
+      outcome: outcome,
+      message: message
+    });
+
+  } catch (error) {
+    console.error('Shadow combat error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.post('/api/dialog/execute', async (req, res) => {
   try {
     const { chatId, treeId, path } = req.body;

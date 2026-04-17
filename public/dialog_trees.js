@@ -384,6 +384,23 @@ const DIALOG_TREES = {
                 }
             ]
         }
+    },
+
+    shadow_encounter: {
+        start: {
+            text: "Deeaaaath...",
+            options: [
+                {
+                    text: "...",
+                    end: true,
+                    actions: [
+                        { 
+                            id: 'shadow_combat'
+                        }
+                    ]
+                }
+            ]
+        }
     }
 };
 
