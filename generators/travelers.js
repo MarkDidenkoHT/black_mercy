@@ -123,6 +123,28 @@ function processRandomTraveler(template) {
   return traveler;
 }
 
+function processFixedTraveler(template) {
+  addLog('GENERATOR', `Processing fixed traveler from template ID ${template.id}`);
+
+  const traveler = {
+    template_id: template.id,
+    name: template.names[0],
+    art: template.art,
+    faction: template.faction[0],
+    traits: {},
+    effect_in: null,
+    effect_in_hidden: null,
+    effect_out: null,
+    effect_ex: null,
+    structure: template.structure || null,
+    is_fixed: true,
+    hero_data: template.hero_data || null
+  };
+
+  addLog('GENERATOR', `  Fixed traveler processed: ${traveler.name} (${traveler.faction})`);
+  return traveler;
+}
+
 function generateFactionDistribution() {
   addLog('GENERATOR', 'Generating faction distribution for 6 structures');
   
@@ -183,12 +205,27 @@ function generateTravelersForSession(playerId, sessionId, structureTemplates) {
   const recentTemplateDays = new Map();
 
   const randomTemplates = TRAVELERS_TEMPLATES.filter(t => !t.fixed);
+  const fixedTemplates = TRAVELERS_TEMPLATES.filter(t => t.fixed);
   const maxRecentMemory = 3;
 
   addLog('GENERATOR', `Random templates available: ${randomTemplates.length}`);
+  addLog('GENERATOR', `Fixed templates available: ${fixedTemplates.length}`);
+
+  const fixedSlots = new Set();
+  for (const template of fixedTemplates) {
+    if (!template.fixed_data) continue;
+    for (const [day, position] of Object.entries(template.fixed_data)) {
+      fixedSlots.add(`${parseInt(day) - 1}_${parseInt(position) - 1}`);
+    }
+  }
 
   for (let day = 0; day < days; day++) {
     for (let position = 0; position < travelersPerDay; position++) {
+      if (fixedSlots.has(`${day}_${position}`)) {
+        schedule[day][position] = null;
+        continue;
+      }
+
       const availableTemplates = randomTemplates.filter(template => {
         if (usedTemplatesPerDay[day].has(template.id)) return false;
 
@@ -212,6 +249,16 @@ function generateTravelersForSession(playerId, sessionId, structureTemplates) {
       schedule[day][position] = processedTraveler;
       usedTemplatesPerDay[day].add(selectedTemplate.id);
       recentTemplateDays.set(selectedTemplate.id, day);
+    }
+  }
+
+  for (const template of fixedTemplates) {
+    if (!template.fixed_data) continue;
+    for (const [day, position] of Object.entries(template.fixed_data)) {
+      const dayIndex = parseInt(day) - 1;
+      const posIndex = parseInt(position) - 1;
+      schedule[dayIndex][posIndex] = processFixedTraveler(template);
+      addLog('GENERATOR', `Injected fixed traveler ${template.names[0]} at Day ${day}, Position ${position}`);
     }
   }
 
@@ -260,6 +307,7 @@ function generateTravelersForSession(playerId, sessionId, structureTemplates) {
 module.exports = {
   generateTravelersForSession,
   processRandomTraveler,
+  processFixedTraveler,
   generateFactionDistribution,
   getLogs,
   clearLogs,
