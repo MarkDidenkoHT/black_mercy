@@ -458,4 +458,8 @@ const TRAVELERS_TEMPLATES = [
   }
 ];
 
-module.exports = TRAVELERS_TEMPLATES;
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = TRAVELERS_TEMPLATES;
+} else {
+  window.TRAVELERS_TEMPLATES = TRAVELERS_TEMPLATES;
+}
