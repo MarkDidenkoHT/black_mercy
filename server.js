@@ -27,6 +27,7 @@ const supabase = createClient(
 
 const { DIALOG_TREES } = require('./public/dialog_trees');
 const dialogHelpers = require('./dialog_helpers')(supabase);
+const travelersGenerator = require('./generators/travelers');
 
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -47,20 +48,44 @@ app.get('/', (req, res) => {
 });
 
 async function callGenerateTravelers(playerId, sessionId) {
-  const response = await fetch(`${process.env.SUPABASE_URL}/functions/v1/generate-travelers`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      player_id: playerId,
-      session_id: sessionId
-    })
-  });
+  console.log(`[SERVER] Starting local traveler generation for player ${playerId}, session ${sessionId}`);
+  
+  const generationResult = travelersGenerator.generateTravelersForSession(playerId, sessionId);
+  
+  console.log(`[SERVER] Generated ${generationResult.travelers.length} travelers and ${generationResult.structures.length} structures`);
+  console.log(`[SERVER] Generation logs:`, generationResult.logs);
 
-  if (!response.ok) throw new Error('Failed to generate travelers');
-  return await response.json();
+  const { data: insertedTravelers, error: travelersError } = await supabase
+    .from('travelers')
+    .insert(generationResult.travelers)
+    .select();
+
+  if (travelersError) {
+    console.error(`[SERVER] Error inserting travelers:`, travelersError);
+    throw travelersError;
+  }
+
+  console.log(`[SERVER] Inserted ${insertedTravelers.length} travelers into database`);
+
+  const { data: insertedStructures, error: structuresError } = await supabase
+    .from('structures')
+    .insert(generationResult.structures)
+    .select();
+
+  if (structuresError) {
+    console.error(`[SERVER] Error inserting structures:`, structuresError);
+    throw structuresError;
+  }
+
+  console.log(`[SERVER] Inserted ${insertedStructures.length} structures into database`);
+
+  return {
+    success: true,
+    message: `Generated ${generationResult.travelers.length} travelers and ${generationResult.structures.length} structures`,
+    travelers: insertedTravelers,
+    structures: insertedStructures,
+    logs: generationResult.logs
+  };
 }
 
 async function calculateStructureTotals(playerId, sessionId) {
