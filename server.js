@@ -50,7 +50,18 @@ app.get('/', (req, res) => {
 async function callGenerateTravelers(playerId, sessionId) {
   console.log(`[SERVER] Starting local traveler generation for player ${playerId}, session ${sessionId}`);
   
-  const generationResult = travelersGenerator.generateTravelersForSession(playerId, sessionId);
+  const { data: structureTemplates, error: templatesError } = await supabase
+    .from('structures_templates')
+    .select('*');
+
+  if (templatesError) {
+    console.error(`[SERVER] Error fetching structure templates:`, templatesError);
+    throw templatesError;
+  }
+
+  console.log(`[SERVER] Fetched ${structureTemplates.length} structure templates`);
+
+  const generationResult = travelersGenerator.generateTravelersForSession(playerId, sessionId, structureTemplates);
   
   console.log(`[SERVER] Generated ${generationResult.travelers.length} travelers and ${generationResult.structures.length} structures`);
   console.log(`[SERVER] Generation logs:`, generationResult.logs);
@@ -498,6 +509,7 @@ app.post('/api/travelers/get-day', async (req, res) => {
 app.post('/api/travelers/decision', async (req, res) => {
   try {
     const { chatId, travelerId, decision } = req.body;
+    console.log(`[SERVER] Processing traveler decision:`, { chatId, travelerId, decision });
 
     if (!chatId || !travelerId || !decision) {
       return res.status(400).json({ error: 'chatId, travelerId, and decision are required' });
@@ -530,6 +542,8 @@ app.post('/api/travelers/decision', async (req, res) => {
 
     if (!traveler) return res.status(404).json({ error: 'Traveler not found' });
 
+    console.log(`[SERVER] Traveler loaded:`, traveler);
+
     const { data: reputation } = await supabase
       .from('reputation')
       .select('*')
@@ -538,6 +552,8 @@ app.post('/api/travelers/decision', async (req, res) => {
       .single();
 
     const travelerData = traveler.traveler;
+    console.log(`[SERVER] Traveler data:`, travelerData);
+    
     const structureId  = travelerData.structure;
 
     const { data: structure } = await supabase
@@ -625,8 +641,8 @@ app.post('/api/travelers/decision', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Decision error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[SERVER] Decision error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error', details: error });
   }
 });
 

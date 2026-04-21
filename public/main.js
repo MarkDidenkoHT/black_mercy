@@ -834,7 +834,10 @@ async function completeCurrentTraveler(decision) {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to process decision: ' + response.statusText);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Failed to process decision: ${response.status} - ${errorData.error || response.statusText}`);
+        }
 
         const data = await response.json();
         console.log('Decision response', data);

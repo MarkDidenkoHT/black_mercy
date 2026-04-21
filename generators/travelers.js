@@ -106,20 +106,15 @@ function processRandomTraveler(template) {
   }
 
   const traveler = {
+    template_id: template.id,
     name: selectedName,
-    art: template.art,
     faction: selectedFaction,
     traits: selectedTraits,
     effect_in: effectIn,
     effect_in_hidden: effectInHidden,
     effect_out: effectOut,
     effect_ex: effectEx,
-    dialog: selectedDialog,
-    description: selectedDescription,
-    template_id: template.id,
-    is_fixed: false,
-    structure: template.structure || null,
-    hero_data: null
+    structure: template.structure || null
   };
 
   addLog('GENERATOR', `  Traveler processed: ${selectedName} (${selectedFaction})`);
@@ -166,7 +161,7 @@ function generateFactionDistribution() {
   return result;
 }
 
-function generateTravelersForSession(playerId, sessionId) {
+function generateTravelersForSession(playerId, sessionId, structureTemplates) {
   clearLogs();
   addLog('GENERATOR', `Starting traveler generation for player ${playerId}, session ${sessionId}`);
 
@@ -175,6 +170,11 @@ function generateTravelersForSession(playerId, sessionId) {
   const travelersPerDay = 6;
 
   addLog('GENERATOR', `Total configuration: ${totalTravelers} travelers over ${days} days, ${travelersPerDay} per day`);
+  addLog('GENERATOR', `Structure templates available: ${structureTemplates.length}`);
+
+  if (structureTemplates.length < 6) {
+    throw new Error('Need at least 6 structure templates');
+  }
 
   const schedule = Array.from({ length: days }, () => []);
   const usedTemplatesPerDay = Array.from({ length: days }, () => new Set());
@@ -215,7 +215,10 @@ function generateTravelersForSession(playerId, sessionId) {
 
   const factionDistribution = generateFactionDistribution();
 
-  const generatedStructures = Array.from({ length: 6 }, (_, index) => ({
+  const selectedStructureTemplates = structureTemplates.slice(0, 6);
+  
+  const generatedStructures = selectedStructureTemplates.map((template, index) => ({
+    structure: template.id,
     status: factionDistribution[index],
     player: playerId,
     session: sessionId
