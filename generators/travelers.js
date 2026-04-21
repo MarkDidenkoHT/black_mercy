@@ -108,13 +108,15 @@ function processRandomTraveler(template) {
   const traveler = {
     template_id: template.id,
     name: selectedName,
+    art: template.art,
     faction: selectedFaction,
     traits: selectedTraits,
     effect_in: effectIn,
     effect_in_hidden: effectInHidden,
     effect_out: effectOut,
     effect_ex: effectEx,
-    structure: template.structure || null
+    structure: template.structure || null,
+    is_fixed: false
   };
 
   addLog('GENERATOR', `  Traveler processed: ${selectedName} (${selectedFaction})`);

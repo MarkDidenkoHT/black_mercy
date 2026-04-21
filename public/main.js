@@ -75,6 +75,44 @@ const PHASE_BACKGROUNDS = {
     Night:     'assets/art/town_night.jpg',
 };
 
+function getTravelerTemplate(templateId) {
+    if (typeof TRAVELERS_TEMPLATES === 'undefined') {
+        console.warn('[TEMPLATES] TRAVELERS_TEMPLATES not loaded');
+        return null;
+    }
+    const template = TRAVELERS_TEMPLATES.find(t => t.id === templateId);
+    if (!template) {
+        console.warn('[TEMPLATES] Template not found for ID:', templateId);
+    }
+    return template;
+}
+
+function getDialogForTraveler(template, faction, dialogKey) {
+    if (!template || !template.dialog) {
+        console.warn('[DIALOG] No dialog found in template');
+        return null;
+    }
+    const dialogSection = template.dialog[dialogKey];
+    if (!dialogSection) {
+        console.warn('[DIALOG] No dialog section for key:', dialogKey);
+        return null;
+    }
+    if (typeof dialogSection === 'string') return dialogSection;
+    if (typeof dialogSection === 'object' && faction in dialogSection) {
+        return dialogSection[faction];
+    }
+    console.warn('[DIALOG] No faction-specific dialog for', { dialogKey, faction });
+    return null;
+}
+
+function getDescriptionForTraveler(template, traits) {
+    if (!template || !template.description) return '';
+    const traitValues = Object.values(traits || {}).filter(v => v).sort();
+    if (traitValues.length < 2) return Object.values(template.description)[0] || '';
+    const descriptionKey = traitValues.join('_');
+    return template.description[descriptionKey] || Object.values(template.description)[0] || '';
+}
+
 function showFlowScreen(id) {
     document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById(id);
@@ -533,7 +571,13 @@ function loadCurrentTraveler() {
     const gateActions    = document.getElementById('gate-actions');
 
     if (travelerArt)    travelerArt.src = td.is_fixed ? `assets/art/heroes/${td.art}.png` : `assets/art/travelers/${td.art}.png`;
-    if (travelerDialog) travelerDialog.textContent = td.description || 'A traveler approaches…';
+    
+    let description = 'A traveler approaches…';
+    const template = getTravelerTemplate(td.template_id);
+    if (template) {
+        description = getDescriptionForTraveler(template, td.traits) || description;
+    }
+    if (travelerDialog) travelerDialog.textContent = description;
 
     if (continueButton) {
         continueButton.textContent  = 'Continue';
@@ -632,7 +676,12 @@ function showTravelerGreeting() {
             currentDialogTree = getDialogTree(dialogTreeId);
             showDialogNode();
         } else {
-            const greetingText = td.dialog?.greeting || 'A special visitor arrives.';
+            let greetingText = 'A special visitor arrives.';
+            const template = getTravelerTemplate(td.template_id);
+            if (template) {
+                const dialogText = getDialogForTraveler(template, td.faction, 'greeting');
+                if (dialogText) greetingText = dialogText;
+            }
             travelerDialog.textContent = greetingText;
 
             continueButton.textContent  = 'Complete';
@@ -647,7 +696,13 @@ function showTravelerGreeting() {
         }
     } else {
         console.log('showTravelerGreeting follow-up traveler', td.name || td.art, { currentAvailableInteractions, currentInventory });
-        travelerDialog.textContent = td.dialog?.greeting || 'Greetings. I seek entry to your town.';
+        let greetingText = 'Greetings. I seek entry to your town.';
+        const template = getTravelerTemplate(td.template_id);
+        if (template) {
+            const dialogText = getDialogForTraveler(template, td.faction, 'greeting');
+            if (dialogText) greetingText = dialogText;
+        }
+        travelerDialog.textContent = greetingText;
         continueButton.textContent  = 'Continue';
         continueButton.style.display = 'block';
         continueButton.disabled     = false;
@@ -783,13 +838,26 @@ async function handleTravelerAction(action) {
         return;
     }
 
-    const responses = {
-        check_papers:    td.dialog?.papers      || 'The papers seem to be in order.',
-        holy_water:      td.dialog?.holy_water  || (td.faction === 'possessed' ? 'The traveler shrieks in pain!' : 'The traveler reacts normally to the holy water.'),
-        medicinal_herbs: td.dialog?.medicinal_herbs || (td.faction === 'infected' ? 'The traveler coughs violently!' : 'The traveler shows no unusual reaction.')
+    const template = getTravelerTemplate(td.template_id);
+    const dialogKeyMap = {
+        check_papers:     'papers',
+        holy_water:       'holy_water',
+        medicinal_herbs:  'medicinal_herbs'
+    };
+    const dialogKey = dialogKeyMap[action];
+    
+    let responseText = '';
+    if (template) {
+        responseText = getDialogForTraveler(template, td.faction, dialogKey) || '';
+    }
+    
+    const fallbackResponses = {
+        check_papers:    'The papers seem to be in order.',
+        holy_water:      td.faction === 'possessed' ? 'The traveler shrieks in pain!' : 'The traveler reacts normally to the holy water.',
+        medicinal_herbs: td.faction === 'infected' ? 'The traveler coughs violently!' : 'The traveler shows no unusual reaction.'
     };
 
-    travelerDialog.textContent = responses[action];
+    travelerDialog.textContent = responseText || fallbackResponses[action];
     await updateInventory(item, -1);
     currentTravelerUsedInteractions.add(action.replace(/_/g, '-'));
     renderInventory();
@@ -810,10 +878,12 @@ async function completeCurrentTraveler(decision) {
 
     const td = currentTraveler.traveler;
 
+    const template = getTravelerTemplate(td.template_id);
+    
     const responseDialogs = {
-        allow:          td.dialog?.in        || 'Thank you for allowing me passage.',
-        deny:           td.dialog?.out       || 'Very well. I will leave peacefully.',
-        execute:        td.dialog?.execution || 'Please, have mercy!',
+        allow:          getDialogForTraveler(template, td.faction, 'in') || 'Thank you for allowing me passage.',
+        deny:           getDialogForTraveler(template, td.faction, 'out') || 'Very well. I will leave peacefully.',
+        execute:        getDialogForTraveler(template, td.faction, 'execution') || 'Please, have mercy!',
         complete_fixed: null
     };
 
